@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Gift, MessageSquare, TrendingUp } from 'lucide-react';
+import { Star, Gift, MessageSquare, TrendingUp, Trophy } from 'lucide-react';
 import LoyaltyTab from '../components/tabs/LoyaltyTab';
 import PromotionsTab from '../components/tabs/PromotionsTab';
 import FeedbackTab from '../components/tabs/FeedbackTab';
 import ReviewsTab from '../components/tabs/ReviewsTab';
+import GamificationTab from '../components/tabs/GamificationTab';
 
 const tabs = [
   { id: 'loyalty', label: 'Loyalty Points', icon: Star, component: LoyaltyTab },
   { id: 'promotions', label: 'Promotions', icon: Gift, component: PromotionsTab },
+  { id: 'achievements', label: 'Achievements', icon: Trophy, component: GamificationTab },
   { id: 'feedback', label: 'Give Feedback', icon: MessageSquare, component: FeedbackTab },
   { id: 'reviews', label: 'All Reviews', icon: TrendingUp, component: ReviewsTab },
 ];
@@ -59,7 +61,7 @@ const HomePage = () => {
         transition={{ delay: 0.2 }}
         className="bg-white rounded-2xl p-4 shadow-lg"
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {tabs.map((tab, index) => (
             <motion.button
               key={tab.id}

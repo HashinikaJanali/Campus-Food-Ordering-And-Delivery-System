@@ -1,7 +1,9 @@
 const Review = require("../Model/Review");
 const LoyaltyPoints = require("../Model/LoyaltyPoints");
+const Notification = require("../Model/Notification");
+const aiService = require("../services/aiService");
 
-// Create a new review
+// Create a new review with AI analysis
 const createReview = async (req, res) => {
   try {
     console.log("📝 Creating review...");
@@ -31,13 +33,35 @@ const createReview = async (req, res) => {
       });
     }
 
-    // Determine sentiment based on rating
+    // 🤖 AI ANALYSIS - NEW!
+    console.log("🤖 Running AI analysis on review text...");
+    let aiAnalysis = null;
     let sentiment = "neutral";
-    const ratingNum = parseInt(rating);
-    if (ratingNum >= 4) {
-      sentiment = "positive";
-    } else if (ratingNum <= 2) {
-      sentiment = "negative";
+
+    if (reviewText && reviewText.trim().length >= 10) {
+      try {
+        // Run AI analysis
+        aiAnalysis = await aiService.analyzeReview(reviewText);
+        sentiment = aiAnalysis.sentiment;
+        console.log("✅ AI Analysis complete:", {
+          sentiment: aiAnalysis.sentiment,
+          confidence: aiAnalysis.confidence,
+          emotions: aiAnalysis.emotions,
+          topics: aiAnalysis.topics,
+          method: aiAnalysis.method
+        });
+      } catch (error) {
+        console.error("⚠️ AI analysis failed, using fallback:", error.message);
+        // Fallback to rating-based sentiment
+        const ratingNum = parseInt(rating);
+        if (ratingNum >= 4) sentiment = "positive";
+        else if (ratingNum <= 2) sentiment = "negative";
+      }
+    } else {
+      // No text or too short, use rating-based sentiment
+      const ratingNum = parseInt(rating);
+      if (ratingNum >= 4) sentiment = "positive";
+      else if (ratingNum <= 2) sentiment = "negative";
     }
 
     const review = new Review({
@@ -46,15 +70,23 @@ const createReview = async (req, res) => {
       orderId,
       foodItem,
       vendor,
-      rating: ratingNum,
+      rating: parseInt(rating),
       reviewText: reviewText || "",
       imageUrl,
-      sentiment, // Set sentiment here instead of in pre-save hook
+      sentiment,
+      aiAnalysis: aiAnalysis ? {
+        confidence: parseFloat(aiAnalysis.confidence),
+        emotions: aiAnalysis.emotions || [],
+        topics: aiAnalysis.topics || [],
+        method: aiAnalysis.method || 'rule-based',
+        analyzedAt: new Date(),
+      } : undefined,
     });
 
     await review.save();
     console.log("✅ Review saved:", review._id);
 
+    // Award loyalty points
     let loyaltyAccount = await LoyaltyPoints.findOne({ userId });
     
     if (!loyaltyAccount) {
@@ -70,11 +102,22 @@ const createReview = async (req, res) => {
     await loyaltyAccount.save();
     console.log("✅ Points awarded:", loyaltyAccount.totalPoints);
 
+    // Create notification
+    await Notification.create({
+      userId,
+      type: 'points_earned',
+      title: '⭐ Review Bonus!',
+      message: 'You earned 5 points for writing a review!',
+      icon: '⭐',
+      data: { points: 5, reviewId: review._id },
+    });
+
     res.status(201).json({
       success: true,
-      message: "Review submitted successfully! You earned 5 points.",
+      message: "Review submitted successfully! AI analysis complete.",
       data: review,
       pointsEarned: 5,
+      aiPowered: aiAnalysis?.method === 'ai-powered', // Tell frontend if AI was used
     });
   } catch (error) {
     console.error("❌ Create review error:", error);
@@ -180,7 +223,7 @@ const getUserReviews = async (req, res) => {
   }
 };
 
-// Update a review
+// Update a review with AI re-analysis
 const updateReview = async (req, res) => {
   try {
     const { rating, reviewText } = req.body;
@@ -200,6 +243,25 @@ const updateReview = async (req, res) => {
     
     if (req.file) {
       review.imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    }
+
+    // 🤖 Re-run AI analysis if review text changed
+    if (reviewText && reviewText.trim().length >= 10) {
+      console.log("🤖 Re-analyzing updated review...");
+      try {
+        const aiAnalysis = await aiService.analyzeReview(reviewText);
+        review.sentiment = aiAnalysis.sentiment;
+        review.aiAnalysis = {
+          confidence: parseFloat(aiAnalysis.confidence),
+          emotions: aiAnalysis.emotions || [],
+          topics: aiAnalysis.topics || [],
+          method: aiAnalysis.method || 'rule-based',
+          analyzedAt: new Date(),
+        };
+        console.log("✅ AI re-analysis complete");
+      } catch (error) {
+        console.error("⚠️ AI re-analysis failed:", error.message);
+      }
     }
 
     await review.save();
@@ -334,6 +396,101 @@ const markHelpful = async (req, res) => {
   }
 };
 
+// 🤖 NEW: Get AI insights for a specific vendor
+const getVendorInsights = async (req, res) => {
+  try {
+    const { vendor } = req.params;
+    
+    console.log(`🤖 Generating AI insights for vendor: ${vendor}`);
+    
+    const reviews = await Review.find({ vendor });
+    
+    if (reviews.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          summary: 'No reviews yet for this vendor',
+          strengths: [],
+          improvements: [],
+          overallSentiment: 'neutral',
+          totalReviews: 0,
+        }
+      });
+    }
+
+    const insights = await aiService.generateVendorInsights(reviews);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        ...insights,
+        totalReviews: reviews.length,
+        vendor,
+      }
+    });
+  } catch (error) {
+    console.error("Error generating vendor insights:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// 🤖 NEW: Get overall AI analytics
+const getAIAnalytics = async (req, res) => {
+  try {
+    console.log("🤖 Generating overall AI analytics...");
+    
+    const reviews = await Review.find({ 'aiAnalysis.method': 'ai-powered' });
+    
+    const totalAIReviews = reviews.length;
+    const avgConfidence = reviews.reduce((sum, r) => sum + (r.aiAnalysis?.confidence || 0), 0) / totalAIReviews;
+    
+    // Get most common emotions
+    const emotionCounts = {};
+    reviews.forEach(r => {
+      r.aiAnalysis?.emotions?.forEach(e => {
+        emotionCounts[e.emotion] = (emotionCounts[e.emotion] || 0) + 1;
+      });
+    });
+    
+    const topEmotions = Object.entries(emotionCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([emotion, count]) => ({ emotion, count }));
+    
+    // Get most common topics
+    const topicCounts = {};
+    reviews.forEach(r => {
+      r.aiAnalysis?.topics?.forEach(t => {
+        topicCounts[t.topic] = (topicCounts[t.topic] || 0) + 1;
+      });
+    });
+    
+    const topTopics = Object.entries(topicCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([topic, count]) => ({ topic, count }));
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        totalAIReviews,
+        averageConfidence: avgConfidence.toFixed(1),
+        topEmotions,
+        topTopics,
+      }
+    });
+  } catch (error) {
+    console.error("Error generating AI analytics:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createReview,
   getReviews,
@@ -343,4 +500,6 @@ module.exports = {
   deleteReview,
   getRatingSummary,
   markHelpful,
+  getVendorInsights,    // NEW!
+  getAIAnalytics,       // NEW!
 };

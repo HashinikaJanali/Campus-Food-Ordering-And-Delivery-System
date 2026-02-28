@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -27,6 +28,8 @@ app.get("/api/health", (req, res) => {
 // Import routes AFTER middleware setup
 const reviewRoutes = require("./Routes/reviewRoutes");
 const loyaltyRoutes = require("./Routes/loyaltyRoutes");
+const notificationRoutes = require("./Routes/notificationRoutes");
+app.use("/api/notifications", notificationRoutes);
 
 // API Routes
 app.use("/api/reviews", reviewRoutes);
