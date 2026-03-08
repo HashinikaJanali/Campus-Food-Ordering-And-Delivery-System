@@ -1,9 +1,7 @@
 const Category = require('../../models/inventory/Category');
 const FoodItem = require('../../models/inventory/FoodItem');
 
-// @desc    Get all categories
-// @route   GET /api/categories
-// @access  Public
+// Get all categories
 exports.getCategories = async (req, res) => {
     try {
         const categories = await Category.find().sort({ displayOrder: 1, name: 1 });
@@ -13,9 +11,7 @@ exports.getCategories = async (req, res) => {
     }
 };
 
-// @desc    Create category
-// @route   POST /api/categories
-// @access  Private
+// Create category
 exports.createCategory = async (req, res) => {
     try {
         const category = await Category.create(req.body);
@@ -25,9 +21,7 @@ exports.createCategory = async (req, res) => {
     }
 };
 
-// @desc    Update category
-// @route   PUT /api/categories/:id
-// @access  Private
+// Update category
 exports.updateCategory = async (req, res) => {
     try {
         const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -38,9 +32,7 @@ exports.updateCategory = async (req, res) => {
     }
 };
 
-// @desc    Delete category
-// @route   DELETE /api/categories/:id
-// @access  Private
+// Delete category
 exports.deleteCategory = async (req, res) => {
     try {
         const itemCount = await FoodItem.countDocuments({ category: req.params.id });

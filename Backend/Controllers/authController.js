@@ -1,9 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 
-// @desc    Register admin (for initial setup)
-// @route   POST /api/auth/register
-// @access  Public (Initial setup only)
+// Register admin (for initial setup)
 exports.registerAdmin = async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -24,9 +22,7 @@ exports.registerAdmin = async (req, res) => {
     }
 };
 
-// @desc    Login admin
-// @route   POST /api/auth/login
-// @access  Public
+// Login admin
 exports.loginAdmin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -49,9 +45,7 @@ exports.loginAdmin = async (req, res) => {
     }
 };
 
-// @desc    Get current admin
-// @route   GET /api/auth/me
-// @access  Private
+// Get current admin
 exports.getMe = async (req, res) => {
     res.json({ success: true, admin: req.admin });
 };

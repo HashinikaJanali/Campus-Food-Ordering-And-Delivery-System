@@ -1,8 +1,6 @@
 const Canteen = require('../../models/inventory/Canteen');
 
-// @desc    Get all canteens
-// @route   GET /api/canteens
-// @access  Public
+// Get all canteens
 exports.getCanteens = async (req, res) => {
     try {
         const canteens = await Canteen.find({ isActive: true }).sort('name');
@@ -12,9 +10,7 @@ exports.getCanteens = async (req, res) => {
     }
 };
 
-// @desc    Get all canteens (Admin)
-// @route   GET /api/canteens/admin
-// @access  Private/Admin
+// Get all canteens
 exports.getAdminCanteens = async (req, res) => {
     try {
         const canteens = await Canteen.find().sort('name');
@@ -24,9 +20,7 @@ exports.getAdminCanteens = async (req, res) => {
     }
 };
 
-// @desc    Create new canteen
-// @route   POST /api/canteens
-// @access  Private/Admin
+// Create new canteen
 exports.createCanteen = async (req, res) => {
     try {
         const canteen = await Canteen.create(req.body);
@@ -36,9 +30,7 @@ exports.createCanteen = async (req, res) => {
     }
 };
 
-// @desc    Update canteen
-// @route   PATCH /api/canteens/:id
-// @access  Private/Admin
+// Update canteen
 exports.updateCanteen = async (req, res) => {
     try {
         const canteen = await Canteen.findByIdAndUpdate(req.params.id, req.body, {
@@ -52,9 +44,7 @@ exports.updateCanteen = async (req, res) => {
     }
 };
 
-// @desc    Delete canteen
-// @route   DELETE /api/canteens/:id
-// @access  Private/Admin
+// Delete canteen
 exports.deleteCanteen = async (req, res) => {
     try {
         const canteen = await Canteen.findByIdAndDelete(req.params.id);
