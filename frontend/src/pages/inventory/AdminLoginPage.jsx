@@ -48,7 +48,7 @@ export default function AdminLogin() {
               <ChefHat size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-white text-xl">Campus Bites</h1>
+              <h1 className="font-display font-bold text-white text-xl">Go & Grab</h1>
               <p className="text-primary-200 text-sm">Food & Inventory Management</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function AdminLogin() {
               <ChefHat size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-gray-900">Campus Bites</h1>
+              <h1 className="font-display font-bold text-gray-900">Go & Grab</h1>
               <p className="text-xs text-gray-400">Food & Inventory Management</p>
             </div>
           </div>

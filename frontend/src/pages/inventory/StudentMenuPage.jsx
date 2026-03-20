@@ -270,7 +270,7 @@ export default function StudentMenuPage() {
               <ChefHat size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-2xl leading-tight">Campus Bites</h1>
+              <h1 className="font-display font-bold text-2xl leading-tight">Go & Grab</h1>
               <p className="text-primary-200 text-sm">Fresh food, every day</p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function StudentMenuPage() {
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <ChefHat size={16} className="text-primary-500" />
-            <span className="font-display font-bold text-gray-900">Campus Bites</span>
+            <span className="font-display font-bold text-gray-900">Go & Grab</span>
           </div>
           <p className="text-gray-400 text-sm">Campus Food & Inventory Management System</p>
         </div>
