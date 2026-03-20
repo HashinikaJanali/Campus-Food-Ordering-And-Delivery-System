@@ -1,0 +1,15 @@
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/auth');
+
+// Register admin (for initial setup)
+router.post('/register', authController.registerAdmin);
+
+// Login admin
+router.post('/login', authController.loginAdmin);
+
+// Get current admin
+router.get('/me', authMiddleware, authController.getMe);
+
+module.exports = router;
