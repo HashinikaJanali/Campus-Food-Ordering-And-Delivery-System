@@ -31,6 +31,7 @@ const loyaltyRoutes = require("./Routes/loyaltyRoutes");
 // API Routes
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/orders", require("./Routes/orderRoute"));
 
 // MongoDB Connection
 mongoose.connect("mongodb+srv://thinalidihansa_db_user:cDJwmcC1irNWGF6G@feedback.frtwq9k.mongodb.net/campuseats-engagement")

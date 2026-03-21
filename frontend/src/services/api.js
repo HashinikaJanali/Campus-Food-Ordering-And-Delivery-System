@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -29,6 +29,15 @@ export const loyaltyAPI = {
   redeem: (data) => api.post('/loyalty/redeem', data),
   getHistory: (userId) => api.get(`/loyalty/${userId}/history`),
   getLeaderboard: (limit) => api.get('/loyalty/leaderboard/top', { params: { limit } }),
+};
+
+// Order API
+export const orderAPI = {
+  getAll: (params) => api.get('/orders', { params }),
+  getById: (id) => api.get(`/orders/${id}`),
+  create: (data) => api.post('/orders', data),
+  updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  delete: (id) => api.delete(`/orders/${id}`),
 };
 
 export default api;
