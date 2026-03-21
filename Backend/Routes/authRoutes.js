@@ -3,7 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/auth');
 
-// Register admin (for initial setup)
+// Register admin
 router.post('/register', authController.registerAdmin);
 
 // Login admin

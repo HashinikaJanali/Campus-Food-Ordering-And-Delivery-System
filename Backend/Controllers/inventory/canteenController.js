@@ -1,4 +1,4 @@
-const Canteen = require('../../models/inventory/Canteen');
+const Canteen = require('../../Model/inventory/Canteen');
 
 // Get all canteens
 exports.getCanteens = async (req, res) => {

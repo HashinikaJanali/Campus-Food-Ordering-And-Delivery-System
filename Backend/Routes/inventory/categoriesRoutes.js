@@ -3,16 +3,16 @@ const router = express.Router();
 const categoryController = require('../../controllers/inventory/categoryController');
 const authMiddleware = require('../../middleware/auth');
 
-// GET all categories
+// Get all categories
 router.get('/', categoryController.getCategories);
 
-// POST create category
+// Create new category
 router.post('/', authMiddleware, categoryController.createCategory);
 
-// PUT update category
+// Update category
 router.put('/:id', authMiddleware, categoryController.updateCategory);
 
-// DELETE category
+// Delete category
 router.delete('/:id', authMiddleware, categoryController.deleteCategory);
 
 module.exports = router;

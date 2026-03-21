@@ -61,8 +61,8 @@ const FoodCard = ({ item, onClick, onStockUpdate }) => {
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-display font-bold text-gray-900 text-base leading-tight group-hover:text-primary-600 transition-colors">{item.name}</h3>
-          <span className="text-primary-600 font-bold font-display text-base whitespace-nowrap">Rs. {parseFloat(item.price).toFixed(2)}</span>
+          <h3 className="font-display font-bold text-gray-900 text-base leading-tight group-hover:text-admin-600 transition-colors">{item.name}</h3>
+          <span className="text-admin-600 font-bold font-display text-base whitespace-nowrap">Rs. {parseFloat(item.price).toFixed(2)}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mb-2">
@@ -71,7 +71,7 @@ const FoodCard = ({ item, onClick, onStockUpdate }) => {
             {item.preparationTime}m
           </span>
           {item.canteen && (
-            <span className="flex items-center gap-1.5 text-blue-600 font-medium">
+            <span className="flex items-center gap-1.5 text-admin-600 font-medium">
               <MapPin size={13} className="shrink-0" />
               {item.canteen.name}
             </span>
@@ -91,7 +91,7 @@ const FoodCard = ({ item, onClick, onStockUpdate }) => {
           <div className="pt-3 border-t border-gray-50 mt-auto">
             <button
               onClick={handleAddToCart}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-sm transition-all duration-200 active:scale-95 group/btn"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-admin-500 hover:bg-admin-600 text-white rounded-xl shadow-sm transition-all duration-200 active:scale-95 group/btn"
             >
               <PlusCircle size={18} />
               <span className="text-xs font-bold font-display">Add to Cart</span>
@@ -125,7 +125,7 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
           {item.image ? (
             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-orange-50 to-primary-100 flex items-center justify-center text-7xl">
+            <div className="w-full h-full bg-gradient-to-br from-orange-50 to-admin-100 flex items-center justify-center text-7xl">
               {item.category?.icon || '🍽️'}
             </div>
           )}
@@ -140,7 +140,7 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-2">
             <h2 className="font-display font-bold text-gray-900 text-xl">{item.name}</h2>
-            <span className="text-primary-600 font-bold font-display text-xl">Rs. {parseFloat(item.price).toFixed(2)}</span>
+            <span className="text-admin-600 font-bold font-display text-xl">Rs. {parseFloat(item.price).toFixed(2)}</span>
           </div>
           <p className="text-gray-500 text-sm mb-4">{item.description}</p>
 
@@ -150,7 +150,7 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
               {item.preparationTime} min prep time
             </span>
             {item.canteen && (
-              <span className="flex items-center gap-1.5 text-sm text-blue-600 font-medium px-1">
+              <span className="flex items-center gap-1.5 text-sm text-admin-600 font-medium px-1">
                 <MapPin size={16} />
                 {item.canteen.name}
               </span>
@@ -203,7 +203,7 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
             className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-display font-bold text-base transition-all
               ${item.stockQuantity === 0
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-primary-500 hover:bg-primary-600 text-white shadow-orange hover:shadow-orange-lg active:scale-[0.98]'
+                : 'bg-admin-500 hover:bg-admin-600 text-white shadow-orange hover:shadow-orange-lg active:scale-[0.98]'
               }`}
           >
             <ShoppingCart size={20} />
@@ -263,7 +263,7 @@ export default function StudentMenuPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero header */}
-      <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white">
+      <div className="bg-gradient-to-br from-admin-500 via-admin-600 to-admin-700 text-white">
         <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
@@ -271,11 +271,11 @@ export default function StudentMenuPage() {
             </div>
             <div>
               <h1 className="font-display font-bold text-2xl leading-tight">Go & Grab</h1>
-              <p className="text-primary-200 text-sm">Fresh food, every day</p>
+              <p className="text-admin-200 text-sm">Fresh food, every day</p>
             </div>
           </div>
           <h2 className="font-display font-bold text-3xl sm:text-4xl mb-2">Today's Menu</h2>
-          <p className="text-primary-200">Freshly prepared for campus students</p>
+          <p className="text-admin-200">Freshly prepared for campus students</p>
 
           {/* Search bar */}
           <div className="mt-6 relative max-w-md">
@@ -296,7 +296,7 @@ export default function StudentMenuPage() {
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
           <button
             onClick={() => setActiveCategory('all')}
-            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === 'all' ? 'bg-primary-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300'
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === 'all' ? 'bg-admin-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-admin-300'
               }`}
           >
             All
@@ -305,7 +305,7 @@ export default function StudentMenuPage() {
             <button
               key={cat._id}
               onClick={() => setActiveCategory(cat._id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === cat._id ? 'bg-primary-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300'
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === cat._id ? 'bg-admin-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-admin-300'
                 }`}
             >
               {cat.icon} {cat.name}
@@ -331,7 +331,7 @@ export default function StudentMenuPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
@@ -362,7 +362,7 @@ export default function StudentMenuPage() {
       <footer className="bg-white border-t border-gray-100 py-8 mt-12">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <ChefHat size={16} className="text-primary-500" />
+            <ChefHat size={16} className="text-admin-500" />
             <span className="font-display font-bold text-gray-900">Go & Grab</span>
           </div>
           <p className="text-gray-400 text-sm">Campus Food & Inventory Management System</p>

@@ -47,7 +47,7 @@ export default function MenuPreviewPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -62,7 +62,7 @@ export default function MenuPreviewPage() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setActiveCategory('all')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === 'all' ? 'bg-primary-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300'
+          className={`px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === 'all' ? 'bg-admin-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-admin-300'
             }`}
         >
           All ({items.length})
@@ -73,7 +73,7 @@ export default function MenuPreviewPage() {
             <button
               key={cat._id}
               onClick={() => setActiveCategory(cat._id)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === cat._id ? 'bg-primary-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300'
+              className={`px-4 py-2 rounded-xl text-sm font-semibold font-display transition-all duration-200 ${activeCategory === cat._id ? 'bg-admin-500 text-white shadow-orange' : 'bg-white text-gray-600 border border-gray-200 hover:border-admin-300'
                 }`}
             >
               {cat.icon} {cat.name} ({count})
@@ -84,7 +84,7 @@ export default function MenuPreviewPage() {
 
       {/* Menu grid */}
       {filtered.length === 0 ? (
-        <div className="card text-center py-16">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 text-center py-16">
           <p className="text-gray-400">No items in this category are visible on the menu</p>
         </div>
       ) : (
@@ -92,7 +92,7 @@ export default function MenuPreviewPage() {
           {filtered.map((item, idx) => (
             <div
               key={item._id}
-              className={`card p-0 overflow-hidden transition-all duration-200 animate-fade-in group relative ${item.stockQuantity === 0 ? 'opacity-60' : 'hover:shadow-md hover:-translate-y-0.5'
+              className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-0 overflow-hidden transition-all duration-200 animate-fade-in group relative ${item.stockQuantity === 0 ? 'opacity-60' : 'hover:shadow-md hover:-translate-y-0.5'
                 }`}
               style={{ animationDelay: `${idx * 40}ms` }}
             >
@@ -103,7 +103,7 @@ export default function MenuPreviewPage() {
                 title={item.isMenuVisible ? 'Hide from menu' : 'Show on menu'}
               >
                 {item.isMenuVisible ? (
-                  <Eye size={14} className="text-primary-600" />
+                  <Eye size={14} className="text-admin-600" />
                 ) : (
                   <EyeOff size={14} className="text-gray-400" />
                 )}
@@ -114,7 +114,7 @@ export default function MenuPreviewPage() {
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-br from-orange-50 to-primary-50">
+                  <div className="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-br from-orange-50 to-admin-50">
                     {item.category?.icon || '🍽️'}
                   </div>
                 )}
@@ -138,7 +138,7 @@ export default function MenuPreviewPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="font-display font-bold text-gray-900 leading-tight">{item.name}</h3>
-                  <span className="text-primary-600 font-bold font-display whitespace-nowrap">
+                  <span className="text-admin-600 font-bold font-display whitespace-nowrap">
                     Rs. {parseFloat(item.price).toFixed(2)}
                   </span>
                 </div>

@@ -50,7 +50,7 @@ const QuickAdjust = ({ item, onUpdate }) => {
   return (
     <div className="flex items-center gap-2 mt-2">
       <select
-        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:ring-1 focus:ring-primary-400 focus:outline-none"
+        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:ring-1 focus:ring-admin-400 focus:outline-none"
         value={op}
         onChange={e => setOp(e.target.value)}
       >
@@ -60,7 +60,7 @@ const QuickAdjust = ({ item, onUpdate }) => {
       </select>
       <input
         type="number" min="0" placeholder="Qty"
-        className="w-20 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-primary-400 focus:outline-none"
+        className="w-20 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-admin-400 focus:outline-none"
         value={qty}
         onChange={e => setQty(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleSave()}
@@ -68,7 +68,7 @@ const QuickAdjust = ({ item, onUpdate }) => {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="px-3 py-1.5 bg-primary-500 text-white text-xs rounded-lg hover:bg-primary-600 transition-colors font-display font-semibold disabled:opacity-70"
+        className="px-3 py-1.5 bg-admin-500 text-white text-xs rounded-lg hover:bg-admin-600 transition-colors font-display font-semibold disabled:opacity-70"
       >
         {saving ? '...' : 'Update'}
       </button>
@@ -129,7 +129,7 @@ export default function InventoryPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -141,7 +141,7 @@ export default function InventoryPage() {
           <h1 className="text-2xl font-bold font-display text-gray-900">Inventory Management</h1>
           <p className="text-gray-500 text-sm mt-1">Monitor and update stock quantities</p>
         </div>
-        <button onClick={fetchAll} className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
+        <button onClick={fetchAll} className="flex items-center gap-2 text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
           <RefreshCw size={15} />
           Refresh
         </button>
@@ -157,7 +157,7 @@ export default function InventoryPage() {
           <button
             key={key}
             onClick={() => setFilterStatus(filterStatus === key ? 'all' : key)}
-            className={`card flex items-center gap-3 transition-all duration-200 hover:shadow-md cursor-pointer border ${filterStatus === key ? 'ring-2 ring-primary-400' : ''
+            className={`p-6 rounded-2xl shadow-sm flex items-center gap-4 transition-all duration-200 hover:shadow-md cursor-pointer border ${filterStatus === key ? 'ring-2 ring-admin-400' : ''
               } ${color.split(' ').slice(1).join(' ')}`}
           >
             <Icon size={20} className={color.split(' ')[0]} />
@@ -191,9 +191,9 @@ export default function InventoryPage() {
           return (
             <div
               key={item._id}
-              className={`card p-4 transition-all duration-200 animate-fade-in ${status === 'out_of_stock' ? 'border-red-100 bg-red-50/30' :
-                status === 'low_stock' ? 'border-amber-100 bg-amber-50/30' :
-                  'hover:shadow-md'
+              className={`bg-white p-4 rounded-2xl shadow-sm border overflow-hidden transition-all duration-200 animate-fade-in hover:shadow-md ${status === 'out_of_stock' ? 'border-red-200 bg-red-50/30' :
+                status === 'low_stock' ? 'border-amber-200 bg-amber-50/30' :
+                  'border-emerald-200 bg-emerald-50/10'
                 }`}
               style={{ animationDelay: `${idx * 30}ms` }}
             >
@@ -203,7 +203,7 @@ export default function InventoryPage() {
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <div className="w-full h-full bg-primary-50 rounded-xl flex items-center justify-center text-2xl">🍽️</div>
+                    <div className="w-full h-full bg-admin-50 rounded-xl flex items-center justify-center text-2xl">🍽️</div>
                   )}
                 </div>
 
@@ -244,7 +244,7 @@ export default function InventoryPage() {
                 {/* Expand toggle */}
                 <button
                   onClick={() => setExpandedItem(isExpanded ? null : item._id)}
-                  className={`flex-shrink-0 p-2 rounded-xl transition-all duration-200 font-display font-semibold text-xs flex items-center gap-1 ${isExpanded ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-primary-50 hover:text-primary-600'
+                  className={`flex-shrink-0 p-2 rounded-xl transition-all duration-200 font-display font-semibold text-xs flex items-center gap-1 ${isExpanded ? 'bg-admin-100 text-admin-700' : 'bg-gray-100 text-gray-600 hover:bg-admin-50 hover:text-admin-600'
                     }`}
                 >
                   <Edit3 size={14} />
@@ -270,7 +270,7 @@ export default function InventoryPage() {
                             toast.error('Failed to update');
                           }
                         }}
-                        className="px-3 py-1 bg-primary-50 text-primary-700 text-xs rounded-lg hover:bg-primary-100 transition-colors font-display font-semibold"
+                        className="px-3 py-1 bg-admin-50 text-admin-700 text-xs rounded-lg hover:bg-admin-100 transition-colors font-display font-semibold"
                       >
                         +{amount}
                       </button>
@@ -284,7 +284,7 @@ export default function InventoryPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="card text-center py-16">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16">
           <Package size={40} className="mx-auto text-gray-300 mb-3" />
           <p className="font-display font-semibold text-gray-600">No inventory items found</p>
         </div>

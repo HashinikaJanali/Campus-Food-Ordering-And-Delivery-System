@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
+const Admin = require('../Model/Admin');
 
-// Register admin (for initial setup)
+// Register admin
 exports.registerAdmin = async (req, res) => {
     try {
         const { name, email, password } = req.body;

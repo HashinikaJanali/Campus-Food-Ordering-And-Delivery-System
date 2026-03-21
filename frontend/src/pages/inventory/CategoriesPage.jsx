@@ -71,27 +71,27 @@ export default function CategoriesPage() {
           <h1 className="text-2xl font-bold font-display text-gray-900">Categories</h1>
           <p className="text-gray-500 text-sm mt-1">Organize your food items by category</p>
         </div>
-        <button onClick={() => { setEditCat(null); setForm({ name: '', description: '', icon: '🍽️', displayOrder: 0 }); setShowForm(true); }} className="btn-primary flex items-center gap-2">
+        <button onClick={() => { setEditCat(null); setForm({ name: '', description: '', icon: '🍽️', displayOrder: 0 }); setShowForm(true); }} className="btn-admin flex items-center gap-2">
           <Plus size={16} /> Add Category
         </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat, idx) => (
             <div
               key={cat._id}
-              className="card hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 animate-fade-in group"
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 animate-fade-in group"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="text-4xl">{cat.icon}</div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(cat)} className="p-1.5 hover:bg-primary-50 text-gray-400 hover:text-primary-600 rounded-lg transition-colors">
+                  <button onClick={() => openEdit(cat)} className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors">
                     <Edit2 size={14} />
                   </button>
                   <button onClick={() => setDeleteConfirm(cat)} className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors">
@@ -111,7 +111,7 @@ export default function CategoriesPage() {
             </div>
           ))}
           {categories.length === 0 && (
-            <div className="col-span-3 card text-center py-16">
+            <div className="col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center py-16">
               <Tag size={40} className="mx-auto text-gray-200 mb-3" />
               <p className="font-display font-semibold text-gray-600">No categories yet</p>
               <p className="text-gray-400 text-sm">Create your first food category</p>
@@ -147,7 +147,7 @@ export default function CategoriesPage() {
                     <button
                       key={emoji} type="button"
                       onClick={() => setForm({ ...form, icon: emoji })}
-                      className={`text-xl p-1 rounded-lg transition-all hover:scale-110 ${form.icon === emoji ? 'bg-primary-100 scale-110' : 'hover:bg-gray-100'}`}
+                      className={`text-xl p-1 rounded-lg transition-all hover:scale-110 ${form.icon === emoji ? 'bg-admin-100 scale-110' : 'hover:bg-gray-100'}`}
                     >
                       {emoji}
                     </button>
@@ -163,7 +163,7 @@ export default function CategoriesPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Cancel</button>
-                <button type="submit" className="btn-primary flex-1">{editCat ? 'Update' : 'Create'}</button>
+                <button type="submit" className="btn-admin flex-1">{editCat ? 'Update' : 'Create'}</button>
               </div>
             </form>
           </div>

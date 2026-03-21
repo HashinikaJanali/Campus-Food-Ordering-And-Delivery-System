@@ -87,26 +87,26 @@ export default function FoodItemsPage() {
           <h1 className="text-2xl font-bold font-display text-gray-900">Food Items</h1>
           <p className="text-gray-500 text-sm mt-1">{items.length} total items</p>
         </div>
-        <button onClick={() => { setEditItem(null); setShowModal(true); }} className="btn-primary flex items-center gap-2">
+        <button onClick={() => { setEditItem(null); setShowModal(true); }} className="btn-admin flex items-center gap-2">
           <Plus size={16} />
           Add Item
         </button>
       </div>
 
       {/* Filters */}
-      <div className="card p-4">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-48">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text" placeholder="Search food items..."
-              className="input-field pl-9 py-2"
+              className="w-full h-11 pl-9 pr-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900"
               value={filters.search}
               onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
             />
           </div>
           <select
-            className="input-field w-auto py-2"
+            className="h-11 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900"
             value={filters.category}
             onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}
           >
@@ -114,7 +114,7 @@ export default function FoodItemsPage() {
             {categories.map(c => <option key={c._id} value={c._id}>{c.icon} {c.name}</option>)}
           </select>
           <select
-            className="input-field w-auto py-2"
+            className="h-11 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900"
             value={filters.canteen}
             onChange={e => setFilters(prev => ({ ...prev, canteen: e.target.value }))}
           >
@@ -122,7 +122,7 @@ export default function FoodItemsPage() {
             {canteens.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
           <select
-            className="input-field w-auto py-2"
+            className="h-11 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900"
             value={filters.status}
             onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
@@ -132,7 +132,7 @@ export default function FoodItemsPage() {
             <option value="out_of_stock">Out of Stock</option>
           </select>
           <select
-            className="input-field w-auto py-2"
+            className="h-11 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900"
             value={filters.menuVisible}
             onChange={e => setFilters(prev => ({ ...prev, menuVisible: e.target.value }))}
           >
@@ -143,13 +143,13 @@ export default function FoodItemsPage() {
           <div className="flex rounded-xl overflow-hidden border border-gray-200">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 text-sm transition-colors ${viewMode === 'grid' ? 'bg-primary-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              className={`px-4 py-2 text-sm font-body transition-colors ${viewMode === 'grid' ? 'bg-admin-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
             >
               Grid
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-2 text-sm transition-colors ${viewMode === 'table' ? 'bg-primary-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              className={`px-4 py-2 text-sm font-body transition-colors ${viewMode === 'table' ? 'bg-admin-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
             >
               Table
             </button>
@@ -161,10 +161,10 @@ export default function FoodItemsPage() {
       {/* Loading */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="card text-center py-16">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16">
           <div className="text-4xl mb-3">🍽️</div>
           <p className="font-display font-semibold text-gray-700">No items found</p>
           <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or add a new item</p>
@@ -174,7 +174,7 @@ export default function FoodItemsPage() {
           {filtered.map((item, idx) => (
             <div
               key={item._id}
-              className="card p-0 overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group animate-fade-in"
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group animate-fade-in"
               style={{ animationDelay: `${idx * 40}ms` }}
             >
               {/* Image */}
@@ -182,7 +182,7 @@ export default function FoodItemsPage() {
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-primary-50 to-orange-50">
+                  <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-admin-50 to-orange-50">
                     🍽️
                   </div>
                 )}
@@ -199,17 +199,17 @@ export default function FoodItemsPage() {
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
                     onClick={() => { setEditItem(item); setShowModal(true); }}
-                    className="p-2 bg-white rounded-lg shadow-md hover:bg-primary-50 transition-colors"
+                    className="p-2 bg-white rounded-lg shadow-md hover:bg-blue-50 transition-colors"
                     title="Edit"
                   >
-                    <Edit2 size={14} className="text-primary-600" />
+                    <Edit2 size={14} className="text-blue-500" />
                   </button>
                   <button
                     onClick={() => handleToggleMenu(item._id)}
-                    className="p-2 bg-white rounded-lg shadow-md hover:bg-blue-50 transition-colors"
+                    className="p-2 bg-white rounded-lg shadow-md hover:bg-admin-50 transition-colors"
                     title={item.isMenuVisible ? 'Hide from menu' : 'Show on menu'}
                   >
-                    {item.isMenuVisible ? <EyeOff size={14} className="text-blue-600" /> : <Eye size={14} className="text-blue-600" />}
+                    {item.isMenuVisible ? <EyeOff size={14} className="text-admin-600" /> : <Eye size={14} className="text-admin-600" />}
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(item)}
@@ -225,7 +225,7 @@ export default function FoodItemsPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-display font-semibold text-gray-900 text-sm leading-tight">{item.name}</h3>
-                  <span className="font-bold text-primary-600 text-sm whitespace-nowrap font-display">
+                  <span className="font-bold text-admin-600 text-sm whitespace-nowrap font-display">
                     Rs. {parseFloat(item.price).toFixed(2)}
                   </span>
                 </div>
@@ -234,7 +234,7 @@ export default function FoodItemsPage() {
                   <StockBadge item={item} />
                   <div className="text-right">
                     <p className="text-[10px] text-gray-400 font-medium">{item.category?.name}</p>
-                    <p className="text-[10px] text-primary-500 font-semibold">{item.canteen?.name}</p>
+                    <p className="text-[10px] text-admin-500 font-semibold">{item.canteen?.name}</p>
                   </div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function FoodItemsPage() {
         </div>
       ) : (
         /* Table view */
-        <div className="card p-0 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -267,7 +267,7 @@ export default function FoodItemsPage() {
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="w-9 h-9 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center text-base">🍽️</div>
+                          <div className="w-9 h-9 bg-admin-50 rounded-lg flex items-center justify-center text-base">🍽️</div>
                         )}
                         <div>
                           <p className="text-sm font-semibold text-gray-900 font-display">{item.name}</p>
@@ -276,8 +276,8 @@ export default function FoodItemsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{item.category?.icon} {item.category?.name}</td>
-                    <td className="px-4 py-3 text-sm text-primary-600 font-medium">{item.canteen?.name}</td>
-                    <td className="px-4 py-3 text-sm font-bold text-primary-600 font-display">Rs. {parseFloat(item.price).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-admin-600 font-medium">{item.canteen?.name}</td>
+                    <td className="px-4 py-3 text-sm font-bold text-admin-600 font-display">Rs. {parseFloat(item.price).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-sm font-bold font-display ${item.stockQuantity === 0 ? 'text-red-600' :
                         item.stockQuantity <= item.lowStockThreshold ? 'text-amber-600' : 'text-emerald-600'
@@ -300,7 +300,7 @@ export default function FoodItemsPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => { setEditItem(item); setShowModal(true); }}
-                          className="p-1.5 hover:bg-primary-50 text-gray-400 hover:text-primary-600 rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-500 rounded-lg transition-colors"
                         >
                           <Edit2 size={14} />
                         </button>

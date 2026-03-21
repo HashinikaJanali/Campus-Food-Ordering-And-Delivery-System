@@ -1,5 +1,5 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const StockAlert = require('../../models/inventory/StockAlert');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const StockAlert = require('../../Model/inventory/StockAlert');
 
 // Update stock quantity
 exports.updateStock = async (req, res) => {
@@ -26,7 +26,7 @@ exports.updateStock = async (req, res) => {
 
         await item.save();
 
-        // Helper to create alerts (moved inside to avoid external dependency for now, or could be a separate helper)
+        // Helper to create alerts
         const createAlert = async (type, message) => {
             const existing = await StockAlert.findOne({ foodItem: item._id, alertType: type, isResolved: false });
             if (!existing) {

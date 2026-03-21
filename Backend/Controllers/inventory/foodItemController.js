@@ -1,5 +1,5 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const StockAlert = require('../../models/inventory/StockAlert');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const StockAlert = require('../../Model/inventory/StockAlert');
 const fs = require('fs');
 const path = require('path');
 

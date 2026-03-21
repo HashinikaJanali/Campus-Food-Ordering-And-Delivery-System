@@ -34,7 +34,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-admin-500 via-admin-600 to-admin-800 flex-col justify-between p-12 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full"></div>
@@ -49,16 +49,16 @@ export default function AdminLogin() {
             </div>
             <div>
               <h1 className="font-display font-bold text-white text-xl">Go & Grab</h1>
-              <p className="text-primary-200 text-sm">Food & Inventory Management</p>
+              <p className="text-admin-200 text-sm">Food & Inventory Management</p>
             </div>
           </div>
 
           <div className="space-y-6">
             <h2 className="font-display font-bold text-white text-4xl leading-tight">
               Manage Your<br />Campus Menu<br />
-              <span className="text-primary-200">Effortlessly</span>
+              <span className="text-admin-200">Effortlessly</span>
             </h2>
-            <p className="text-primary-100 text-lg leading-relaxed max-w-sm">
+            <p className="text-admin-100 text-lg leading-relaxed max-w-sm">
               Real-time inventory tracking, smart stock alerts, and seamless menu management — all in one place.
             </p>
           </div>
@@ -81,10 +81,10 @@ export default function AdminLogin() {
 
       {/* Right panel - form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-orange border border-gray-100 border-t-4 border-t-admin-500">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-orange">
+            <div className="w-10 h-10 bg-gradient-to-br from-admin-400 to-admin-600 rounded-xl flex items-center justify-center shadow-orange">
               <ChefHat size={20} className="text-white" />
             </div>
             <div>
@@ -109,7 +109,7 @@ export default function AdminLogin() {
                     type="text"
                     required
                     placeholder="Your full name"
-                    className="input-field"
+                    className="w-full h-12 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
                     value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                   />
@@ -124,7 +124,7 @@ export default function AdminLogin() {
                     type="email"
                     required
                     placeholder="admin@campus.edu"
-                    className="input-field pl-10"
+                    className="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
                     value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })}
                   />
@@ -139,7 +139,7 @@ export default function AdminLogin() {
                     type={showPass ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
-                    className="input-field pl-10 pr-10"
+                    className="w-full h-12 pl-10 pr-10 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
                     value={form.password}
                     onChange={e => setForm({ ...form, password: e.target.value })}
                   />
@@ -156,7 +156,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full flex items-center justify-center gap-2 mt-2 py-3 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="btn-admin w-full flex items-center justify-center gap-2 mt-2 py-3 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -174,7 +174,7 @@ export default function AdminLogin() {
               {' '}
               <button
                 onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                className="text-primary-600 font-semibold hover:underline font-display"
+                className="text-admin-600 font-semibold hover:underline font-display"
               >
                 {mode === 'login' ? 'Register here' : 'Sign in'}
               </button>

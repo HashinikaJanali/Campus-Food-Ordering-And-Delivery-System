@@ -32,6 +32,15 @@ const loyaltyRoutes = require("./Routes/loyaltyRoutes");
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 
+app.use('/api/auth', require('./Routes/authRoutes'));
+app.use('/api/food-items', require('./Routes/inventory/foodItemsRoutes'));
+app.use('/api/categories', require('./Routes/inventory/categoriesRoutes'));
+app.use('/api/canteens', require('./Routes/inventory/canteensRoutes'));
+app.use('/api/inventory', require('./Routes/inventory/inventoryRoutes'));
+app.use('/api/alerts', require('./Routes/inventory/alertsRoutes'));
+app.use('/api/analytics', require('./Routes/inventory/analyticsRoutes'));
+
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -48,9 +57,9 @@ mongoose.connect(process.env.MONGODB_URI)
 // Error handling middleware (MUST be last)
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err);
-  res.status(err.status || 500).json({ 
-    success: false, 
-    message: err.message || "Something went wrong!", 
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Something went wrong!",
   });
 });
 

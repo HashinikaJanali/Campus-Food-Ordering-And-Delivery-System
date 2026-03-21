@@ -1,5 +1,5 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const Category = require('../../models/inventory/Category');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const Category = require('../../Model/inventory/Category');
 
 // Data for dashboard charts
 

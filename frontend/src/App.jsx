@@ -45,15 +45,15 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            <Layout>
               <Routes>
+                {/* Student routes */}
+                <Route path="/" element={<Layout><HomePage /></Layout>} />
+                <Route path="/orders" element={<Layout><OrderManagementPage /></Layout>} />
+                <Route path="/track" element={<Layout><OrderTrackingPage /></Layout>} />
+                <Route path="/history" element={<Layout><OrderHistoryPage /></Layout>} />
+                <Route path="/menu" element={<Layout><StudentMenuPage /></Layout>} />
 
-                <Route path="/" element={<HomePage />} />
-                <Route path="/orders" element={<OrderManagementPage />} />
-                <Route path="/track" element={<OrderTrackingPage />} />
-                <Route path="/history" element={<OrderHistoryPage />} />
-
-                <Route path="/menu" element={<StudentMenuPage />} />
+                {/* Admin routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
@@ -75,9 +75,7 @@ function App() {
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
-
               </Routes>
-            </Layout>
           </Router>
 
           <Toaster

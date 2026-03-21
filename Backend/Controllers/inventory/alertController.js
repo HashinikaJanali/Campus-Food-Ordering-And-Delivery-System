@@ -1,4 +1,4 @@
-const StockAlert = require('../../models/inventory/StockAlert');
+const StockAlert = require('../../Model/inventory/StockAlert');
 
 // Get all alerts
 exports.getAlerts = async (req, res) => {

@@ -286,7 +286,7 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
                     checked={form[toggle.name]} onChange={handleChange}
                     className="sr-only"
                   />
-                  <div className={`w-10 h-6 rounded-full transition-colors duration-200 ${form[toggle.name] ? 'bg-primary-500' : 'bg-gray-200'}`}>
+                  <div className={`w-10 h-6 rounded-full transition-colors duration-200 ${form[toggle.name] ? 'bg-admin-500' : 'bg-gray-200'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform duration-200 shadow-sm ${form[toggle.name] ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                 </div>

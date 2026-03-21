@@ -4,12 +4,12 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/campus_food_inventory';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_food_inventory';
 
-const Admin = require('./models/Admin');
-const Category = require('./models/inventory/Category');
-const FoodItem = require('./models/inventory/FoodItem');
-const Canteen = require('./models/inventory/Canteen');
+const Admin = require('./Model/Admin');
+const Category = require('./Model/inventory/Category');
+const FoodItem = require('./Model/inventory/FoodItem');
+const Canteen = require('./Model/inventory/Canteen');
 
 const categories = [
   { name: 'Rice & Curry', icon: '🍛', description: 'Traditional Sri Lankan rice and curry meals', displayOrder: 1 },

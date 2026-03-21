@@ -1,5 +1,5 @@
-const Category = require('../../models/inventory/Category');
-const FoodItem = require('../../models/inventory/FoodItem');
+const Category = require('../../Model/inventory/Category');
+const FoodItem = require('../../Model/inventory/FoodItem');
 
 // Get all categories
 exports.getCategories = async (req, res) => {

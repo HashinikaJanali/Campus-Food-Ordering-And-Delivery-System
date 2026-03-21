@@ -8,7 +8,7 @@ const alertConfig = {
   out_of_stock: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-100', badge: 'badge-out-of-stock' },
   low_stock: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100', badge: 'badge-low-stock' },
   restocked: { icon: Package, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100', badge: 'badge-in-stock' },
-  threshold_changed: { icon: Bell, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100', badge: 'badge-in-stock' },
+  threshold_changed: { icon: Bell, color: 'text-admin-500', bg: 'bg-admin-50', border: 'border-admin-100', badge: 'badge-in-stock' },
 };
 
 const timeAgo = (date) => {
@@ -91,7 +91,7 @@ export default function AlertsPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -121,7 +121,7 @@ export default function AlertsPage() {
             <Trash2 size={14} />
             Clear Resolved
           </button>
-          <button onClick={fetchAlerts} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 px-3 py-2 rounded-xl hover:bg-primary-50 transition-colors font-display font-medium">
+          <button onClick={fetchAlerts} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-admin-600 px-3 py-2 rounded-xl hover:bg-admin-50 transition-colors font-display font-medium">
             <RefreshCw size={14} />
           </button>
         </div>
@@ -138,7 +138,7 @@ export default function AlertsPage() {
             key={tab.key}
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold font-display transition-all duration-200 ${filter === tab.key
-                ? 'bg-white text-primary-600 shadow-sm'
+                ? 'bg-white text-admin-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
               }`}
           >

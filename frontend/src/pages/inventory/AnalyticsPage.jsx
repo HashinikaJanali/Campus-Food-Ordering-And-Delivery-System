@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
         return (
             <div className="h-full flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-12 h-12 border-4 border-admin-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-gray-500 font-medium">Crunching your data...</p>
                 </div>
             </div>
@@ -94,13 +94,13 @@ export default function AnalyticsPage() {
                         onClick={fetchAnalytics}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium shadow-sm"
                     >
-                        <TrendingUp size={16} className="text-primary-600" />
+                        <TrendingUp size={16} className="text-admin-600" />
                         Refresh
                     </button>
                     <button
                         onClick={handleExport}
                         disabled={exporting}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all text-sm font-medium shadow-orange disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-admin-600 text-white rounded-xl hover:bg-admin-700 transition-all text-sm font-medium shadow-orange disabled:opacity-50"
                     >
                         <FileDown size={16} />
                         {exporting ? 'Exporting...' : 'Generate Report'}
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="font-display font-bold text-gray-900">Category Distribution</h3>
-                        <div className="px-3 py-1 bg-primary-50 text-xs font-semibold text-primary-600 rounded-lg">Items per Category</div>
+                        <div className="px-3 py-1 bg-admin-50 text-xs font-semibold text-admin-600 rounded-lg">Items per Category</div>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="font-display font-bold text-gray-900">Stock Levels</h3>
-                        <div className="px-3 py-1 bg-blue-50 text-xs font-semibold text-blue-600 rounded-lg">Availability Ranges</div>
+                        <div className="px-3 py-1 bg-admin-50 text-xs font-semibold text-admin-600 rounded-lg">Availability Ranges</div>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
 
 function StatCard({ title, value, icon: Icon, color, urgent }) {
     const colorMap = {
-        orange: 'bg-primary-50 text-primary-600',
+        orange: 'bg-admin-50 text-admin-600',
         blue: 'bg-blue-50 text-blue-600',
         red: 'bg-red-50 text-red-600',
         gray: 'bg-gray-100 text-gray-600'

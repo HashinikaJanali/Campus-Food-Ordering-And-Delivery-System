@@ -64,11 +64,11 @@ export default function AdminLayout() {
         {/* Logo */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-orange">
+            <div className="w-10 h-10 bg-gradient-to-br from-admin-400 to-admin-600 rounded-xl flex items-center justify-center shadow-orange">
               <ChefHat size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-gray-900 text-base leading-tight">Campus Bites</h1>
+              <h1 className="font-display font-bold text-gray-900 text-base leading-tight">Go & Grab</h1>
               <p className="text-xs text-gray-400 font-body">Inventory Admin</p>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function AdminLayout() {
               className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                 ${isActive
-                  ? 'bg-primary-50 text-primary-600 font-semibold shadow-sm'
+                  ? 'bg-admin-50 text-admin-600 font-semibold shadow-sm'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                 }
               `}
@@ -106,7 +106,7 @@ export default function AdminLayout() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 font-display font-medium"
+            className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 transition-all duration-200 font-display font-medium"
           >
             <ExternalLink size={16} />
             Student Menu View
@@ -117,7 +117,7 @@ export default function AdminLayout() {
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
+              <div className="w-9 h-9 bg-gradient-to-br from-admin-400 to-admin-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold font-display">
                   {admin?.name?.charAt(0).toUpperCase()}
                 </span>
@@ -144,15 +144,15 @@ export default function AdminLayout() {
         <header className="lg:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-admin-600 hover:bg-admin-50 rounded-lg transition-colors"
           >
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-gradient-to-br from-admin-400 to-admin-600 rounded-lg flex items-center justify-center">
               <ChefHat size={14} className="text-white" />
             </div>
-            <span className="font-display font-bold text-gray-900 text-sm">Campus Bites</span>
+            <span className="font-display font-bold text-gray-900 text-sm">Go & Grab</span>
           </div>
           <div className="w-8" />
         </header>

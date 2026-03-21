@@ -13,13 +13,13 @@ import toast from 'react-hot-toast';
 const StatCard = ({ icon: Icon, label, value, sub, color, linkTo }) => (
   <Link
     to={linkTo || '#'}
-    className="card hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group animate-fade-in"
+    className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group animate-fade-in"
   >
     <div className="flex items-start justify-between mb-4">
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
         <Icon size={22} className="text-white" />
       </div>
-      <ArrowRight size={16} className="text-gray-300 group-hover:text-primary-400 transition-colors" />
+      <ArrowRight size={16} className="text-gray-300 group-hover:text-admin-400 transition-colors" />
     </div>
     <p className="text-3xl font-bold font-display text-gray-900">{value}</p>
     <p className="text-sm font-semibold text-gray-700 mt-1 font-display">{label}</p>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-admin-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -79,7 +79,7 @@ export default function DashboardPage() {
         </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 hover:bg-primary-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium"
         >
           <RefreshCw size={15} />
           Refresh
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           icon={UtensilsCrossed}
           label="Total Items"
           value={stats?.total || 0}
-          color="bg-gradient-to-br from-primary-400 to-primary-600"
+          color="bg-gradient-to-br from-admin-400 to-admin-600"
           linkTo="/admin/food-items"
         />
         <StatCard
@@ -137,19 +137,19 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* Category chart */}
-        <div className="card">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
           <h2 className="font-display font-bold text-gray-900 mb-1">Items by Category</h2>
           <p className="text-gray-400 text-xs mb-5">Stock distribution across categories</p>
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: 'DM Sans' }} />
-                <YAxis tick={{ fontSize: 11, fontFamily: 'DM Sans' }} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                <YAxis tick={{ fontSize: 11, fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
                 <Tooltip
-                  contentStyle={{ fontFamily: 'DM Sans', fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                  contentStyle={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
                 />
                 <Bar dataKey="inStock" name="In Stock" radius={[4, 4, 0, 0]} fill="#f97316" />
                 <Bar dataKey="outOfStock" name="Out of Stock" radius={[4, 4, 0, 0]} fill="#fecaca" />
@@ -163,13 +163,13 @@ export default function DashboardPage() {
         {/* Critical items */}
         <div className="space-y-4">
           {/* Low stock */}
-          <div className="card">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 bg-amber-50/10">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-bold text-gray-900 flex items-center gap-2">
                 <AlertTriangle size={16} className="text-amber-500" />
                 Low Stock Items
               </h2>
-              <Link to="/admin/alerts" className="text-xs text-primary-500 hover:underline font-display font-semibold">View all</Link>
+              <Link to="/admin/alerts" className="text-xs text-admin-500 hover:underline font-display font-semibold">View all</Link>
             </div>
             {stats?.lowStockItems?.length > 0 ? (
               <div className="space-y-2">
@@ -195,7 +195,7 @@ export default function DashboardPage() {
 
           {/* Out of stock */}
           {stats?.outOfStockItems?.length > 0 && (
-            <div className="card border-red-100">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 bg-red-50/10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-bold text-gray-900 flex items-center gap-2">
                   <XCircle size={16} className="text-red-500" />
