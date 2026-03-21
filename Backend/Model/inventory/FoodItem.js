@@ -91,11 +91,10 @@ foodItemSchema.virtual('stockStatus').get(function () {
 });
 
 // Pre-save: auto set availability based on stock
-foodItemSchema.pre('save', function (next) {
+foodItemSchema.pre('save', function () {
   if (this.stockQuantity === 0) {
     this.isAvailable = false;
   }
-  next();
 });
 
 foodItemSchema.set('toJSON', { virtuals: true });

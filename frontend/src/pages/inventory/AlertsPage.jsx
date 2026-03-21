@@ -112,12 +112,15 @@ export default function AlertsPage() {
         </div>
         <div className="flex gap-2">
           {unread > 0 && (
-            <button onClick={handleMarkAllRead} className="btn-secondary text-sm flex items-center gap-2">
+            <button 
+              onClick={handleMarkAllRead} 
+              className="bg-white hover:bg-orange-50 text-admin-600 border border-admin-300 font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0 font-display"
+            >
               <BellOff size={14} />
               Mark All Read
             </button>
           )}
-          <button onClick={handleClearResolved} className="btn-danger text-sm flex items-center gap-2">
+          <button onClick={handleClearResolved} className="bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold px-4 py-2 rounded-xl border border-red-200 flex items-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0 font-display">
             <Trash2 size={14} />
             Clear Resolved
           </button>
@@ -149,7 +152,7 @@ export default function AlertsPage() {
 
       {/* Alerts list */}
       {alerts.length === 0 ? (
-        <div className="card text-center py-16">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16">
           <Bell size={40} className="mx-auto text-gray-200 mb-3" />
           <p className="font-display font-semibold text-gray-600">No alerts</p>
           <p className="text-gray-400 text-sm mt-1">
@@ -165,7 +168,7 @@ export default function AlertsPage() {
             return (
               <div
                 key={alert._id}
-                className={`card p-4 transition-all duration-200 border animate-fade-in ${config.border} ${!alert.isRead && !alert.isResolved ? config.bg : 'bg-white'} ${alert.isResolved ? 'opacity-60' : ''}`}
+                className={`bg-white rounded-2xl shadow-sm p-4 transition-all duration-200 border animate-fade-in ${config.border} ${!alert.isRead && !alert.isResolved ? config.bg : 'bg-white'} ${alert.isResolved ? 'opacity-60' : ''}`}
                 style={{ animationDelay: `${idx * 30}ms` }}
               >
                 <div className="flex items-start gap-4">

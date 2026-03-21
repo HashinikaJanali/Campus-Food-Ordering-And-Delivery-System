@@ -24,7 +24,7 @@ exports.getAlerts = async (req, res) => {
 // Mark alert as read
 exports.markAsRead = async (req, res) => {
     try {
-        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true });
+        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isRead: true }, { returnDocument: 'after' });
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -44,7 +44,7 @@ exports.markAllRead = async (req, res) => {
 // Resolve alert
 exports.resolveAlert = async (req, res) => {
     try {
-        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isResolved: true, isRead: true }, { new: true });
+        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isResolved: true, isRead: true }, { returnDocument: 'after' });
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

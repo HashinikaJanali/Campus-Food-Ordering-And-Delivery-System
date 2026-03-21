@@ -34,7 +34,7 @@ exports.createCanteen = async (req, res) => {
 exports.updateCanteen = async (req, res) => {
     try {
         const canteen = await Canteen.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
+            returnDocument: 'after',
             runValidators: true
         });
         if (!canteen) return res.status(404).json({ success: false, message: 'Canteen not found' });

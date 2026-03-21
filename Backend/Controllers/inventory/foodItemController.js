@@ -33,7 +33,7 @@ const createStockAlert = async (foodItem, alertType) => {
 };
 
 // Create food item
-exports.createFoodItem = async (req, res) => {
+exports.createFoodItem = async (req, res, next) => {
     try {
         const data = { ...req.body };
         if (req.file) {
@@ -56,7 +56,7 @@ exports.createFoodItem = async (req, res) => {
         data.isMenuVisible = data.isMenuVisible === 'true' || data.isMenuVisible === true || data.isMenuVisible === undefined;
 
         const foodItem = await FoodItem.create(data);
-        await foodItem.populate(['category', 'canteen']);
+        await FoodItem.populate(foodItem, ['category', 'canteen']);
 
         // Check stock after creation
         if (foodItem.stockQuantity === 0) {
@@ -195,7 +195,7 @@ exports.updateFoodItem = async (req, res) => {
         if (data.isVegan !== undefined) data.isVegan = data.isVegan === 'true' || data.isVegan === true;
         if (data.isMenuVisible !== undefined) data.isMenuVisible = data.isMenuVisible === 'true' || data.isMenuVisible === true;
 
-        const updated = await FoodItem.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true }).populate(['category', 'canteen']);
+        const updated = await FoodItem.findByIdAndUpdate(req.params.id, data, { returnDocument: 'after', runValidators: true }).populate(['category', 'canteen']);
 
         // Stock change alerts
         const newStock = updated.stockQuantity;

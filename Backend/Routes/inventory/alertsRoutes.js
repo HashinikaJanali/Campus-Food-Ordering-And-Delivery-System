@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const alertController = require('../../controllers/inventory/alertController');
+const alertController = require('../../Controllers/inventory/alertController');
 const authMiddleware = require('../../middleware/auth');
 
 // Get all alerts

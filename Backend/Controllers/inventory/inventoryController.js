@@ -77,7 +77,7 @@ exports.bulkUpdateStock = async (req, res) => {
             const item = await FoodItem.findByIdAndUpdate(
                 update.id,
                 { stockQuantity: update.quantity },
-                { new: true }
+                { returnDocument: 'after' }
             );
             if (item) results.push(item);
         }

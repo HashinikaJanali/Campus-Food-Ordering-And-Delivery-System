@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    const dir = 'uploads/';
+    const dir = 'uploads/food-images/';
     if (!fs.existsSync(dir)){
         fs.mkdirSync(dir, { recursive: true });
     }
@@ -23,7 +23,7 @@ function checkFileType(file, cb) {
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb('Error: Images only!');
+    cb(new Error('Error: Images only!'), false);
   }
 }
 

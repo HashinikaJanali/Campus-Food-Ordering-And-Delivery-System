@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const foodItemController = require('../../controllers/inventory/foodItemController');
+const foodItemController = require('../../Controllers/inventory/foodItemController');
 const authMiddleware = require('../../middleware/auth');
 const upload = require('../../middleware/upload');
 

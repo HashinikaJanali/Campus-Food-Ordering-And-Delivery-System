@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const canteenController = require('../../controllers/inventory/canteenController');
+const canteenController = require('../../Controllers/inventory/canteenController');
 const authMiddleware = require('../../middleware/auth');
 
 router.get('/', canteenController.getCanteens);
