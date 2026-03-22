@@ -1,9 +1,8 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const Category = require('../../models/inventory/Category');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const Category = require('../../Model/inventory/Category');
 
-// @desc    Data for dashboard charts
-// @route   GET /api/analytics/overview
-// @access  Private
+// Data for dashboard charts
+
 exports.getAnalyticsOverview = async (req, res) => {
     try {
         // 1. Category Distribution
@@ -76,9 +75,7 @@ exports.getAnalyticsOverview = async (req, res) => {
     }
 };
 
-// @desc    Data for CSV export
-// @route   GET /api/analytics/report
-// @access  Private
+// Data for CSV export
 exports.getAnalyticsReport = async (req, res) => {
     try {
         const items = await FoodItem.find().populate('category');

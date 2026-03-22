@@ -1,5 +1,5 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const StockAlert = require('../../models/inventory/StockAlert');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const StockAlert = require('../../Model/inventory/StockAlert');
 const fs = require('fs');
 const path = require('path');
 
@@ -32,10 +32,8 @@ const createStockAlert = async (foodItem, alertType) => {
     }
 };
 
-// @desc    Create food item
-// @route   POST /api/food-items
-// @access  Private
-exports.createFoodItem = async (req, res) => {
+// Create food item
+exports.createFoodItem = async (req, res, next) => {
     try {
         const data = { ...req.body };
         if (req.file) {
@@ -58,7 +56,7 @@ exports.createFoodItem = async (req, res) => {
         data.isMenuVisible = data.isMenuVisible === 'true' || data.isMenuVisible === true || data.isMenuVisible === undefined;
 
         const foodItem = await FoodItem.create(data);
-        await foodItem.populate(['category', 'canteen']);
+        await FoodItem.populate(foodItem, ['category', 'canteen']);
 
         // Check stock after creation
         if (foodItem.stockQuantity === 0) {
@@ -74,9 +72,7 @@ exports.createFoodItem = async (req, res) => {
     }
 };
 
-// @desc    Get all food items
-// @route   GET /api/food-items
-// @access  Public
+// Get all food items
 exports.getFoodItems = async (req, res) => {
     try {
         const { category, search, status, menuVisible, page = 1, limit = 50 } = req.query;
@@ -109,9 +105,7 @@ exports.getFoodItems = async (req, res) => {
     }
 };
 
-// @desc    Public menu (students view)
-// @route   GET /api/food-items/public
-// @access  Public
+// Public menu (students view)
 exports.getPublicMenu = async (req, res) => {
     try {
         const { category } = req.query;
@@ -129,9 +123,7 @@ exports.getPublicMenu = async (req, res) => {
     }
 };
 
-// @desc    Dashboard stats
-// @route   GET /api/food-items/stats
-// @access  Private
+// Dashboard stats
 exports.getFoodItemStats = async (req, res) => {
     try {
         const total = await FoodItem.countDocuments();
@@ -161,9 +153,7 @@ exports.getFoodItemStats = async (req, res) => {
     }
 };
 
-// @desc    Get single item
-// @route   GET /api/food-items/:id
-// @access  Public
+// Get single item
 exports.getFoodItemById = async (req, res) => {
     try {
         const item = await FoodItem.findById(req.params.id).populate(['category', 'canteen']);
@@ -174,9 +164,7 @@ exports.getFoodItemById = async (req, res) => {
     }
 };
 
-// @desc    Update food item
-// @route   PUT /api/food-items/:id
-// @access  Private
+// Update food item
 exports.updateFoodItem = async (req, res) => {
     try {
         const existing = await FoodItem.findById(req.params.id);
@@ -207,7 +195,7 @@ exports.updateFoodItem = async (req, res) => {
         if (data.isVegan !== undefined) data.isVegan = data.isVegan === 'true' || data.isVegan === true;
         if (data.isMenuVisible !== undefined) data.isMenuVisible = data.isMenuVisible === 'true' || data.isMenuVisible === true;
 
-        const updated = await FoodItem.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true }).populate(['category', 'canteen']);
+        const updated = await FoodItem.findByIdAndUpdate(req.params.id, data, { returnDocument: 'after', runValidators: true }).populate(['category', 'canteen']);
 
         // Stock change alerts
         const newStock = updated.stockQuantity;
@@ -228,9 +216,7 @@ exports.updateFoodItem = async (req, res) => {
     }
 };
 
-// @desc    Toggle menu visibility
-// @route   PATCH /api/food-items/:id/toggle-menu
-// @access  Private
+// Toggle menu visibility
 exports.toggleMenuVisibility = async (req, res) => {
     try {
         const item = await FoodItem.findById(req.params.id);
@@ -243,9 +229,7 @@ exports.toggleMenuVisibility = async (req, res) => {
     }
 };
 
-// @desc    Toggle availability
-// @route   PATCH /api/food-items/:id/toggle-availability
-// @access  Private
+// Toggle availability
 exports.toggleAvailability = async (req, res) => {
     try {
         const item = await FoodItem.findById(req.params.id);
@@ -261,9 +245,7 @@ exports.toggleAvailability = async (req, res) => {
     }
 };
 
-// @desc    Delete food item
-// @route   DELETE /api/food-items/:id
-// @access  Private
+// Delete food item
 exports.deleteFoodItem = async (req, res) => {
     try {
         const item = await FoodItem.findById(req.params.id);

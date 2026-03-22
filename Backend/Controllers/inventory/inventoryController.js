@@ -1,9 +1,7 @@
-const FoodItem = require('../../models/inventory/FoodItem');
-const StockAlert = require('../../models/inventory/StockAlert');
+const FoodItem = require('../../Model/inventory/FoodItem');
+const StockAlert = require('../../Model/inventory/StockAlert');
 
-// @desc    Update stock quantity
-// @route   PATCH /api/inventory/:id/stock
-// @access  Private
+// Update stock quantity
 exports.updateStock = async (req, res) => {
     try {
         const { quantity, operation, threshold } = req.body;
@@ -28,7 +26,7 @@ exports.updateStock = async (req, res) => {
 
         await item.save();
 
-        // Helper to create alerts (moved inside to avoid external dependency for now, or could be a separate helper)
+        // Helper to create alerts
         const createAlert = async (type, message) => {
             const existing = await StockAlert.findOne({ foodItem: item._id, alertType: type, isResolved: false });
             if (!existing) {
@@ -56,9 +54,7 @@ exports.updateStock = async (req, res) => {
     }
 };
 
-// @desc    Full inventory overview
-// @route   GET /api/inventory/overview
-// @access  Private
+// Full inventory overview
 exports.getInventoryOverview = async (req, res) => {
     try {
         const items = await FoodItem.find()
@@ -71,9 +67,7 @@ exports.getInventoryOverview = async (req, res) => {
     }
 };
 
-// @desc    Bulk stock update
-// @route   PATCH /api/inventory/bulk-update
-// @access  Private
+// Bulk stock update
 exports.bulkUpdateStock = async (req, res) => {
     try {
         const { updates } = req.body; // [{ id, quantity }]
@@ -83,7 +77,7 @@ exports.bulkUpdateStock = async (req, res) => {
             const item = await FoodItem.findByIdAndUpdate(
                 update.id,
                 { stockQuantity: update.quantity },
-                { new: true }
+                { returnDocument: 'after' }
             );
             if (item) results.push(item);
         }
@@ -94,9 +88,7 @@ exports.bulkUpdateStock = async (req, res) => {
     }
 };
 
-// @desc    Reserve stock (on add to cart)
-// @route   POST /api/inventory/:id/reserve
-// @access  Public
+// Reserve stock (on add to cart)
 exports.reserveStock = async (req, res) => {
     try {
         const { quantity = 1 } = req.body;
@@ -140,9 +132,7 @@ exports.reserveStock = async (req, res) => {
     }
 };
 
-// @desc    Release stock (on remove from cart/cancel)
-// @route   POST /api/inventory/:id/release
-// @access  Public
+// Release stock (on remove from cart/cancel)
 exports.releaseStock = async (req, res) => {
     try {
         const { quantity = 1 } = req.body;

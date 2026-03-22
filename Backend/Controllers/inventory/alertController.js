@@ -1,8 +1,6 @@
-const StockAlert = require('../../models/inventory/StockAlert');
+const StockAlert = require('../../Model/inventory/StockAlert');
 
-// @desc    Get all alerts
-// @route   GET /api/alerts
-// @access  Private
+// Get all alerts
 exports.getAlerts = async (req, res) => {
     try {
         const { isRead, isResolved, limit = 50 } = req.query;
@@ -23,21 +21,17 @@ exports.getAlerts = async (req, res) => {
     }
 };
 
-// @desc    Mark alert as read
-// @route   PATCH /api/alerts/:id/read
-// @access  Private
+// Mark alert as read
 exports.markAsRead = async (req, res) => {
     try {
-        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true });
+        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isRead: true }, { returnDocument: 'after' });
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// @desc    Mark all alerts as read
-// @route   PATCH /api/alerts/mark-all-read
-// @access  Private
+// Mark all alerts as read
 exports.markAllRead = async (req, res) => {
     try {
         await StockAlert.updateMany({ isRead: false }, { isRead: true });
@@ -47,21 +41,17 @@ exports.markAllRead = async (req, res) => {
     }
 };
 
-// @desc    Resolve alert
-// @route   PATCH /api/alerts/:id/resolve
-// @access  Private
+// Resolve alert
 exports.resolveAlert = async (req, res) => {
     try {
-        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isResolved: true, isRead: true }, { new: true });
+        const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isResolved: true, isRead: true }, { returnDocument: 'after' });
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// @desc    Clear resolved alerts
-// @route   DELETE /api/alerts/clear-resolved
-// @access  Private
+// Clear resolved alerts
 exports.clearResolved = async (req, res) => {
     try {
         await StockAlert.deleteMany({ isResolved: true });
