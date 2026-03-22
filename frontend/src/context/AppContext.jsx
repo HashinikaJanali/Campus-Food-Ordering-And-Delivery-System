@@ -11,7 +11,7 @@ export const useApp = () => {
   }
   return context;
 };
-
+    
 export const AppProvider = ({ children }) => {
   // Mock user (replace with real auth later)
   const [currentUser, setCurrentUser] = useState({

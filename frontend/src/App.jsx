@@ -3,6 +3,9 @@ import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
+import OrderManagementPage from './pages/OrderManagementPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
 
 function App() {
   return (
@@ -11,6 +14,9 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/orders" element={<OrderManagementPage />} />
+            <Route path="/track" element={<OrderTrackingPage />} />
+            <Route path="/history" element={<OrderHistoryPage />} />
           </Routes>
         </Layout>
       </Router>

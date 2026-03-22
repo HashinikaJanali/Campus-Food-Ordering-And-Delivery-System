@@ -40,7 +40,7 @@ app.use("/api/ai", aiRoutes);
 
 
 // MongoDB Connection
-mongoose.connect("mongodb+srv://thinalidihansa_db_user:cDJwmcC1irNWGF6G@feedback.frtwq9k.mongodb.net/campuseats-engagement")
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("✅ MongoDB Connected Successfully");
     app.listen(PORT, () => {
