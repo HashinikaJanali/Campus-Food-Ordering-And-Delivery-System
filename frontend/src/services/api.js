@@ -31,7 +31,6 @@ export const loyaltyAPI = {
   getLeaderboard: (limit) => api.get('/loyalty/leaderboard/top', { params: { limit } }),
 };
 
-<<<<<<< HEAD
 // Order API
 export const orderAPI = {
   getAll: (params) => api.get('/orders', { params }),
@@ -41,7 +40,6 @@ export const orderAPI = {
   delete: (id) => api.delete(`/orders/${id}`),
 };
 
-=======
 export const notificationAPI = {
   create: (data) => api.post('/notifications', data),
   getAll: (userId, params) => api.get(`/notifications/user/${userId}`, { params }),
@@ -52,5 +50,4 @@ export const notificationAPI = {
 };
 
 
->>>>>>> origin/main
 export default api;
