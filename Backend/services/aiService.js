@@ -4,13 +4,9 @@ const axios = require('axios');
 const HF_API_KEY = process.env.HF_API_KEY || 'hf_temp';
 const HF_API_URL = 'https://api-inference.huggingface.co/models/';
 
-// Sentiment Analysis Model
-const SENTIMENT_MODEL = 'cardiffnlp/twitter-roberta-base-sentiment-latest';
-
-// Emotion Detection Model
-const EMOTION_MODEL = 'j-hartmann/emotion-english-distilroberta-base';
-
-// Zero-shot Classification for Topics
+// UPDATED WORKING MODELS - 2024
+const SENTIMENT_MODEL = 'distilbert-base-uncased-finetuned-sst-2-english';
+const EMOTION_MODEL = 'bhadresh-savani/distilbert-base-uncased-emotion';
 const TOPIC_MODEL = 'facebook/bart-large-mnli';
 
 class AIService {
@@ -26,21 +22,23 @@ class AIService {
             'Authorization': `Bearer ${HF_API_KEY}`,
             'Content-Type': 'application/json',
           },
-          timeout: 30000, // 30 second timeout
+          timeout: 30000,
         }
       );
 
       const results = response.data[0];
-      
-      // Find highest confidence sentiment
       const topSentiment = results.reduce((max, item) => 
         item.score > max.score ? item : max
       );
 
-      // Map labels to our format
       let sentiment = 'neutral';
-      if (topSentiment.label.includes('positive')) sentiment = 'positive';
-      if (topSentiment.label.includes('negative')) sentiment = 'negative';
+      const label = topSentiment.label.toLowerCase();
+      
+      if (label.includes('positive') || label === 'positive') {
+        sentiment = 'positive';
+      } else if (label.includes('negative') || label === 'negative') {
+        sentiment = 'negative';
+      }
 
       return {
         sentiment,
@@ -51,8 +49,7 @@ class AIService {
         }))
       };
     } catch (error) {
-      console.error('Sentiment analysis error:', error.message);
-      // Fallback to rule-based
+      console.error('❌ Sentiment API error:', error.response?.status, error.message);
       return this.fallbackSentiment(text);
     }
   }
@@ -74,7 +71,6 @@ class AIService {
 
       const emotions = response.data[0];
       
-      // Get top 3 emotions
       const topEmotions = emotions
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
@@ -85,7 +81,7 @@ class AIService {
 
       return topEmotions;
     } catch (error) {
-      console.error('Emotion detection error:', error.message);
+      console.error('❌ Emotion API error:', error.response?.status, error.message);
       return [{ emotion: 'neutral', confidence: '50.0' }];
     }
   }
@@ -95,11 +91,13 @@ class AIService {
     try {
       const topics = [
         'food quality',
-        'delivery speed',
-        'price value',
+        'delivery speed', 
+        'price and value',
         'customer service',
-        'packaging',
-        'portion size'
+        'packaging quality',
+        'portion size',
+        'taste and flavor',
+        'freshness'
       ];
 
       const response = await axios.post(
@@ -120,93 +118,36 @@ class AIService {
         }
       );
 
-      // Get topics with confidence > 30%
       const detectedTopics = response.data.labels
         .map((label, index) => ({
           topic: label,
           confidence: (response.data.scores[index] * 100).toFixed(1)
         }))
-        .filter(t => parseFloat(t.confidence) > 30)
+        .filter(t => parseFloat(t.confidence) > 25)
         .slice(0, 3);
 
       return detectedTopics;
     } catch (error) {
-      console.error('Topic extraction error:', error.message);
-      return [];
+      console.error('❌ Topic API error:', error.response?.status, error.message);
+      return this.fallbackTopics(text);
     }
-  }
-
-  // Generate AI insights for a vendor
-  async generateVendorInsights(reviews) {
-    const totalReviews = reviews.length;
-    if (totalReviews === 0) {
-      return {
-        summary: 'No reviews yet',
-        strengths: [],
-        improvements: [],
-        overallSentiment: 'neutral'
-      };
-    }
-
-    // Count sentiments
-    const sentimentCounts = {
-      positive: reviews.filter(r => r.aiAnalysis?.sentiment === 'positive').length,
-      neutral: reviews.filter(r => r.aiAnalysis?.sentiment === 'neutral').length,
-      negative: reviews.filter(r => r.aiAnalysis?.sentiment === 'negative').length,
-    };
-
-    // Find most common topics
-    const allTopics = reviews
-      .flatMap(r => r.aiAnalysis?.topics || [])
-      .reduce((acc, topic) => {
-        acc[topic.topic] = (acc[topic.topic] || 0) + 1;
-        return acc;
-      }, {});
-
-    const topTopics = Object.entries(allTopics)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([topic]) => topic);
-
-    // Overall sentiment
-    const overallSentiment = sentimentCounts.positive > sentimentCounts.negative 
-      ? 'positive' 
-      : sentimentCounts.negative > sentimentCounts.positive 
-      ? 'negative' 
-      : 'neutral';
-
-    // Generate insights
-    const positivePercentage = ((sentimentCounts.positive / totalReviews) * 100).toFixed(0);
-
-    return {
-      summary: `${positivePercentage}% of customers are satisfied. ${totalReviews} total reviews analyzed.`,
-      strengths: topTopics.filter(t => 
-        reviews.some(r => 
-          r.aiAnalysis?.topics?.some(rt => 
-            rt.topic === t && r.rating >= 4
-          )
-        )
-      ),
-      improvements: topTopics.filter(t => 
-        reviews.some(r => 
-          r.aiAnalysis?.topics?.some(rt => 
-            rt.topic === t && r.rating <= 2
-          )
-        )
-      ),
-      overallSentiment,
-      sentimentBreakdown: {
-        positive: sentimentCounts.positive,
-        neutral: sentimentCounts.neutral,
-        negative: sentimentCounts.negative,
-      }
-    };
   }
 
   // Fallback sentiment analysis (rule-based)
   fallbackSentiment(text) {
-    const positiveWords = ['good', 'great', 'excellent', 'amazing', 'delicious', 'perfect', 'love', 'best', 'awesome', 'fantastic'];
-    const negativeWords = ['bad', 'terrible', 'awful', 'horrible', 'disgusting', 'worst', 'hate', 'poor', 'disappointing', 'cold'];
+    const positiveWords = [
+      'good', 'great', 'excellent', 'amazing', 'delicious', 'perfect', 
+      'love', 'best', 'awesome', 'fantastic', 'wonderful', 'tasty', 
+      'fresh', 'hot', 'fast', 'quick', 'friendly', 'nice', 'super',
+      'brilliant', 'outstanding', 'incredible', 'fabulous', 'superb'
+    ];
+    
+    const negativeWords = [
+      'bad', 'terrible', 'awful', 'horrible', 'disgusting', 'worst', 
+      'hate', 'poor', 'disappointing', 'cold', 'late', 'slow', 'rude', 
+      'stale', 'burnt', 'soggy', 'nasty', 'gross', 'unacceptable',
+      'pathetic', 'useless', 'trash', 'garbage'
+    ];
 
     const lowerText = text.toLowerCase();
     
@@ -214,11 +155,15 @@ class AIService {
     let negativeCount = 0;
 
     positiveWords.forEach(word => {
-      if (lowerText.includes(word)) positiveCount++;
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      const matches = lowerText.match(regex);
+      if (matches) positiveCount += matches.length;
     });
 
     negativeWords.forEach(word => {
-      if (lowerText.includes(word)) negativeCount++;
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      const matches = lowerText.match(regex);
+      if (matches) negativeCount += matches.length;
     });
 
     let sentiment = 'neutral';
@@ -226,17 +171,49 @@ class AIService {
 
     if (positiveCount > negativeCount) {
       sentiment = 'positive';
-      confidence = Math.min(50 + (positiveCount * 10), 95);
+      confidence = Math.min(60 + (positiveCount * 8), 95);
     } else if (negativeCount > positiveCount) {
       sentiment = 'negative';
-      confidence = Math.min(50 + (negativeCount * 10), 95);
+      confidence = Math.min(60 + (negativeCount * 8), 95);
     }
+
+    console.log(`📊 Fallback sentiment: ${sentiment} (${positiveCount} positive, ${negativeCount} negative words)`);
 
     return {
       sentiment,
       confidence: confidence.toFixed(1),
       method: 'rule-based'
     };
+  }
+
+  // Fallback topics (rule-based)
+  fallbackTopics(text) {
+    const lowerText = text.toLowerCase();
+    const topics = [];
+
+    const topicKeywords = {
+      'food quality': ['delicious', 'tasty', 'fresh', 'quality', 'flavor', 'taste', 'yummy', 'food'],
+      'delivery speed': ['fast', 'quick', 'slow', 'late', 'delivery', 'arrived', 'time', 'wait'],
+      'price and value': ['expensive', 'cheap', 'price', 'cost', 'value', 'worth', 'money'],
+      'customer service': ['service', 'staff', 'friendly', 'rude', 'polite', 'helpful'],
+      'packaging quality': ['packaging', 'wrapped', 'container', 'box', 'bag', 'sealed'],
+      'portion size': ['portion', 'size', 'amount', 'quantity', 'small', 'large', 'big']
+    };
+
+    Object.entries(topicKeywords).forEach(([topic, keywords]) => {
+      let count = 0;
+      keywords.forEach(keyword => {
+        if (lowerText.includes(keyword)) count++;
+      });
+      if (count > 0) {
+        topics.push({
+          topic,
+          confidence: Math.min(40 + (count * 15), 90).toFixed(1)
+        });
+      }
+    });
+
+    return topics.sort((a, b) => parseFloat(b.confidence) - parseFloat(a.confidence)).slice(0, 3);
   }
 
   // Complete AI analysis
@@ -251,31 +228,110 @@ class AIService {
       };
     }
 
+    console.log('🤖 Starting AI analysis...');
+
     try {
-      // Run all analyses in parallel
-      const [sentimentResult, emotions, topics] = await Promise.all([
+      // Run all analyses in parallel with individual error handling
+      const [sentimentResult, emotions, topics] = await Promise.allSettled([
         this.analyzeSentiment(reviewText),
         this.detectEmotions(reviewText),
         this.extractTopics(reviewText)
       ]);
 
+      // Extract results or use fallbacks
+      const sentiment = sentimentResult.status === 'fulfilled' 
+        ? sentimentResult.value 
+        : this.fallbackSentiment(reviewText);
+
+      const emotionData = emotions.status === 'fulfilled' 
+        ? emotions.value 
+        : [{ emotion: 'neutral', confidence: '50.0' }];
+
+      const topicData = topics.status === 'fulfilled' 
+        ? topics.value 
+        : this.fallbackTopics(reviewText);
+
+      const isAIPowered = sentimentResult.status === 'fulfilled' || 
+                         emotions.status === 'fulfilled' || 
+                         topics.status === 'fulfilled';
+
+      console.log('✅ Analysis complete:', {
+        sentiment: sentiment.sentiment,
+        confidence: sentiment.confidence,
+        emotionCount: emotionData.length,
+        topicCount: topicData.length,
+        method: isAIPowered ? 'ai-powered' : 'rule-based'
+      });
+
       return {
-        sentiment: sentimentResult.sentiment,
-        confidence: sentimentResult.confidence,
-        emotions,
-        topics,
-        method: 'ai-powered',
+        sentiment: sentiment.sentiment,
+        confidence: sentiment.confidence,
+        emotions: emotionData,
+        topics: topicData,
+        method: isAIPowered ? 'ai-powered' : 'rule-based',
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Full AI analysis error:', error);
+      console.error('❌ Complete AI analysis failed:', error.message);
+      // Full fallback
+      const fallbackSentiment = this.fallbackSentiment(reviewText);
+      const fallbackTopics = this.fallbackTopics(reviewText);
+      
       return {
-        ...this.fallbackSentiment(reviewText),
-        emotions: [],
-        topics: [],
-        method: 'fallback'
+        ...fallbackSentiment,
+        emotions: [{ emotion: 'neutral', confidence: '50.0' }],
+        topics: fallbackTopics,
+        method: 'rule-based'
       };
     }
+  }
+
+  // Generate vendor insights
+  async generateVendorInsights(reviews) {
+    const totalReviews = reviews.length;
+    if (totalReviews === 0) {
+      return {
+        summary: 'No reviews yet',
+        strengths: [],
+        improvements: [],
+        overallSentiment: 'neutral'
+      };
+    }
+
+    const sentimentCounts = {
+      positive: reviews.filter(r => r.sentiment === 'positive').length,
+      neutral: reviews.filter(r => r.sentiment === 'neutral').length,
+      negative: reviews.filter(r => r.sentiment === 'negative').length,
+    };
+
+    const positivePercentage = ((sentimentCounts.positive / totalReviews) * 100).toFixed(0);
+
+    const allTopics = {};
+    reviews.forEach(review => {
+      if (review.aiAnalysis && review.aiAnalysis.topics) {
+        review.aiAnalysis.topics.forEach(topic => {
+          allTopics[topic.topic] = (allTopics[topic.topic] || 0) + 1;
+        });
+      }
+    });
+
+    const topTopics = Object.entries(allTopics)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic]) => topic);
+
+    return {
+      summary: `${positivePercentage}% of customers are satisfied. ${totalReviews} total reviews analyzed.`,
+      strengths: topTopics.filter(t => 
+        reviews.some(r => r.rating >= 4 && r.aiAnalysis?.topics?.some(rt => rt.topic === t))
+      ).slice(0, 2),
+      improvements: topTopics.filter(t => 
+        reviews.some(r => r.rating <= 2 && r.aiAnalysis?.topics?.some(rt => rt.topic === t))
+      ).slice(0, 2),
+      overallSentiment: sentimentCounts.positive > sentimentCounts.negative ? 'positive' : 
+                       sentimentCounts.negative > sentimentCounts.positive ? 'negative' : 'neutral',
+      sentimentBreakdown: sentimentCounts,
+    };
   }
 }
 

@@ -1,8 +1,61 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, CheckCheck } from 'lucide-react';
+import { Bell, X, Check, CheckCheck, Sparkles, Gift, Star, Trophy, AlertCircle } from 'lucide-react';
 import { notificationAPI } from '../services/api';
 import { useApp } from '../context/AppContext';
+
+// Notification type configurations
+const notificationTypes = {
+  points_earned: {
+    color: 'bg-yellow-50',
+    borderColor: 'border-yellow-300',
+    icon: Star,
+    iconColor: 'text-yellow-600',
+    bgIcon: 'bg-yellow-100',
+  },
+  achievement_unlocked: {
+    color: 'bg-purple-50',
+    borderColor: 'border-purple-300',
+    icon: Trophy,
+    iconColor: 'text-purple-600',
+    bgIcon: 'bg-purple-100',
+  },
+  promotion_new: {
+    color: 'bg-pink-50',
+    borderColor: 'border-pink-300',
+    icon: Gift,
+    iconColor: 'text-pink-600',
+    bgIcon: 'bg-pink-100',
+  },
+  review_helpful: {
+    color: 'bg-blue-50',
+    borderColor: 'border-blue-300',
+    icon: Sparkles,
+    iconColor: 'text-blue-600',
+    bgIcon: 'bg-blue-100',
+  },
+  level_up: {
+    color: 'bg-green-50',
+    borderColor: 'border-green-300',
+    icon: Trophy,
+    iconColor: 'text-green-600',
+    bgIcon: 'bg-green-100',
+  },
+  reward_redeemed: {
+    color: 'bg-indigo-50',
+    borderColor: 'border-indigo-300',
+    icon: Gift,
+    iconColor: 'text-indigo-600',
+    bgIcon: 'bg-indigo-100',
+  },
+  default: {
+    color: 'bg-gray-50',
+    borderColor: 'border-gray-300',
+    icon: AlertCircle,
+    iconColor: 'text-gray-600',
+    bgIcon: 'bg-gray-100',
+  },
+};
 
 const NotificationBell = () => {
   const { currentUser } = useApp();
@@ -14,7 +67,6 @@ const NotificationBell = () => {
     fetchNotifications();
     fetchUnreadCount();
 
-    // Poll for new notifications every 30 seconds
     const interval = setInterval(() => {
       fetchUnreadCount();
     }, 30000);
@@ -86,16 +138,20 @@ const NotificationBell = () => {
     return `${diffDays}d ago`;
   };
 
+  const getNotificationStyle = (type) => {
+    return notificationTypes[type] || notificationTypes.default;
+  };
+
   return (
     <div className="relative">
       {/* Bell Button */}
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-all"
       >
-        <Bell className="w-6 h-6 text-gray-700" />
+        <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'text-orange-500' : 'text-gray-600'}`} />
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
@@ -127,72 +183,95 @@ const NotificationBell = () => {
               className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border-2 border-gray-200 z-50 max-h-[600px] flex flex-col"
             >
               {/* Header */}
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="font-bold text-lg">Notifications</h3>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllAsRead}
-                    className="text-sm text-primary hover:text-primary-600 font-semibold flex items-center gap-1"
-                  >
-                    <CheckCheck className="w-4 h-4" />
-                    Mark all read
-                  </button>
-                )}
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">Notifications</h3>
+                      <p className="text-xs text-gray-500">{unreadCount} unread</p>
+                    </div>
+                  </div>
+
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-sm text-primary hover:text-primary-600 font-semibold flex items-center gap-1"
+                    >
+                      <CheckCheck className="w-4 h-4" />
+                      Mark all read
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Notifications List */}
               <div className="overflow-y-auto flex-1">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>No notifications yet</p>
+                  <div className="p-8 text-center">
+                    {/* Empty State Illustration */}
+                    <img
+                      src="https://illustrations.popsy.co/amber/message-sent.svg"
+                      alt="No notifications"
+                      className="w-48 h-48 mx-auto mb-4 opacity-60"
+                    />
+                    <p className="font-semibold text-gray-700">No notifications yet</p>
+                    <p className="text-sm text-gray-500 mt-1">We'll notify you when something happens!</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {notifications.map((notif) => (
-                      <motion.div
-                        key={notif._id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className={`p-4 hover:bg-gray-50 transition-all ${
-                          !notif.read ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <div className="flex gap-3">
-                          <div className="text-2xl flex-shrink-0">{notif.icon}</div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <h4 className="font-semibold text-sm">{notif.title}</h4>
-                              <button
-                                onClick={() => handleDelete(notif._id)}
-                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                    {notifications.map((notif) => {
+                      const style = getNotificationStyle(notif.type);
+                      const IconComponent = style.icon;
+
+                      return (
+                        <div
+                          key={notif._id}
+                          className={`p-4 hover:bg-gray-50 transition-all ${
+                            !notif.read ? `${style.color} border-l-4 ${style.borderColor}` : ''
+                          }`}
+                        >
+                          <div className="flex gap-3">
+                            {/* Icon */}
+                            <div className={`flex-shrink-0 w-10 h-10 rounded-full ${style.bgIcon} flex items-center justify-center`}>
+                              <IconComponent className={`w-5 h-5 ${style.iconColor}`} />
                             </div>
                             
-                            <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
-                            
-                            <div className="flex items-center gap-3 mt-2">
-                              <span className="text-xs text-gray-500">
-                                {getTimeAgo(notif.createdAt)}
-                              </span>
-                              
-                              {!notif.read && (
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="font-semibold text-sm">{notif.title}</h4>
                                 <button
-                                  onClick={() => handleMarkAsRead(notif._id)}
-                                  className="text-xs text-primary hover:text-primary-600 font-semibold flex items-center gap-1"
+                                  onClick={() => handleDelete(notif._id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
                                 >
-                                  <Check className="w-3 h-3" />
-                                  Mark read
+                                  <X className="w-4 h-4" />
                                 </button>
-                              )}
+                              </div>
+                              
+                              <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
+                              
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-xs text-gray-500">
+                                  {getTimeAgo(notif.createdAt)}
+                                </span>
+                                
+                                {!notif.read && (
+                                  <button
+                                    onClick={() => handleMarkAsRead(notif._id)}
+                                    className="text-xs text-primary hover:text-primary-600 font-semibold flex items-center gap-1"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                    Mark read
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

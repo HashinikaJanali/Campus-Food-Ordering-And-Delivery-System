@@ -32,6 +32,7 @@ export const loyaltyAPI = {
 };
 
 export const notificationAPI = {
+  create: (data) => api.post('/notifications', data),
   getAll: (userId, params) => api.get(`/notifications/user/${userId}`, { params }),
   getUnreadCount: (userId) => api.get(`/notifications/user/${userId}/unread-count`),
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
