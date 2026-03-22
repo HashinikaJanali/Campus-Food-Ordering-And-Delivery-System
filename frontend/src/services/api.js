@@ -31,6 +31,7 @@ export const loyaltyAPI = {
   getLeaderboard: (limit) => api.get('/loyalty/leaderboard/top', { params: { limit } }),
 };
 
+<<<<<<< HEAD
 // Order API
 export const orderAPI = {
   getAll: (params) => api.get('/orders', { params }),
@@ -40,4 +41,16 @@ export const orderAPI = {
   delete: (id) => api.delete(`/orders/${id}`),
 };
 
+=======
+export const notificationAPI = {
+  create: (data) => api.post('/notifications', data),
+  getAll: (userId, params) => api.get(`/notifications/user/${userId}`, { params }),
+  getUnreadCount: (userId) => api.get(`/notifications/user/${userId}/unread-count`),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: (userId) => api.patch(`/notifications/user/${userId}/read-all`),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
+
+>>>>>>> origin/main
 export default api;

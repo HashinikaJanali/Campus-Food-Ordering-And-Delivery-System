@@ -6,9 +6,20 @@
   body {
     @apply font-body bg-gray-50 text-gray-900;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm bg-white transition-all text-gray-900 placeholder:text-gray-400;
   }
 }
 
@@ -16,13 +27,35 @@
   .bg-gradient-primary {
     background: linear-gradient(135deg, #FF6B35, #F7931E);
   }
-  
+
   .bg-gradient-gold {
     background: linear-gradient(135deg, #F59E0B, #F7931E);
   }
-  
+
   .text-gradient-primary {
     @apply bg-gradient-primary bg-clip-text text-transparent;
+  }
+
+  .btn-admin,
+  .btn-primary {
+    @apply bg-admin-500 hover:bg-admin-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-orange hover:shadow-orange-lg hover:-translate-y-0.5 active:translate-y-0 font-display;
+  }
+
+  .btn-admin-secondary,
+  .btn-secondary {
+    @apply bg-white hover:bg-admin-50 text-admin-600 hover:text-admin-700 border border-admin-300 font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 font-display;
+  }
+
+  .badge-in-stock {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+
+  .badge-low-stock {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200;
+  }
+
+  .badge-out-of-stock {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200;
   }
 }
 

@@ -1,18 +1,16 @@
-import { Star } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import Footer from './Footer';
+import TopHeader from './TopHeader';
+import logoImage from '../assets/logo.png';
 
 const Layout = ({ children }) => {
-  const { loyaltyData, loading } = useApp();
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
-      <main className="pb-8 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
+    <div className="flex flex-col min-h-screen">
+      <TopHeader />
+      <main className="flex-1 pb-8">
+        <div className="w-full">{children}</div>
       </main>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

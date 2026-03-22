@@ -9,18 +9,60 @@ import axios from 'axios';
 // Mock orders for demo
 const mockOrders = [
   {
-    orderId: 'ORD-1234',
-    foodItem: 'Classic Beef Burger',
-    vendor: 'Main Canteen',
-    deliveredAt: '2 hours ago',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop',
+    orderId: 'ORD-009',
+    foodItem: 'Veg Burger',
+    vendor: 'Tech Canteen',
+    deliveredAt: '30 minutes ago',
+    image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=200&h=200&fit=crop',
   },
   {
-    orderId: 'ORD-1230',
-    foodItem: 'Pepperoni Pizza',
-    vendor: 'Pizza Paradise',
+    orderId: 'ORD-010',
+    foodItem: 'Beef Kottu',
+    vendor: 'South Canteen',
+    deliveredAt: '2 hours ago',
+    image: 'https://images.unsplash.com/photo-1606755962770-9e6ef2b4b91f?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-011',
+    foodItem: 'Mutton Fried Rice',
+    vendor: 'Engineering Canteen',
     deliveredAt: 'Yesterday',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
+    image: 'https://images.unsplash.com/photo-1604908177522-42f9d5eb08a0?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-012',
+    foodItem: 'Vegetable Sandwich',
+    vendor: 'New Building Canteen',
+    deliveredAt: '3 hours ago',
+    image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-013',
+    foodItem: 'Cheese Pizza',
+    vendor: 'Basement Canteen',
+    deliveredAt: '5 hours ago',
+    image: 'https://images.unsplash.com/photo-1601924582971-1b6cb7b9b57b?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-014',
+    foodItem: 'Egg Sandwich',
+    vendor: 'Main Canteen',
+    deliveredAt: 'This morning',
+    image: 'https://images.unsplash.com/photo-1562967916-eb82221dfb29?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-015',
+    foodItem: 'Pasta Alfredo',
+    vendor: 'P&S Canteen',
+    deliveredAt: '1 hour ago',
+    image: 'https://images.unsplash.com/photo-1606755962770-9e6ef2b4b91f?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-016',
+    foodItem: 'Fish Cutlet',
+    vendor: 'Anohana Canteen',
+    deliveredAt: '4 hours ago',
+    image: 'https://images.unsplash.com/photo-1604908177522-42f9d5eb08a0?w=200&h=200&fit=crop',
   },
 ];
 
@@ -51,7 +93,7 @@ const FeedbackTab = () => {
     }
 
     const order = orders.find(o => o.orderId === orderId);
-    
+
     try {
       // Create FormData for file upload
       const formData = new FormData();
@@ -62,7 +104,7 @@ const FeedbackTab = () => {
       formData.append('vendor', order.vendor);
       formData.append('rating', rating);
       formData.append('reviewText', reviewText);
-      
+
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -90,7 +132,7 @@ const FeedbackTab = () => {
       const formData = new FormData();
       formData.append('rating', rating);
       formData.append('reviewText', reviewText);
-      
+
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -279,7 +321,7 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -341,9 +383,8 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
                 className="transition-all"
               >
                 <Star
-                  className={`w-10 h-10 ${
-                    star <= rating ? 'fill-gold text-gold' : 'text-gray-300'
-                  }`}
+                  className={`w-10 h-10 ${star <= rating ? 'fill-gold text-gold' : 'text-gray-300'
+                    }`}
                 />
               </motion.button>
             ))}
@@ -367,7 +408,7 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
         {/* Image Upload */}
         <div>
           <label className="block font-semibold mb-2">Add a photo (optional)</label>
-          
+
           {!imagePreview ? (
             <label className="block">
               <input
@@ -384,9 +425,9 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
             </label>
           ) : (
             <div className="relative">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
+              <img
+                src={imagePreview}
+                alt="Preview"
                 className="w-full max-w-xs rounded-lg border-2 border-gray-200"
               />
               <button
@@ -436,7 +477,7 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
       }
 
       setImageFile(file);
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -540,6 +581,24 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
       </div>
     </div>
   );
+
+  {/* Empty State with Illustration */ }
+  {
+    orders.length === 0 && (
+      <div className="text-center py-12">
+        <img
+          src="https://illustrations.popsy.co/amber/shrug.svg"
+          alt="No orders"
+          className="w-64 h-64 mx-auto mb-6"
+        />
+        <h3 className="text-2xl font-bold mb-2">No Orders Yet</h3>
+        <p className="text-gray-600">
+          Order some delicious food and you'll be able to leave a review!
+        </p>
+      </div>
+    )
+  }
+
 };
 
 export default FeedbackTab;
