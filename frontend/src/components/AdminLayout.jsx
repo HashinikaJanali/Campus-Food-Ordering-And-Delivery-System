@@ -68,7 +68,7 @@ export default function AdminLayout() {
               <ChefHat size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-gray-900 text-base leading-tight">Go & Grab</h1>
+              <h1 className="font-display font-bold text-gray-900 text-base leading-tight">Grab & Go</h1>
               <p className="text-xs text-gray-400 font-body">Inventory Admin</p>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function AdminLayout() {
             <div className="w-7 h-7 bg-gradient-to-br from-admin-400 to-admin-600 rounded-lg flex items-center justify-center">
               <ChefHat size={14} className="text-white" />
             </div>
-            <span className="font-display font-bold text-gray-900 text-sm">Go & Grab</span>
+            <span className="font-display font-bold text-gray-900 text-sm">Grab & Go</span>
           </div>
           <div className="w-8" />
         </header>

@@ -81,8 +81,8 @@ const Layout = ({ children }) => {
       </motion.nav>
 
       {/* Main Content */}
-      <main className="flex-1 pt-24 sm:pt-28 pb-8 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto">{children}</div>
+      <main className="flex-1 pb-8">
+        <div className="w-full">{children}</div>
       </main>
 
       {/* Footer */}

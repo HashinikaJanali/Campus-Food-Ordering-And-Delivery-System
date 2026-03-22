@@ -261,23 +261,22 @@ export default function StudentMenuPage() {
   const menuCats = categories.filter(c => items.some(i => i.category?._id === c._id));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16 sm:pt-20">
       {/* Hero header */}
       <div className="bg-gradient-to-br from-admin-500 via-admin-600 to-admin-700 text-white">
-        <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14">
+        <div className="px-4 sm:pl-32 sm:pr-8 py-10 sm:py-14">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
               <ChefHat size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-2xl leading-tight">Go & Grab</h1>
+              <h1 className="font-display font-bold text-2xl leading-tight">Grab & Go</h1>
               <p className="text-admin-200 text-sm">Fresh food, every day</p>
             </div>
           </div>
           <h2 className="font-display font-bold text-3xl sm:text-4xl mb-2">Today's Menu</h2>
           <p className="text-admin-200">Freshly prepared for campus students</p>
-
-          {/* Search bar */}
+          {/* Search bar removed from hero for cleaner look? No, user didn't ask. */}
           <div className="mt-6 relative max-w-md">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -291,7 +290,7 @@ export default function StudentMenuPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
         {/* Category filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
           <button
@@ -357,17 +356,6 @@ export default function StudentMenuPage() {
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-8 mt-12">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <ChefHat size={16} className="text-admin-500" />
-            <span className="font-display font-bold text-gray-900">Go & Grab</span>
-          </div>
-          <p className="text-gray-400 text-sm">Campus Food & Inventory Management System</p>
-        </div>
-      </footer>
 
       {selectedItem && (
         <ItemDetailModal
