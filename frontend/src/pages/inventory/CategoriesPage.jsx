@@ -123,7 +123,7 @@ export default function CategoriesPage() {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h2 className="font-display font-bold text-gray-900 text-lg mb-5">{editCat ? 'Edit Category' : 'New Category'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -173,7 +173,7 @@ export default function CategoriesPage() {
       {/* Delete confirm */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full animate-bounce-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="text-center mb-5">
               <div className="text-4xl mb-3">{deleteConfirm.icon}</div>
               <h3 className="font-display font-bold text-gray-900">Delete "{deleteConfirm.name}"?</h3>
