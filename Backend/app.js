@@ -29,11 +29,15 @@ app.get("/api/health", (req, res) => {
 const reviewRoutes = require("./Routes/reviewRoutes");
 const loyaltyRoutes = require("./Routes/loyaltyRoutes");
 const notificationRoutes = require("./Routes/notificationRoutes");
+const aiRoutes = require("./Routes/aiRoutes");
+
 app.use("/api/notifications", notificationRoutes);
 
 // API Routes
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/ai", aiRoutes);
+
 
 // MongoDB Connection
 mongoose.connect("mongodb+srv://thinalidihansa_db_user:cDJwmcC1irNWGF6G@feedback.frtwq9k.mongodb.net/campuseats-engagement")
