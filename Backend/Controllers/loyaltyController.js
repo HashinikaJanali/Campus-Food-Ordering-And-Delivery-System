@@ -1,10 +1,11 @@
 const LoyaltyPoints = require("../Model/LoyaltyPoints");
+const Notification = require("../Model/Notification");
 
 // Get loyalty account
 const getLoyaltyAccount = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     let loyaltyAccount = await LoyaltyPoints.findOne({ userId });
 
     if (!loyaltyAccount) {
@@ -31,7 +32,6 @@ const createLoyaltyAccount = async (req, res) => {
   try {
     const { userId, userName } = req.body;
 
-    // Check if account already exists
     let loyaltyAccount = await LoyaltyPoints.findOne({ userId });
 
     if (loyaltyAccount) {
@@ -82,8 +82,23 @@ const addPoints = async (req, res) => {
       });
     }
 
+    // Store old level to detect level-up
+    const oldLevel = loyaltyAccount.level;
+
     loyaltyAccount.addPoints(amount, description, orderId);
     await loyaltyAccount.save();
+
+    // level-up notification
+    if (oldLevel !== loyaltyAccount.level) {
+      await Notification.create({
+        userId,
+        type: "level_up",
+        title: "🏆 Level Up!",
+        message: `Congratulations! You reached ${loyaltyAccount.level} status!`,
+        icon: "🏆",
+        data: { newLevel: loyaltyAccount.level },
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -124,6 +139,15 @@ const redeemPoints = async (req, res) => {
     loyaltyAccount.redeemPoints(amount, `Redeemed: ${rewardName}`);
     await loyaltyAccount.save();
 
+    await Notification.create({
+      userId,
+      type: "reward_redeemed",
+      title: "🎁 Reward Redeemed!",
+      message: `You redeemed: ${rewardName}`,
+      icon: "🎁",
+      data: { amount, rewardName },
+    });
+
     res.status(200).json({
       success: true,
       message: `${rewardName} redeemed successfully!`,
@@ -137,11 +161,11 @@ const redeemPoints = async (req, res) => {
   }
 };
 
-// Get points history
+// Points history
 const getPointsHistory = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const loyaltyAccount = await LoyaltyPoints.findOne({ userId });
 
     if (!loyaltyAccount) {
@@ -165,11 +189,11 @@ const getPointsHistory = async (req, res) => {
   }
 };
 
-// Get leaderboard
+// Leaderboard
 const getLeaderboard = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    
+
     const leaderboard = await LoyaltyPoints.find()
       .sort({ totalPoints: -1 })
       .limit(limit)
@@ -187,7 +211,6 @@ const getLeaderboard = async (req, res) => {
   }
 };
 
-// Export all functions
 module.exports = {
   getLoyaltyAccount,
   createLoyaltyAccount,

@@ -9,18 +9,60 @@ import axios from 'axios';
 // Mock orders for demo
 const mockOrders = [
   {
-    orderId: 'ORD-1234',
-    foodItem: 'Classic Beef Burger',
+    orderId: 'ORD-001',
+    foodItem: 'Rice & Curry',
     vendor: 'Main Canteen',
     deliveredAt: '2 hours ago',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-002',
+    foodItem: 'Chicken Kottu',
+    vendor: 'Anohana Canteen',
+    deliveredAt: '5 hours ago',
+    image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-003',
+    foodItem: 'String Hoppers with Curry',
+    vendor: 'Bird Nest Canteen',
+    deliveredAt: 'Yesterday',
+    image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-004',
+    foodItem: 'Fried Rice',
+    vendor: 'Engineering Canteen',
+    deliveredAt: '1 day ago',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-005',
+    foodItem: 'Submarine',
+    vendor: 'New Building Canteen',
+    deliveredAt: '3 hours ago',
+    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-006',
+    foodItem: 'Chicken Burger',
+    vendor: 'Basement Canteen',
+    deliveredAt: '4 hours ago',
     image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop',
   },
   {
-    orderId: 'ORD-1230',
-    foodItem: 'Pepperoni Pizza',
-    vendor: 'Pizza Paradise',
-    deliveredAt: 'Yesterday',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
+    orderId: 'ORD-007',
+    foodItem: 'Egg Hoppers',
+    vendor: 'Main Canteen',
+    deliveredAt: 'This morning',
+    image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200&h=200&fit=crop',
+  },
+  {
+    orderId: 'ORD-008',
+    foodItem: 'Noodles',
+    vendor: 'P&S Canteen',
+    deliveredAt: '6 hours ago',
+    image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&h=200&fit=crop',
   },
 ];
 
@@ -540,6 +582,22 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
       </div>
     </div>
   );
+
+  {/* Empty State with Illustration */}
+{orders.length === 0 && (
+  <div className="text-center py-12">
+    <img
+      src="https://illustrations.popsy.co/amber/shrug.svg"
+      alt="No orders"
+      className="w-64 h-64 mx-auto mb-6"
+    />
+    <h3 className="text-2xl font-bold mb-2">No Orders Yet</h3>
+    <p className="text-gray-600">
+      Order some delicious food and you'll be able to leave a review!
+    </p>
+  </div>
+)}
+
 };
 
 export default FeedbackTab;

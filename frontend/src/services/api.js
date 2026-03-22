@@ -31,4 +31,14 @@ export const loyaltyAPI = {
   getLeaderboard: (limit) => api.get('/loyalty/leaderboard/top', { params: { limit } }),
 };
 
+export const notificationAPI = {
+  create: (data) => api.post('/notifications', data),
+  getAll: (userId, params) => api.get(`/notifications/user/${userId}`, { params }),
+  getUnreadCount: (userId) => api.get(`/notifications/user/${userId}/unread-count`),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: (userId) => api.patch(`/notifications/user/${userId}/read-all`),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
+
 export default api;

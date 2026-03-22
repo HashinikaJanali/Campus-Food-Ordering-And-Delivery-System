@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Search, TrendingUp, ThumbsUp, Sparkles } from 'lucide-react';
 import { reviewAPI } from '../../services/api';
+import SentimentBadge from '../SentimentBadge';
 
 // Sample/Demo Reviews Data with Sri Lankan person images
 const sampleReviews = [
@@ -28,7 +29,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-2',
     foodItem: 'Pepperoni Pizza',
-    vendor: 'Pizza Paradise',
+    vendor: 'Bird Nest Canteen',
     rating: 4,
     reviewText: 'Good pizza but arrived a bit cold. The toppings were fresh and generous though. Still tasty! Would order again but maybe pick up instead of delivery.',
     imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
@@ -44,7 +45,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-3',
     foodItem: 'Rice & Curry',
-    vendor: 'Spice Kitchen',
+    vendor: 'Anohana Canteen',
     rating: 5,
     reviewText: 'Best Rice & Curry I have had on campus! Generous portions and authentic taste. The chicken was perfectly cooked. Will definitely order again!',
     imageUrl: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop',
@@ -76,7 +77,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-5',
     foodItem: 'Submarine',
-    vendor: 'Sub Station',
+    vendor: 'Bird Nest Canteen',
     rating: 4,
     reviewText: 'Submarine was good but could use more sauce. Otherwise, fresh ingredients and good portion size. Fast delivery!',
     sentiment: 'positive',
@@ -106,7 +107,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-7',
     foodItem: 'Noodles',
-    vendor: 'Spice Kitchen',
+    vendor: 'New Building Canteen',
     rating: 3,
     reviewText: 'Food was okay, nothing special. Average taste and portions. Might try a different vendor next time.',
     sentiment: 'neutral',
@@ -121,7 +122,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-8',
     foodItem: 'Hoppers with Curry',
-    vendor: 'Spice Kitchen',
+    vendor: 'New Building Canteen',
     rating: 5,
     reviewText: 'Authentic Sri Lankan breakfast! The egg hopper was perfect and the curry was so flavorful. Reminded me of home cooking. Will order again tomorrow!',
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&h=300&fit=crop',
@@ -153,7 +154,7 @@ const sampleReviews = [
     userImage: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop&crop=face',
     orderId: 'ORD-SAMPLE-10',
     foodItem: 'String Hoppers',
-    vendor: 'Spice Kitchen',
+    vendor: 'New Building Canteen',
     rating: 5,
     reviewText: 'Best string hoppers on campus! Came with delicious dhal curry and sambol. Very authentic taste and good value for money. Highly recommended for breakfast!',
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&h=300&fit=crop',
@@ -646,6 +647,12 @@ const ReviewCard = ({ review, index }) => {
           className="w-full max-w-md rounded-lg mt-4 shadow-md"
         />
       )}
+
+      {/* ⭐⭐⭐ AI SENTIMENT ANALYSIS - THIS IS THE NEW PART! ⭐⭐⭐ */}
+      {review.aiAnalysis && (
+        <SentimentBadge aiAnalysis={review.aiAnalysis} />
+      )}
+      {/* ⭐⭐⭐ END OF NEW PART ⭐⭐⭐ */}
 
       <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-4">
         <motion.button
