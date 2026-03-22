@@ -103,7 +103,7 @@ export default function AdminLayout() {
         {/* Student view link */}
         <div className="p-4 border-t border-gray-100">
           <a
-            href="/"
+            href="/menu"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 transition-all duration-200 font-display font-medium"

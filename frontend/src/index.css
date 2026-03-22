@@ -43,7 +43,7 @@
 
   .btn-admin-secondary,
   .btn-secondary {
-    @apply bg-white hover:bg-blue-50 text-admin-600 border border-admin-300 font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 font-display;
+    @apply bg-white hover:bg-admin-50 text-admin-600 hover:text-admin-700 border border-admin-300 font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 font-display;
   }
 
   .badge-in-stock {
