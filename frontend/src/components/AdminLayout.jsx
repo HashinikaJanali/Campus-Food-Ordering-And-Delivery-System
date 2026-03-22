@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import TopHeader from './TopHeader';
 
 const navItems = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -22,7 +23,7 @@ const navItems = [
 export default function AdminLayout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const [unreadAlerts, setUnreadAlerts] = useState(0);
 
   useEffect(() => {
@@ -45,7 +46,20 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50 font-body">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <TopHeader />
+      
+      {/* Mobile Floating Toggle (Only visible when sidebar closed on mobile) */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-40 p-4 bg-admin-500 text-white rounded-full shadow-orange-lg hover:bg-admin-600 transition-all active:scale-95"
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      <div className={`flex font-body pt-16 sm:pt-20 transition-all duration-300`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -56,22 +70,29 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-100 z-30
-        transition-transform duration-300 ease-in-out flex flex-col
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto shadow-sm
+        fixed top-16 sm:top-20 left-0 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] 
+        ${sidebarOpen ? 'w-64' : 'w-20 lg:w-20 -translate-x-full lg:translate-x-0'} 
+        bg-white border-r border-gray-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-sm
       `}>
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-admin-400 to-admin-600 rounded-xl flex items-center justify-center shadow-orange">
-              <ChefHat size={20} className="text-white" />
+        {/* Sidebar Header with Toggle */}
+        <div className={`p-6 border-b border-gray-100 flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
+          {sidebarOpen && (
+            <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+              <div className="w-10 h-10 bg-gradient-to-br from-admin-400 to-admin-600 rounded-xl flex items-center justify-center shadow-orange shrink-0">
+                <ChefHat size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="font-display font-bold text-gray-900 text-lg leading-tight tracking-tight">Grab & Go</h1>
+                <p className="text-[10px] text-gray-400 font-body uppercase tracking-wider">Inventory Admin</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-display font-bold text-gray-900 text-base leading-tight">Grab & Go</h1>
-              <p className="text-xs text-gray-400 font-body">Inventory Admin</p>
-            </div>
-          </div>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`p-2 text-gray-400 hover:text-admin-600 hover:bg-admin-50 rounded-lg transition-colors ${!sidebarOpen ? 'mx-auto' : ''}`}
+          >
+            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
 
         {/* Navigation */}
@@ -80,7 +101,9 @@ export default function AdminLayout() {
             <NavLink
               key={path}
               to={path}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => {
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
               className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                 ${isActive
@@ -89,9 +112,9 @@ export default function AdminLayout() {
                 }
               `}
             >
-              <Icon size={18} />
-              <span className="font-display">{label}</span>
-              {label === 'Alerts' && unreadAlerts > 0 && (
+              <Icon size={18} className="shrink-0" />
+              {sidebarOpen && <span className="font-display transition-opacity duration-300">{label}</span>}
+              {sidebarOpen && label === 'Alerts' && unreadAlerts > 0 && (
                 <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse-soft">
                   {unreadAlerts > 9 ? '9+' : unreadAlerts}
                 </span>
@@ -106,62 +129,51 @@ export default function AdminLayout() {
             href="/menu"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 transition-all duration-200 font-display font-medium"
+            className={`flex items-center ${sidebarOpen ? 'gap-2 px-4' : 'justify-center'} py-3 rounded-xl text-sm text-gray-500 hover:text-admin-600 hover:bg-admin-50 transition-all duration-200 font-display font-medium`}
+            title={sidebarOpen ? '' : 'Student Menu View'}
           >
-            <ExternalLink size={16} />
-            Student Menu View
+            <ExternalLink size={16} className="shrink-0" />
+            {sidebarOpen && <span>Student Menu View</span>}
           </a>
         </div>
 
         {/* Admin info + logout */}
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-admin-400 to-admin-600 rounded-full flex items-center justify-center">
+          <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} gap-2`}>
+            <div className={`flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'} min-w-0`}>
+              <div className="w-9 h-9 bg-gradient-to-br from-admin-400 to-admin-600 rounded-full flex items-center justify-center shrink-0">
                 <span className="text-white text-sm font-bold font-display">
                   {admin?.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800 font-display truncate max-w-[100px]">{admin?.name}</p>
-                <p className="text-xs text-gray-400 capitalize">{admin?.role}</p>
-              </div>
+              {sidebarOpen && (
+                <div className="overflow-hidden whitespace-nowrap">
+                  <p className="text-sm font-semibold text-gray-800 font-display truncate max-w-[100px]">{admin?.name}</p>
+                  <p className="text-xs text-gray-400 capitalize">{admin?.role}</p>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
-              title="Logout"
-            >
-              <LogOut size={16} />
-            </button>
+            {sidebarOpen && (
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 shrink-0"
+                title="Logout"
+              >
+                <LogOut size={16} />
+              </button>
+            )}
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar (mobile) */}
-        <header className="lg:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 text-gray-600 hover:text-admin-600 hover:bg-admin-50 rounded-lg transition-colors"
-          >
-            <Menu size={20} />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-admin-400 to-admin-600 rounded-lg flex items-center justify-center">
-              <ChefHat size={14} className="text-white" />
-            </div>
-            <span className="font-display font-bold text-gray-900 text-sm">Grab & Go</span>
-          </div>
-          <div className="w-8" />
-        </header>
-
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {/* Page content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto animate-fade-in">
           <Outlet context={{ refreshAlerts: fetchAlertCount }} />
         </main>
       </div>
     </div>
+  </div>
   );
 }
