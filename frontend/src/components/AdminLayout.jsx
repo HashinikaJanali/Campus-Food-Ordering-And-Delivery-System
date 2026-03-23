@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import TopHeader from './TopHeader';
+
 
 const navItems = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,7 +47,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <TopHeader />
+
       
       {/* Mobile Floating Toggle (Only visible when sidebar closed on mobile) */}
       {!sidebarOpen && (
@@ -59,7 +59,7 @@ export default function AdminLayout() {
         </button>
       )}
 
-      <div className={`flex font-body pt-16 sm:pt-20 transition-all duration-300`}>
+      <div className={`flex font-body transition-all duration-300`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -70,7 +70,7 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-16 sm:top-20 left-0 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] 
+        fixed top-0 left-0 h-screen 
         ${sidebarOpen ? 'w-64' : 'w-20 lg:w-20 -translate-x-full lg:translate-x-0'} 
         bg-white border-r border-gray-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-sm
       `}>
