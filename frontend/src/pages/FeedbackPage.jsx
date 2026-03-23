@@ -74,7 +74,7 @@ const tabs = [
   
 ];
 
-const HomePage = () => {
+const FeedbackPage = () => {
   const [activeTab, setActiveTab] = useState('loyalty');
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
@@ -235,4 +235,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default FeedbackPage;

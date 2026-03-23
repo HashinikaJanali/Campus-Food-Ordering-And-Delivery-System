@@ -4,7 +4,7 @@ import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
+import FeedbackPage from './pages/FeedbackPage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
@@ -47,7 +47,7 @@ function App() {
           <Router>
               <Routes>
                 {/* Student routes */}
-                <Route path="/" element={<Layout><HomePage /></Layout>} />
+                <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<Layout><OrderManagementPage /></Layout>} />
                 <Route path="/track" element={<Layout><OrderTrackingPage /></Layout>} />
                 <Route path="/history" element={<Layout><OrderHistoryPage /></Layout>} />
@@ -74,7 +74,7 @@ function App() {
                   <Route path="canteens" element={<CanteensPage />} />
                 </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/feedback" replace />} />
               </Routes>
           </Router>
 
