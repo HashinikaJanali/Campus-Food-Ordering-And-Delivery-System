@@ -36,6 +36,50 @@ const createStockAlert = async (foodItem, alertType) => {
 exports.createFoodItem = async (req, res, next) => {
     try {
         const data = { ...req.body };
+
+        // --- Request-level validation ---
+        if (!data.name || !data.name.trim()) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Food item name is required' });
+        }
+        if (data.name.trim().length < 2) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
+        }
+        if (data.name.trim().length > 100) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Name cannot exceed 100 characters' });
+        }
+        if (data.price === undefined || data.price === '' || data.price === null) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Price is required' });
+        }
+        if (isNaN(data.price) || Number(data.price) < 0) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Price must be a valid number (0 or greater)' });
+        }
+        if (!data.category) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Please select a category' });
+        }
+        if (!data.canteen) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Please select a canteen' });
+        }
+        if (data.stockQuantity !== undefined && (isNaN(data.stockQuantity) || Number(data.stockQuantity) < 0)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Stock quantity cannot be negative' });
+        }
+        if (data.lowStockThreshold !== undefined && (isNaN(data.lowStockThreshold) || Number(data.lowStockThreshold) < 0)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Low stock threshold cannot be negative' });
+        }
+        if (data.preparationTime !== undefined && (isNaN(data.preparationTime) || Number(data.preparationTime) < 1)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Preparation time must be at least 1 minute' });
+        }
+
+        data.name = data.name.trim();
         if (req.file) {
             data.image = `/uploads/food-images/${req.file.filename}`;
         }
@@ -68,6 +112,10 @@ exports.createFoodItem = async (req, res, next) => {
         res.status(201).json({ success: true, message: 'Food item created successfully', data: foodItem });
     } catch (err) {
         if (req.file) fs.unlinkSync(req.file.path);
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ success: false, message: messages[0] });
+        }
         res.status(400).json({ success: false, message: err.message });
     }
 };
@@ -173,6 +221,39 @@ exports.updateFoodItem = async (req, res) => {
         const prevStock = existing.stockQuantity;
         const data = { ...req.body };
 
+        // --- Request-level validation ---
+        if (data.name !== undefined) {
+            if (!data.name.trim()) {
+                if (req.file) fs.unlinkSync(req.file.path);
+                return res.status(400).json({ success: false, message: 'Food item name is required' });
+            }
+            if (data.name.trim().length < 2) {
+                if (req.file) fs.unlinkSync(req.file.path);
+                return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
+            }
+            if (data.name.trim().length > 100) {
+                if (req.file) fs.unlinkSync(req.file.path);
+                return res.status(400).json({ success: false, message: 'Name cannot exceed 100 characters' });
+            }
+            data.name = data.name.trim();
+        }
+        if (data.price !== undefined && (isNaN(data.price) || Number(data.price) < 0)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Price must be a valid number (0 or greater)' });
+        }
+        if (data.stockQuantity !== undefined && (isNaN(data.stockQuantity) || Number(data.stockQuantity) < 0)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Stock quantity cannot be negative' });
+        }
+        if (data.lowStockThreshold !== undefined && (isNaN(data.lowStockThreshold) || Number(data.lowStockThreshold) < 0)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Low stock threshold cannot be negative' });
+        }
+        if (data.preparationTime !== undefined && (isNaN(data.preparationTime) || Number(data.preparationTime) < 1)) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Preparation time must be at least 1 minute' });
+        }
+
         if (req.file) {
             // Remove old image
             if (existing.image) {
@@ -212,6 +293,10 @@ exports.updateFoodItem = async (req, res) => {
         res.json({ success: true, message: 'Food item updated successfully', data: updated });
     } catch (err) {
         if (req.file) fs.unlinkSync(req.file.path);
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ success: false, message: messages[0] });
+        }
         res.status(400).json({ success: false, message: err.message });
     }
 };

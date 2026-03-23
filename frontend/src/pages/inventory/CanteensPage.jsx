@@ -10,6 +10,7 @@ export default function CanteensPage() {
     const [editCanteen, setEditCanteen] = useState(null);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [form, setForm] = useState({ name: '', location: '', isActive: true });
+    const [errors, setErrors] = useState({});
 
     useEffect(() => { fetchCanteens(); }, []);
 
@@ -32,11 +33,41 @@ export default function CanteensPage() {
             location: canteen.location || '',
             isActive: canteen.isActive
         });
+        setErrors({});
         setShowForm(true);
+    };
+
+    const openCreate = () => {
+        setEditCanteen(null);
+        setForm({ name: '', location: '', isActive: true });
+        setErrors({});
+        setShowForm(true);
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!form.name.trim()) {
+            newErrors.name = 'Canteen name is required';
+        } else if (form.name.trim().length < 2) {
+            newErrors.name = 'Name must be at least 2 characters';
+        } else if (form.name.trim().length > 100) {
+            newErrors.name = 'Name cannot exceed 100 characters';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleFieldChange = (field, value) => {
+        setForm(prev => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: '' }));
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         try {
             if (editCanteen) {
                 await api.patch(`/canteens/${editCanteen._id}`, form);
@@ -48,6 +79,7 @@ export default function CanteensPage() {
             setShowForm(false);
             setEditCanteen(null);
             setForm({ name: '', location: '', isActive: true });
+            setErrors({});
             fetchCanteens();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to save canteen');
@@ -73,11 +105,7 @@ export default function CanteensPage() {
                     <p className="text-gray-500 text-sm mt-1">Manage university canteen locations</p>
                 </div>
                 <button
-                    onClick={() => {
-                        setEditCanteen(null);
-                        setForm({ name: '', location: '', isActive: true });
-                        setShowForm(true);
-                    }}
+                    onClick={openCreate}
                     className="btn-admin flex items-center gap-2"
                 >
                     <Plus size={16} /> Add Canteen
@@ -140,19 +168,25 @@ export default function CanteensPage() {
                                 <Plus size={20} className="rotate-45" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Canteen Name *</label>
                                 <input
-                                    type="text" required className="input-field" placeholder="e.g., P&S Canteen"
-                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                                    type="text"
+                                    className={`input-field ${errors.name ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/20' : ''}`}
+                                    placeholder="e.g., P&S Canteen"
+                                    value={form.name}
+                                    onChange={e => handleFieldChange('name', e.target.value)}
                                 />
+                                {errors.name && (
+                                    <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.name}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Location</label>
                                 <input
                                     type="text" className="input-field" placeholder="e.g., Near New Building"
-                                    value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
+                                    value={form.location} onChange={e => handleFieldChange('location', e.target.value)}
                                 />
                             </div>
                             <div className="flex items-center gap-3 py-2">

@@ -10,6 +10,7 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
   const [imagePreview, setImagePreview] = useState(item?.image || null);
   const [imageFile, setImageFile] = useState(null);
   const [canteens, setCanteens] = useState([]);
+  const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     name: item?.name || '',
     description: item?.description || '',
@@ -60,11 +61,72 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    const newValue = type === 'checkbox' ? checked : value;
+    setForm(prev => ({ ...prev, [name]: newValue }));
+    // Clear error for this field on change
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Name validation
+    if (!form.name.trim()) {
+      newErrors.name = 'Food item name is required';
+    } else if (form.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (form.name.trim().length > 100) {
+      newErrors.name = 'Name cannot exceed 100 characters';
+    }
+
+    // Price validation
+    if (form.price === '' || form.price === null || form.price === undefined) {
+      newErrors.price = 'Price is required';
+    } else if (isNaN(form.price) || Number(form.price) < 0) {
+      newErrors.price = 'Price must be a valid number (0 or greater)';
+    }
+
+    // Category validation
+    if (!form.category) {
+      newErrors.category = 'Please select a category';
+    }
+
+    // Canteen validation
+    if (!form.canteen) {
+      newErrors.canteen = 'Please select a canteen';
+    }
+
+    // Stock quantity validation
+    if (form.stockQuantity === '' || form.stockQuantity === null) {
+      newErrors.stockQuantity = 'Stock quantity is required';
+    } else if (isNaN(form.stockQuantity) || Number(form.stockQuantity) < 0) {
+      newErrors.stockQuantity = 'Stock quantity cannot be negative';
+    }
+
+    // Low stock threshold validation
+    if (form.lowStockThreshold !== '' && form.lowStockThreshold !== undefined) {
+      if (isNaN(form.lowStockThreshold) || Number(form.lowStockThreshold) < 0) {
+        newErrors.lowStockThreshold = 'Threshold cannot be negative';
+      }
+    }
+
+    // Preparation time validation
+    if (form.preparationTime !== '' && form.preparationTime !== undefined) {
+      if (isNaN(form.preparationTime) || Number(form.preparationTime) < 1) {
+        newErrors.preparationTime = 'Prep time must be at least 1 minute';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -106,6 +168,10 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
     }
   };
 
+  // Helper for input field error styling
+  const fieldClass = (fieldName) =>
+    `input-field ${errors[fieldName] ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/20' : ''}`;
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
@@ -122,7 +188,7 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6" noValidate>
           {/* Image upload */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 font-display">Food Image</label>
@@ -158,36 +224,56 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
             <div className="col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Item Name *</label>
               <input
-                type="text" name="name" required
-                className="input-field" placeholder="e.g., Chicken Burger"
+                type="text" name="name"
+                className={fieldClass('name')} placeholder="e.g., Chicken Burger"
                 value={form.name} onChange={handleChange}
               />
+              {errors.name && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.name}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Price (LKR) *</label>
               <input
-                type="number" name="price" required min="0" step="0.01"
-                className="input-field" placeholder="0.00"
+                type="number" name="price" min="0" step="0.01"
+                className={fieldClass('price')} placeholder="0.00"
                 value={form.price} onChange={handleChange}
               />
+              {errors.price && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.price}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Category *</label>
-              <select name="category" required className="input-field" value={form.category} onChange={handleChange}>
+              <select
+                name="category"
+                className={fieldClass('category')}
+                value={form.category} onChange={handleChange}
+              >
                 <option value="">Select category</option>
                 {categories.map(c => (
                   <option key={c._id} value={c._id}>{c.icon} {c.name}</option>
                 ))}
               </select>
+              {errors.category && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.category}</p>
+              )}
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Canteen *</label>
-              <select name="canteen" required className="input-field" value={form.canteen} onChange={handleChange}>
+              <select
+                name="canteen"
+                className={fieldClass('canteen')}
+                value={form.canteen} onChange={handleChange}
+              >
                 <option value="">Select canteen</option>
                 {canteens.map(c => (
                   <option key={c._id} value={c._id}>{c.name}</option>
                 ))}
               </select>
+              {errors.canteen && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.canteen}</p>
+              )}
             </div>
           </div>
 
@@ -205,10 +291,13 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Stock Qty *</label>
               <input
-                type="number" name="stockQuantity" required min="0"
-                className="input-field" placeholder="0"
+                type="number" name="stockQuantity" min="0"
+                className={fieldClass('stockQuantity')} placeholder="0"
                 value={form.stockQuantity} onChange={handleChange}
               />
+              {errors.stockQuantity && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.stockQuantity}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">
@@ -216,17 +305,23 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
               </label>
               <input
                 type="number" name="lowStockThreshold" min="0"
-                className="input-field" placeholder="10"
+                className={fieldClass('lowStockThreshold')} placeholder="10"
                 value={form.lowStockThreshold} onChange={handleChange}
               />
+              {errors.lowStockThreshold && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.lowStockThreshold}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Prep Time (min)</label>
               <input
                 type="number" name="preparationTime" min="1"
-                className="input-field" placeholder="15"
+                className={fieldClass('preparationTime')} placeholder="15"
                 value={form.preparationTime} onChange={handleChange}
               />
+              {errors.preparationTime && (
+                <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.preparationTime}</p>
+              )}
             </div>
           </div>
 
