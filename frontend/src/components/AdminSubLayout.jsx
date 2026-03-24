@@ -11,9 +11,9 @@ const AdminSubLayout = ({ children }) => {
                     <div className="flex-1 px-4 sm:px-8">
                         {children || <Outlet />}
                     </div>
+                    <Footer />
                 </div>
             </main>
-            <Footer />
         </div>
     );
 };
