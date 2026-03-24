@@ -61,12 +61,12 @@ const SCRATCH_PRIZES = [
 const fireConfetti = () => {
   const duration = 3000;
   const animationEnd = Date.now() + duration;
-  
+
   const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
   const interval = setInterval(() => {
     const timeLeft = animationEnd - Date.now();
-    
+
     if (timeLeft <= 0) {
       return clearInterval(interval);
     }
@@ -257,7 +257,7 @@ const MiniGamesTab = () => {
             ✨
           </motion.div>
         ))}
-        
+
         <div className="relative z-10">
           <motion.div
             initial={{ scale: 0 }}
@@ -441,9 +441,8 @@ const GameCard = ({ game, index, onClick }) => {
       } : {}}
       whileTap={isAvailable ? { scale: 0.95 } : {}}
       onClick={isAvailable ? onClick : null}
-      className={`bg-gradient-to-br ${game.color} rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ${
-        isAvailable ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
-      }`}
+      className={`bg-gradient-to-br ${game.color} rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ${isAvailable ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
+        }`}
       style={{
         transformStyle: 'preserve-3d',
       }}
@@ -554,7 +553,7 @@ const SpinWheelGame = ({ onClose, onComplete, playsLeft }) => {
     const spins = 5 + Math.random() * 5; // 5-10 full rotations
     const extraDegrees = Math.random() * 360;
     const totalRotation = rotation + (360 * spins) + extraDegrees;
-    
+
     setRotation(totalRotation);
 
     setTimeout(() => {
@@ -600,7 +599,7 @@ const SpinWheelGame = ({ onClose, onComplete, playsLeft }) => {
                     </div>
                   );
                 })}
-                
+
                 {/* Center Circle */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full shadow-lg border-4 border-yellow-400 flex items-center justify-center text-2xl">
                   ⭐
@@ -616,11 +615,10 @@ const SpinWheelGame = ({ onClose, onComplete, playsLeft }) => {
               whileTap={{ scale: 0.95 }}
               onClick={spin}
               disabled={spinning}
-              className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg ${
-                spinning
+              className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg ${spinning
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-              }`}
+                }`}
             >
               {spinning ? 'Spinning...' : '🎯 SPIN NOW!'}
             </motion.button>
@@ -680,7 +678,7 @@ const ScratchCardGame = ({ onClose, onComplete, playsLeft }) => {
 
   const handleScratch = (index) => {
     if (revealed) return;
-    
+
     const newScratched = [...scratched];
     newScratched[index] = true;
     setScratched(newScratched);
@@ -705,11 +703,10 @@ const ScratchCardGame = ({ onClose, onComplete, playsLeft }) => {
               whileHover={{ scale: scratched[i] ? 1 : 1.05 }}
               whileTap={{ scale: scratched[i] ? 1 : 0.95 }}
               onClick={() => handleScratch(i)}
-              className={`aspect-square rounded-xl flex items-center justify-center text-4xl cursor-pointer transition-all ${
-                scratched[i]
+              className={`aspect-square rounded-xl flex items-center justify-center text-4xl cursor-pointer transition-all ${scratched[i]
                   ? 'bg-gradient-to-br from-yellow-100 to-orange-100 border-2 border-orange-300'
                   : 'bg-gradient-to-br from-gray-400 to-gray-600 text-white text-2xl hover:from-gray-500'
-              }`}
+                }`}
             >
               {scratched[i] ? (
                 <motion.div
@@ -775,7 +772,7 @@ const QuizGame = ({ onClose, onComplete, playsLeft }) => {
 
   const handleAnswer = (index) => {
     if (answered) return;
-    
+
     setSelectedAnswer(index);
     setAnswered(true);
 
@@ -834,9 +831,8 @@ const QuizGame = ({ onClose, onComplete, playsLeft }) => {
           {QUIZ_QUESTIONS.map((_, i) => (
             <div
               key={i}
-              className={`h-2 flex-1 rounded-full ${
-                i < currentQ ? 'bg-green-500' : i === currentQ ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
+              className={`h-2 flex-1 rounded-full ${i < currentQ ? 'bg-green-500' : i === currentQ ? 'bg-blue-500' : 'bg-gray-300'
+                }`}
             />
           ))}
         </div>
@@ -853,17 +849,16 @@ const QuizGame = ({ onClose, onComplete, playsLeft }) => {
               whileTap={!answered ? { scale: 0.98 } : {}}
               onClick={() => handleAnswer(i)}
               disabled={answered}
-              className={`w-full p-4 rounded-xl font-semibold text-left transition-all ${
-                !answered
+              className={`w-full p-4 rounded-xl font-semibold text-left transition-all ${!answered
                   ? 'bg-gray-100 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400'
                   : selectedAnswer === i
-                  ? i === question.correct
-                    ? 'bg-green-100 border-2 border-green-500'
-                    : 'bg-red-100 border-2 border-red-500'
-                  : i === question.correct
-                  ? 'bg-green-100 border-2 border-green-500'
-                  : 'bg-gray-100 border-2 border-gray-200'
-              }`}
+                    ? i === question.correct
+                      ? 'bg-green-100 border-2 border-green-500'
+                      : 'bg-red-100 border-2 border-red-500'
+                    : i === question.correct
+                      ? 'bg-green-100 border-2 border-green-500'
+                      : 'bg-gray-100 border-2 border-gray-200'
+                }`}
             >
               {option}
               {answered && i === question.correct && ' ✓'}
