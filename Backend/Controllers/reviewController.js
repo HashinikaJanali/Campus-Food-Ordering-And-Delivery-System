@@ -21,7 +21,7 @@ const createReview = async (req, res) => {
 
     let imageUrl = "";
     if (req.file) {
-      imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      imageUrl = `http://localhost:5001/uploads/${req.file.filename}`;
       console.log("✅ Image uploaded:", imageUrl);
     }
 
@@ -229,6 +229,9 @@ const updateReview = async (req, res) => {
     const { rating, reviewText } = req.body;
     const { id } = req.params;
 
+    console.log(`📝 Updating review ${id}...`);
+    console.log("Body:", req.body);
+
     const review = await Review.findById(id);
 
     if (!review) {
@@ -242,26 +245,31 @@ const updateReview = async (req, res) => {
     if (reviewText !== undefined) review.reviewText = reviewText;
     
     if (req.file) {
-      review.imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      review.imageUrl = `http://localhost:5001/uploads/${req.file.filename}`;
     }
 
-    // 🤖 Re-run AI analysis if review text changed
+    // Update sentiment if rating or text changed
     if (reviewText && reviewText.trim().length >= 10) {
       console.log("🤖 Re-analyzing updated review...");
       try {
         const aiAnalysis = await aiService.analyzeReview(reviewText);
         review.sentiment = aiAnalysis.sentiment;
         review.aiAnalysis = {
-          confidence: parseFloat(aiAnalysis.confidence),
+          confidence: parseFloat(aiAnalysis.confidence) || 0,
           emotions: aiAnalysis.emotions || [],
           topics: aiAnalysis.topics || [],
           method: aiAnalysis.method || 'rule-based',
           analyzedAt: new Date(),
         };
-        console.log("✅ AI re-analysis complete");
       } catch (error) {
         console.error("⚠️ AI re-analysis failed:", error.message);
       }
+    } else if (rating !== undefined) {
+      // Fallback sentiment if text is short but rating was updated
+      const ratingNum = parseInt(rating);
+      if (ratingNum >= 4) review.sentiment = "positive";
+      else if (ratingNum <= 2) review.sentiment = "negative";
+      else review.sentiment = "neutral";
     }
 
     await review.save();

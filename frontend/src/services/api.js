@@ -4,18 +4,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Review API
 export const reviewAPI = {
-  create: (data) => api.post('/reviews', data),
+  create: (data, config) => api.post('/reviews', data, config),
   getAll: (params) => api.get('/reviews', { params }),
   getById: (id) => api.get(`/reviews/${id}`),
   getUserReviews: (userId) => api.get(`/reviews/user/${userId}`),
-  update: (id, data) => api.put(`/reviews/${id}`, data),
+  update: (id, data, config) => api.put(`/reviews/${id}`, data, config),
   delete: (id) => api.delete(`/reviews/${id}`),
   getSummary: () => api.get('/reviews/summary'),
   markHelpful: (id) => api.patch(`/reviews/${id}/helpful`),

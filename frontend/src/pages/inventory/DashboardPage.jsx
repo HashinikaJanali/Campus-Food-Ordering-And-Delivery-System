@@ -74,7 +74,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-display text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold font-display text-gray-900">Inventory Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">Overview of your food inventory</p>
         </div>
         <button

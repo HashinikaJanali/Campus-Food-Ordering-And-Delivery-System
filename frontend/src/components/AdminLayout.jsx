@@ -7,7 +7,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import TopHeader from './TopHeader';
+import AdminHeader from './AdminHeader';
+import Footer from './Footer';
+
 
 const navItems = [
   { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -46,8 +48,9 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <TopHeader />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <AdminHeader />
+
       
       {/* Mobile Floating Toggle (Only visible when sidebar closed on mobile) */}
       {!sidebarOpen && (
@@ -59,21 +62,20 @@ export default function AdminLayout() {
         </button>
       )}
 
-      <div className={`flex font-body pt-16 sm:pt-20 transition-all duration-300`}>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-16 sm:top-20 left-0 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] 
-        ${sidebarOpen ? 'w-64' : 'w-20 lg:w-20 -translate-x-full lg:translate-x-0'} 
-        bg-white border-r border-gray-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-sm
-      `}>
+      <div className="flex flex-1 font-body pt-0">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        
+        <aside className={`
+          sticky top-[80px] h-[calc(100vh-80px)] 
+          ${sidebarOpen ? 'w-64' : 'w-20 lg:w-20'} 
+          bg-white border-r border-gray-100 z-30 flex flex-col shadow-sm hidden lg:flex
+        `}>
         {/* Sidebar Header with Toggle */}
         <div className={`p-6 border-b border-gray-100 flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
           {sidebarOpen && (
@@ -166,14 +168,14 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto animate-fade-in">
-          <Outlet context={{ refreshAlerts: fetchAlertCount }} />
-        </main>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1 p-4 md:p-6 lg:p-8">
+            <Outlet context={{ refreshAlerts: fetchAlertCount }} />
+          </main>
+        </div>
       </div>
+      <Footer />
     </div>
-  </div>
   );
 }
