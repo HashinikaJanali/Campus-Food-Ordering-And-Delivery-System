@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Clock, FileText, ChevronRight, CheckCircle2, Store, ArrowLeft } from "lucide-react";
+import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -20,8 +20,14 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [addressType, setAddressType] = useState(""); // "" | "on-campus" | "off-campus"
   const [deliveryInfo, setDeliveryInfo] = useState({
-    pickupLocation: "", pickupTime: "", specialInstructions: "",
+    onCampusLocation: "",
+    boardingName: "",
+    street: "",
+    area: "",
+    phoneNumber: "",
+    landmark: "",
   });
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
@@ -88,46 +94,113 @@ const CheckoutPage = () => {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-10"
         >
-          <h2 className="font-display text-2xl font-bold text-gray-900 mb-6">Delivery Information</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-900 mb-6">Pickup and Delivery Information</h2>
+          
+          {/* Address Type Selection */}
+          <div className="mb-8">
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Select delivery type</label>
+            <div className="flex gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                onClick={() => { setAddressType("on-campus"); setDeliveryInfo({ ...deliveryInfo, boardingName: "", street: "", area: "", phoneNumber: "", landmark: "" }); }}
+                className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border-2 ${
+                  addressType === "on-campus"
+                    ? "bg-primary text-white border-primary shadow-lg shadow-orange-200"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:border-primary"
+                }`}
+              >
+                📍 On-Campus
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                onClick={() => { setAddressType("off-campus"); setDeliveryInfo({ ...deliveryInfo, onCampusLocation: "" }); }}
+                className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border-2 ${
+                  addressType === "off-campus"
+                    ? "bg-primary text-white border-primary shadow-lg shadow-orange-200"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:border-primary"
+                }`}
+              >
+                🏠 Off-Campus
+              </motion.button>
+            </div>
+          </div>
+
           <div className="space-y-5">
-            <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Pickup location</label>
-              <div className="relative">
-                <Store size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <select
-                  name="pickupLocation" value={deliveryInfo.pickupLocation} onChange={handleChange} required
-                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 outline-none transition-all appearance-none"
-                >
-                  <option value="">Select canteen / location</option>
-                  <option value="Main Canteen">Main Canteen</option>
-                  <option value="Block A Canteen">Block A Canteen</option>
-                  <option value="Library Café">Library Café</option>
-                </select>
-              </div>
-            </div>
+            {/* On-Campus Message */}
+            {addressType === "on-campus" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 text-center"
+              >
+                <div className="text-3xl mb-3">🏫</div>
+                <p className="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Pick up from Campus Canteen</p>
+                <p className="text-xs text-gray-600 font-medium leading-relaxed">
+                  Your order will be ready for pickup at the main campus canteen.
+                </p>
+              </motion.div>
+            )}
 
-            <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Preferred pickup time</label>
-              <div className="relative">
-                <Clock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="time" name="pickupTime" value={deliveryInfo.pickupTime} onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 outline-none transition-all"
-                />
-              </div>
-            </div>
+            {/* Off-Campus Details */}
+            {addressType === "off-campus" && (
+              <>
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Boarding / House Name</label>
+                  <div className="relative">
+                    <Home size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text" name="boardingName" value={deliveryInfo.boardingName} onChange={handleChange} required placeholder="E.g., Bright Hostel, Galaxy PG"
+                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Special instructions (optional)</label>
-              <div className="relative">
-                <FileText size={16} className="absolute left-4 top-4 text-gray-400" />
-                <textarea
-                  name="specialInstructions" value={deliveryInfo.specialInstructions} onChange={handleChange}
-                  rows={3} placeholder="E.g. no spice, extra sauce..."
-                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all resize-none"
-                />
-              </div>
-            </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Street / Lane</label>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text" name="street" value={deliveryInfo.street} onChange={handleChange} required placeholder="E.g., Main Street, Colony Road"
+                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Area (near campus)</label>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text" name="area" value={deliveryInfo.area} onChange={handleChange} required placeholder="E.g., Near University Gate"
+                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="tel" name="phoneNumber" value={deliveryInfo.phoneNumber} onChange={handleChange} required placeholder="E.g., +91 9876543210"
+                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Landmark (optional)</label>
+                  <div className="relative">
+                    <FileText size={16} className="absolute left-4 top-4 text-gray-400" />
+                    <textarea
+                      name="landmark" value={deliveryInfo.landmark} onChange={handleChange}
+                      rows={2} placeholder="E.g., Near Food City, opposite gym"
+                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all resize-none"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex justify-between mt-8 gap-3">
@@ -139,7 +212,11 @@ const CheckoutPage = () => {
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setStep(1)} disabled={!deliveryInfo.pickupLocation}
+              onClick={() => setStep(1)} 
+              disabled={
+                !addressType ||
+                (addressType === "off-campus" && (!deliveryInfo.boardingName || !deliveryInfo.street || !deliveryInfo.area || !deliveryInfo.phoneNumber))
+              }
               className="flex-1 py-3.5 bg-primary hover:bg-primary-500 disabled:opacity-50 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition-all"
             >
               Review Order <ChevronRight size={16} />
@@ -181,11 +258,21 @@ const CheckoutPage = () => {
 
           <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 mb-6 text-sm space-y-1.5">
             <div className="flex items-center gap-2 font-black text-primary text-[10px] uppercase tracking-widest mb-2">
-              <MapPin size={12} /> Pickup Details
+              <MapPin size={12} /> Pickup & Delivery Details
             </div>
-            <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Location:</span> {deliveryInfo.pickupLocation}</p>
-            {deliveryInfo.pickupTime && <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Time:</span> {deliveryInfo.pickupTime}</p>}
-            {deliveryInfo.specialInstructions && <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Note:</span> {deliveryInfo.specialInstructions}</p>}
+            {addressType === "on-campus" && (
+              <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Type:</span> Pickup from Campus Canteen</p>
+            )}
+            {addressType === "off-campus" && (
+              <>
+                <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Type:</span> Off-Campus Delivery</p>
+                <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Boarding:</span> {deliveryInfo.boardingName}</p>
+                <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Street:</span> {deliveryInfo.street}</p>
+                <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Area:</span> {deliveryInfo.area}</p>
+                <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Phone:</span> {deliveryInfo.phoneNumber}</p>
+                {deliveryInfo.landmark && <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Landmark:</span> {deliveryInfo.landmark}</p>}
+              </>
+            )}
           </div>
 
           <div className="flex justify-between font-black text-gray-900 text-base border-t-2 border-dashed border-gray-100 pt-4 mb-6">
@@ -238,15 +325,42 @@ const CheckoutPage = () => {
             Your order <span className="font-black text-gray-800">{placedOrder?._id}</span> has been received.
           </p>
           <div className="bg-gray-50 rounded-2xl p-5 text-left text-sm mb-8 space-y-2 border border-gray-100">
-            <div className="flex justify-between">
-              <span className="text-gray-500 font-medium">Pickup</span>
-              <span className="font-black text-gray-900">{placedOrder?.deliveryInfo?.pickupLocation}</span>
-            </div>
-            {placedOrder?.deliveryInfo?.pickupTime && (
-              <div className="flex justify-between">
-                <span className="text-gray-500 font-medium">Time</span>
-                <span className="font-black text-gray-900">{placedOrder.deliveryInfo.pickupTime}</span>
+            {placedOrder?.deliveryInfo?.onCampusLocation ? (
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-500 font-medium">Type</span>
+                  <span className="font-black text-gray-900">🏫 Pickup from Canteen</span>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-500 font-medium">Type</span>
+                  <span className="font-black text-gray-900">🚚 Off-Campus Delivery</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Boarding</span>
+                  <span className="font-black text-gray-900">{placedOrder?.deliveryInfo?.boardingName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Street</span>
+                  <span className="font-black text-gray-900">{placedOrder?.deliveryInfo?.street}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Area</span>
+                  <span className="font-black text-gray-900">{placedOrder?.deliveryInfo?.area}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 font-medium">Phone</span>
+                  <span className="font-black text-gray-900">{placedOrder?.deliveryInfo?.phoneNumber}</span>
+                </div>
+                {placedOrder?.deliveryInfo?.landmark && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 font-medium">Landmark</span>
+                    <span className="font-black text-gray-900">{placedOrder.deliveryInfo.landmark}</span>
+                  </div>
+                )}
+              </>
             )}
             <div className="flex justify-between border-t border-dashed border-gray-200 pt-2">
               <span className="font-black text-gray-700">Total</span>
