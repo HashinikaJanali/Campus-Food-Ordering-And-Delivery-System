@@ -13,6 +13,7 @@
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.303.0",
+    "object-hash": "^3.0.0",
     "qr-code-styling": "^1.9.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -4,7 +4,6 @@ import { Star, CheckCircle, Edit2, Trash2, X, Upload } from 'lucide-react';
 import { reviewAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 
 // Mock orders for demo
 const mockOrders = [
@@ -134,7 +133,7 @@ const FeedbackTab = () => {
     // ── Validation (guard before hitting the server) ──
     if (!validateReviewFields(rating, reviewText)) return;
 
-    const order = orders.find((o) => o.orderId === orderId);
+    const order = orders.find(o => o.orderId === orderId);
 
     try {
       const formData = new FormData();
@@ -148,7 +147,9 @@ const FeedbackTab = () => {
       if (imageFile) formData.append('image', imageFile);
 
       const response = await axios.post('http://localhost:5000/api/reviews', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       toast.success(response.data.message);
@@ -157,7 +158,7 @@ const FeedbackTab = () => {
 
       fetchUserReviews();
       refreshLoyaltyData();
-      setOrders(orders.filter((o) => o.orderId !== orderId));
+      setOrders(orders.filter(o => o.orderId !== orderId));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit review');
     }
@@ -174,10 +175,12 @@ const FeedbackTab = () => {
       if (imageFile) formData.append('image', imageFile);
 
       await axios.put(`http://localhost:5000/api/reviews/${reviewId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      toast.success('Review updated successfully!');
+      toast.success(response.data.message || 'Review updated successfully!');
       setEditingReview(null);
       fetchUserReviews();
     } catch (error) {

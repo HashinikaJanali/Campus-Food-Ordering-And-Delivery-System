@@ -13,6 +13,7 @@ export default function CategoriesPage() {
   const [editCat, setEditCat] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', icon: '🍽️', displayOrder: 0 });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => { fetchCategories(); }, []);
 
@@ -31,11 +32,47 @@ export default function CategoriesPage() {
   const openEdit = (cat) => {
     setEditCat(cat);
     setForm({ name: cat.name, description: cat.description || '', icon: cat.icon, displayOrder: cat.displayOrder });
+    setErrors({});
     setShowForm(true);
+  };
+
+  const openCreate = () => {
+    setEditCat(null);
+    setForm({ name: '', description: '', icon: '🍽️', displayOrder: 0 });
+    setErrors({});
+    setShowForm(true);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.name.trim()) {
+      newErrors.name = 'Category name is required';
+    } else if (form.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (form.name.trim().length > 50) {
+      newErrors.name = 'Name cannot exceed 50 characters';
+    }
+
+    const order = Number(form.displayOrder);
+    if (form.displayOrder !== '' && (isNaN(order) || order < 0)) {
+      newErrors.displayOrder = 'Display order must be 0 or greater';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFieldChange = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       if (editCat) {
         await api.put(`/categories/${editCat._id}`, form);
@@ -47,6 +84,7 @@ export default function CategoriesPage() {
       setShowForm(false);
       setEditCat(null);
       setForm({ name: '', description: '', icon: '🍽️', displayOrder: 0 });
+      setErrors({});
       fetchCategories();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save category');
@@ -71,7 +109,7 @@ export default function CategoriesPage() {
           <h1 className="text-2xl font-bold font-display text-gray-900">Categories</h1>
           <p className="text-gray-500 text-sm mt-1">Organize your food items by category</p>
         </div>
-        <button onClick={() => { setEditCat(null); setForm({ name: '', description: '', icon: '🍽️', displayOrder: 0 }); setShowForm(true); }} className="btn-admin flex items-center gap-2">
+        <button onClick={openCreate} className="btn-admin flex items-center gap-2">
           <Plus size={16} /> Add Category
         </button>
       </div>
@@ -123,21 +161,27 @@ export default function CategoriesPage() {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h2 className="font-display font-bold text-gray-900 text-lg mb-5">{editCat ? 'Edit Category' : 'New Category'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Category Name *</label>
                 <input
-                  type="text" required className="input-field" placeholder="e.g., Beverages"
-                  value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                  type="text"
+                  className={`input-field ${errors.name ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/20' : ''}`}
+                  placeholder="e.g., Beverages"
+                  value={form.name}
+                  onChange={e => handleFieldChange('name', e.target.value)}
                 />
+                {errors.name && (
+                  <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Description</label>
                 <input
                   type="text" className="input-field" placeholder="Brief description"
-                  value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+                  value={form.description} onChange={e => handleFieldChange('description', e.target.value)}
                 />
               </div>
               <div>
@@ -157,9 +201,15 @@ export default function CategoriesPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-display">Display Order</label>
                 <input
-                  type="number" className="input-field" placeholder="0"
-                  value={form.displayOrder} onChange={e => setForm({ ...form, displayOrder: parseInt(e.target.value) || 0 })}
+                  type="number"
+                  className={`input-field ${errors.displayOrder ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/20' : ''}`}
+                  placeholder="0"
+                  value={form.displayOrder}
+                  onChange={e => handleFieldChange('displayOrder', parseInt(e.target.value) || 0)}
                 />
+                {errors.displayOrder && (
+                  <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.displayOrder}</p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Cancel</button>
@@ -173,7 +223,7 @@ export default function CategoriesPage() {
       {/* Delete confirm */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full animate-bounce-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div className="text-center mb-5">
               <div className="text-4xl mb-3">{deleteConfirm.icon}</div>
               <h3 className="font-display font-bold text-gray-900">Delete "{deleteConfirm.name}"?</h3>

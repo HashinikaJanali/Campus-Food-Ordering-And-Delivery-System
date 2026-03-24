@@ -1,19 +1,68 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ChefHat, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminLogin() {
-  const [mode, setMode] = useState('login'); // login | register
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
+  const [mode, setMode] = useState(initialMode);
+  
+  // Update mode when URL search params change
+  useEffect(() => {
+    const newMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
+    if (newMode !== mode) {
+      setMode(newMode);
+    }
+  }, [searchParams, mode]);
+
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (mode === 'register') {
+      if (!form.name.trim()) {
+        newErrors.name = 'Full name is required';
+      } else if (form.name.trim().length < 2) {
+        newErrors.name = 'Name must be at least 2 characters';
+      }
+    }
+
+    if (!form.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!form.password) {
+      newErrors.password = 'Password is required';
+    } else if (form.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (field, value) => {
+    setForm({ ...form, [field]: value });
+    // Clear error for this field on change
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       if (mode === 'login') {
@@ -101,18 +150,24 @@ export default function AdminLogin() {
               {mode === 'login' ? 'Sign in to your admin panel' : 'Set up your admin account'}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {mode === 'register' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 font-display">Full Name</label>
                   <input
                     type="text"
-                    required
                     placeholder="Your full name"
-                    className="w-full h-12 px-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
+                    className={`w-full h-12 px-4 border rounded-xl outline-none focus:ring-2 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900 ${
+                      errors.name
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                        : 'border-gray-300 focus:border-admin-500 focus:ring-admin-500/20'
+                    }`}
                     value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
+                    onChange={e => handleChange('name', e.target.value)}
                   />
+                  {errors.name && (
+                    <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.name}</p>
+                  )}
                 </div>
               )}
 
@@ -122,13 +177,19 @@ export default function AdminLogin() {
                   <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="email"
-                    required
                     placeholder="admin@campus.edu"
-                    className="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
+                    className={`w-full h-12 pl-10 pr-4 border rounded-xl outline-none focus:ring-2 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900 ${
+                      errors.email
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                        : 'border-gray-300 focus:border-admin-500 focus:ring-admin-500/20'
+                    }`}
                     value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
+                    onChange={e => handleChange('email', e.target.value)}
                   />
                 </div>
+                {errors.email && (
+                  <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.email}</p>
+                )}
               </div>
 
               <div>
@@ -137,11 +198,14 @@ export default function AdminLogin() {
                   <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type={showPass ? 'text' : 'password'}
-                    required
                     placeholder="••••••••"
-                    className="w-full h-12 pl-10 pr-10 border border-gray-300 rounded-xl outline-none focus:border-admin-500 focus:ring-2 focus:ring-admin-500/20 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900"
+                    className={`w-full h-12 pl-10 pr-10 border rounded-xl outline-none focus:ring-2 font-body text-sm placeholder:text-gray-400 bg-white transition-all text-gray-900 ${
+                      errors.password
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                        : 'border-gray-300 focus:border-admin-500 focus:ring-admin-500/20'
+                    }`}
                     value={form.password}
-                    onChange={e => setForm({ ...form, password: e.target.value })}
+                    onChange={e => handleChange('password', e.target.value)}
                   />
                   <button
                     type="button"
@@ -151,6 +215,9 @@ export default function AdminLogin() {
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="mt-1.5 text-xs text-red-500 font-medium">{errors.password}</p>
+                )}
               </div>
 
               <button
@@ -173,7 +240,10 @@ export default function AdminLogin() {
               {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
               {' '}
               <button
-                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                onClick={() => {
+                  setMode(mode === 'login' ? 'register' : 'login');
+                  setErrors({});
+                }}
                 className="text-admin-600 font-semibold hover:underline font-display"
               >
                 {mode === 'login' ? 'Register here' : 'Sign in'}

@@ -23,9 +23,26 @@ exports.getAdminCanteens = async (req, res) => {
 // Create new canteen
 exports.createCanteen = async (req, res) => {
     try {
-        const canteen = await Canteen.create(req.body);
+        const { name } = req.body;
+        if (!name || !name.trim()) {
+            return res.status(400).json({ success: false, message: 'Canteen name is required' });
+        }
+        if (name.trim().length < 2) {
+            return res.status(400).json({ success: false, message: 'Canteen name must be at least 2 characters' });
+        }
+        if (name.trim().length > 100) {
+            return res.status(400).json({ success: false, message: 'Canteen name cannot exceed 100 characters' });
+        }
+        const canteen = await Canteen.create({ ...req.body, name: name.trim() });
         res.status(201).json({ success: true, data: canteen });
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(400).json({ success: false, message: 'A canteen with this name already exists' });
+        }
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ success: false, message: messages[0] });
+        }
         res.status(400).json({ success: false, message: err.message });
     }
 };
@@ -33,6 +50,19 @@ exports.createCanteen = async (req, res) => {
 // Update canteen
 exports.updateCanteen = async (req, res) => {
     try {
+        const { name } = req.body;
+        if (name !== undefined) {
+            if (!name.trim()) {
+                return res.status(400).json({ success: false, message: 'Canteen name is required' });
+            }
+            if (name.trim().length < 2) {
+                return res.status(400).json({ success: false, message: 'Canteen name must be at least 2 characters' });
+            }
+            if (name.trim().length > 100) {
+                return res.status(400).json({ success: false, message: 'Canteen name cannot exceed 100 characters' });
+            }
+            req.body.name = name.trim();
+        }
         const canteen = await Canteen.findByIdAndUpdate(req.params.id, req.body, {
             returnDocument: 'after',
             runValidators: true
@@ -40,6 +70,13 @@ exports.updateCanteen = async (req, res) => {
         if (!canteen) return res.status(404).json({ success: false, message: 'Canteen not found' });
         res.json({ success: true, data: canteen });
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(400).json({ success: false, message: 'A canteen with this name already exists' });
+        }
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ success: false, message: messages[0] });
+        }
         res.status(400).json({ success: false, message: err.message });
     }
 };

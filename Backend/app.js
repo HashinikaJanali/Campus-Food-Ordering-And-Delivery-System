@@ -47,6 +47,7 @@ app.use('/api/inventory', require('./Routes/inventory/inventoryRoutes'));
 app.use('/api/alerts', require('./Routes/inventory/alertsRoutes'));
 app.use('/api/analytics', require('./Routes/inventory/analyticsRoutes'));
 
+app.use("/api/orders", require("./Routes/orderRoute"));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)

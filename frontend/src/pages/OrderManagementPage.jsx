@@ -1,23 +1,49 @@
-//Vendor (/orders)
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_ORDERS } from '../constants/orderConstants';
+import { orderAPI } from '../services/api';
 import OrderCard from '../components/orders/OrderCard';
 import OrderStatsRow from '../components/orders/OrderStatsRow';
 import OrderTabNav from '../components/orders/OrderTabNav';
 import OrderSearchBar from '../components/orders/OrderSearchBar';
 import DailySummaryCard from '../components/orders/DailySummaryCard';
 
-const ALL_STATUSES = ['all', 'pending', 'preparing', 'ready', 'picked_up', 'cancelled'];
+const ALL_STATUSES = ['all', 'pending', 'preparing', 'ready', 'delivered', 'cancelled'];
 
 const OrderManagementPage = () => {
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleStatusChange = (id, newStatus) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+  // Fetch orders from backend
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await orderAPI.getAll();
+      setOrders(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load orders');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await orderAPI.updateStatus(id, newStatus);
+      setOrders(prev =>
+        prev.map(o => o._id === id ? { ...o, status: newStatus } : o)
+      );
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
   };
 
   const counts = ALL_STATUSES.reduce((acc, key) => {
@@ -30,13 +56,13 @@ const OrderManagementPage = () => {
   const filtered = orders.filter(o => {
     const matchTab = activeTab === 'all' || o.status === activeTab;
     const matchSearch = search === '' ||
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer.toLowerCase().includes(search.toLowerCase());
+      o._id.toLowerCase().includes(search.toLowerCase()) ||
+      o.customerName.toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 pt-24 sm:pt-28">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 py-10 mb-20">
       {/* Hero Banner */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -68,44 +94,72 @@ const OrderManagementPage = () => {
         </div>
       </motion.div>
 
-      {/* Daily Summary */}
-      <DailySummaryCard orders={orders} />
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg animate-pulse">Loading orders...</p>
+        </div>
+      )}
 
-      {/* Stats */}
-      <OrderStatsRow counts={counts} />
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+          <p className="text-red-500 font-medium">{error}</p>
+          <button
+            onClick={fetchOrders}
+            className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
-      {/* Tabs */}
-      <OrderTabNav activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
+      {!loading && !error && (
+        <>
+          {/* Daily Summary */}
+          <DailySummaryCard orders={orders} />
 
-      {/* Search */}
-      <OrderSearchBar value={search} onChange={setSearch} />
+          {/* Stats */}
+          <OrderStatsRow counts={counts} />
 
-      {/* Orders List */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab + search}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="space-y-4"
-        >
-          {filtered.length === 0 ? (
+          {/* Tabs */}
+          <OrderTabNav activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
+
+          {/* Search */}
+          <OrderSearchBar value={search} onChange={setSearch} />
+
+          {/* Orders List */}
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-white rounded-2xl p-12 text-center shadow-md"
+              key={activeTab + search}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
             >
-              <p className="text-5xl mb-4">🔍</p>
-              <p className="text-gray-500 font-medium">No orders found</p>
+              {filtered.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-white rounded-2xl p-12 text-center shadow-md"
+                >
+                  <p className="text-5xl mb-4">🔍</p>
+                  <p className="text-gray-500 font-medium">No orders found</p>
+                </motion.div>
+              ) : (
+                filtered.map(order => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))
+              )}
             </motion.div>
-          ) : (
-            filtered.map(order => (
-              <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
-            ))
-          )}
-        </motion.div>
-      </AnimatePresence>
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 };
