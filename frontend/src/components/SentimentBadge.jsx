@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion';
 import { Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-const SentimentBadge = ({ aiAnalysis }) => {
+const SentimentBadge = ({ aiAnalysis, sentiment }) => {
   if (!aiAnalysis) return null;
 
-  const { sentiment, confidence, emotions, topics } = aiAnalysis;
+  const { confidence, emotions, topics, method } = aiAnalysis;
 
   // Sentiment configuration
   const getSentimentConfig = () => {
@@ -64,7 +64,9 @@ const SentimentBadge = ({ aiAnalysis }) => {
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-purple-500" />
-        <span className="text-xs font-bold text-purple-700">AI ANALYSIS</span>
+        <span className="text-xs font-bold text-purple-700">
+          {method === 'ai-powered' ? 'AI ANALYSIS' : 'REVIEW ANALYSIS'}
+        </span>
       </div>
 
       {/* Main Sentiment */}
