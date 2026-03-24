@@ -66,6 +66,50 @@ const mockOrders = [
   },
 ];
 
+// ─── Shared image validation helper ───────────────────────────────────────────
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_IMAGE_SIZE_MB = 5;
+
+const validateImageFile = (file) => {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    toast.error('⚠️ Only JPG, PNG, GIF, or WEBP images are allowed!');
+    return false;
+  }
+  if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+    toast.error(`⚠️ Image size must be less than ${MAX_IMAGE_SIZE_MB}MB!`);
+    return false;
+  }
+  return true;
+};
+
+// ─── Shared review text / rating validation helper ────────────────────────────
+const validateReviewFields = (rating, reviewText) => {
+  if (rating === 0) {
+    toast.error('⚠️ Please rate the order before submitting!');
+    return false;
+  }
+
+  const trimmed = reviewText.trim();
+
+  if (trimmed.length > 0 && trimmed.length < 10) {
+    toast.error('⚠️ Review must be at least 10 characters long!');
+    return false;
+  }
+
+  if (trimmed.length > 0 && /^\d+$/.test(trimmed)) {
+    toast.error('⚠️ Review cannot contain only numbers!');
+    return false;
+  }
+
+  if (trimmed.length > 0 && /^[^a-zA-Z0-9]+$/.test(trimmed)) {
+    toast.error('⚠️ Review cannot contain only special characters!');
+    return false;
+  }
+
+  return true;
+};
+
+// ─── FeedbackTab ──────────────────────────────────────────────────────────────
 const FeedbackTab = () => {
   const { currentUser, refreshLoyaltyData } = useApp();
   const [orders, setOrders] = useState(mockOrders);
@@ -87,15 +131,12 @@ const FeedbackTab = () => {
   };
 
   const handleSubmitReview = async (orderId, rating, reviewText, imageFile) => {
-    if (rating === 0) {
-      toast.error('⚠️ Please rate the order before submitting!');
-      return;
-    }
+    // ── Validation (guard before hitting the server) ──
+    if (!validateReviewFields(rating, reviewText)) return;
 
-    const order = orders.find(o => o.orderId === orderId);
+    const order = orders.find((o) => o.orderId === orderId);
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('userId', currentUser.userId);
       formData.append('userName', currentUser.userName);
@@ -103,16 +144,11 @@ const FeedbackTab = () => {
       formData.append('foodItem', order.foodItem);
       formData.append('vendor', order.vendor);
       formData.append('rating', rating);
-      formData.append('reviewText', reviewText);
-
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
+      formData.append('reviewText', reviewText.trim());
+      if (imageFile) formData.append('image', imageFile);
 
       const response = await axios.post('http://localhost:5000/api/reviews', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       toast.success(response.data.message);
@@ -121,26 +157,24 @@ const FeedbackTab = () => {
 
       fetchUserReviews();
       refreshLoyaltyData();
-      setOrders(orders.filter(o => o.orderId !== orderId));
+      setOrders(orders.filter((o) => o.orderId !== orderId));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit review');
     }
   };
 
   const handleUpdateReview = async (reviewId, rating, reviewText, imageFile) => {
+    // ── Validation ──
+    if (!validateReviewFields(rating, reviewText)) return;
+
     try {
       const formData = new FormData();
       formData.append('rating', rating);
-      formData.append('reviewText', reviewText);
-
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
+      formData.append('reviewText', reviewText.trim());
+      if (imageFile) formData.append('image', imageFile);
 
       await axios.put(`http://localhost:5000/api/reviews/${reviewId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       toast.success('Review updated successfully!');
@@ -175,11 +209,7 @@ const FeedbackTab = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             className="bg-green-50 border-2 border-green-500 rounded-2xl p-8 text-center shadow-lg"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="text-6xl mb-4"
-            >
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-6xl mb-4">
               ✓
             </motion.div>
             <h3 className="text-2xl font-bold text-green-700 mb-2">Review Submitted!</h3>
@@ -237,12 +267,16 @@ const FeedbackTab = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="font-bold text-xl">{review.foodItem}</h3>
-                        <p className="text-gray-600 text-sm">{review.vendor} • {review.orderId}</p>
+                        <p className="text-gray-600 text-sm">
+                          {review.vendor} • {review.orderId}
+                        </p>
                         <div className="flex gap-1 mt-2">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-5 h-5 ${i < review.rating ? 'fill-gold text-gold' : 'text-gray-300'}`}
+                              className={`w-5 h-5 ${
+                                i < review.rating ? 'fill-gold text-gold' : 'text-gray-300'
+                              }`}
                             />
                           ))}
                         </div>
@@ -266,11 +300,16 @@ const FeedbackTab = () => {
                         </motion.button>
                       </div>
                     </div>
+
                     {review.reviewText && (
                       <p className="text-gray-700 mb-3">{review.reviewText}</p>
                     )}
                     {review.imageUrl && (
-                      <img src={review.imageUrl} alt="Review" className="w-full max-w-xs rounded-lg mt-3" />
+                      <img
+                        src={review.imageUrl}
+                        alt="Review"
+                        className="w-full max-w-xs rounded-lg mt-3"
+                      />
                     )}
                     <div className="text-sm text-gray-500 mt-3">
                       {new Date(review.createdAt).toLocaleDateString('en-US', {
@@ -287,6 +326,7 @@ const FeedbackTab = () => {
         </div>
       )}
 
+      {/* Empty State */}
       {orders.length === 0 && reviewedOrders.length === 0 && (
         <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
           <div className="text-6xl mb-4">📝</div>
@@ -298,37 +338,49 @@ const FeedbackTab = () => {
   );
 };
 
-// Order Review Card Component
+// ─── OrderReviewCard ──────────────────────────────────────────────────────────
 const OrderReviewCard = ({ order, index, onSubmit }) => {
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [errors, setErrors] = useState({});
+
+  // ── Per-field live validation ──────────────────────────────────────────────
+  const validateField = (field, value) => {
+    const newErrors = { ...errors };
+
+    if (field === 'rating') {
+      if (value === 0) newErrors.rating = 'Please select a star rating.';
+      else delete newErrors.rating;
+    }
+
+    if (field === 'reviewText') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0 && trimmed.length < 10) {
+        newErrors.reviewText = 'Review must be at least 10 characters.';
+      } else if (trimmed.length > 0 && /^\d+$/.test(trimmed)) {
+        newErrors.reviewText = 'Review cannot contain only numbers.';
+      } else if (trimmed.length > 0 && /^[^a-zA-Z0-9]+$/.test(trimmed)) {
+        newErrors.reviewText = 'Review cannot contain only special characters.';
+      } else {
+        delete newErrors.reviewText;
+      }
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
+    if (!file) return;
+    if (!validateImageFile(file)) return;
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
-        return;
-      }
-
-      setImageFile(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -337,11 +389,23 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
   };
 
   const handleSubmit = () => {
+    // Final validation before submit
+    if (!validateReviewFields(rating, reviewText)) return;
+
+    // Check if any live errors exist
+    if (Object.keys(errors).length > 0) {
+      toast.error('⚠️ Please fix the errors before submitting.');
+      return;
+    }
+
     onSubmit(order.orderId, rating, reviewText, imageFile);
+
+    // Reset state
     setRating(0);
     setReviewText('');
     setImageFile(null);
     setImagePreview('');
+    setErrors({});
   };
 
   return (
@@ -351,6 +415,7 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
       transition={{ delay: index * 0.1 }}
       className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 hover:border-primary transition-all"
     >
+      {/* Order Info */}
       <div className="flex gap-6 mb-6 flex-col sm:flex-row">
         <motion.img
           whileHover={{ scale: 1.05, rotate: 3 }}
@@ -360,7 +425,9 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
         />
         <div className="flex-1">
           <h3 className="font-bold text-xl mb-1">{order.foodItem}</h3>
-          <p className="text-gray-600 mb-2">{order.vendor} • Delivered {order.deliveredAt}</p>
+          <p className="text-gray-600 mb-2">
+            {order.vendor} • Delivered {order.deliveredAt}
+          </p>
           <p className="text-sm text-gray-500">Order {order.orderId}</p>
           <div className="mt-2 inline-flex items-center gap-2 bg-yellow-50 text-gold px-3 py-1 rounded-full text-sm font-semibold">
             ⭐ Write a review to earn 5 points!
@@ -371,24 +438,37 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
       <div className="space-y-4">
         {/* Star Rating */}
         <div>
-          <label className="block font-semibold mb-2">How was the food?</label>
+          <label className="block font-semibold mb-2">
+            How was the food? <span className="text-red-500">*</span>
+          </label>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <motion.button
                 key={star}
                 whileHover={{ scale: 1.2, rotate: 15 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setRating(star)}
+                onClick={() => {
+                  setRating(star);
+                  validateField('rating', star);
+                }}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
                 type="button"
                 className="transition-all"
               >
                 <Star
-                  className={`w-10 h-10 ${star <= rating ? 'fill-gold text-gold' : 'text-gray-300'
-                    }`}
+                  className={`w-10 h-10 ${
+                    star <= (hoverRating || rating) ? 'fill-gold text-gold' : 'text-gray-300'
+                  }`}
                 />
               </motion.button>
             ))}
           </div>
+          {errors.rating && (
+            <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+              <span>⚠️</span> {errors.rating}
+            </p>
+          )}
         </div>
 
         {/* Review Text */}
@@ -396,13 +476,35 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
           <label className="block font-semibold mb-2">Write a review (optional)</label>
           <textarea
             value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            placeholder="Tell us about your experience..."
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl resize-none focus:border-primary focus:outline-none transition-all"
+            onChange={(e) => {
+              setReviewText(e.target.value);
+              validateField('reviewText', e.target.value);
+            }}
+            placeholder="Tell us about your experience... (min 10 characters if provided)"
+            className={`w-full px-4 py-3 border-2 rounded-xl resize-none focus:outline-none transition-all ${
+              errors.reviewText
+                ? 'border-red-400 focus:border-red-500 bg-red-50'
+                : 'border-gray-200 focus:border-primary'
+            }`}
             rows="3"
             maxLength="500"
           />
-          <div className="text-sm text-gray-500 mt-1">{reviewText.length}/500 characters</div>
+          <div className="flex justify-between items-center mt-1">
+            {errors.reviewText ? (
+              <p className="text-red-500 text-sm flex items-center gap-1">
+                <span>⚠️</span> {errors.reviewText}
+              </p>
+            ) : (
+              <span />
+            )}
+            <span
+              className={`text-sm ml-auto ${
+                reviewText.length >= 450 ? 'text-red-500 font-semibold' : 'text-gray-500'
+              }`}
+            >
+              {reviewText.length}/500
+            </span>
+          </div>
         </div>
 
         {/* Image Upload */}
@@ -413,18 +515,18 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
             <label className="block">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif,image/webp"
                 onChange={handleImageChange}
                 className="hidden"
               />
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-gray-50 transition-all">
                 <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <p className="text-gray-600 font-semibold">Click to upload image</p>
-                <p className="text-sm text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                <p className="text-sm text-gray-500 mt-1">JPG, PNG, GIF, WEBP — max 5MB</p>
               </div>
             </label>
           ) : (
-            <div className="relative">
+            <div className="relative inline-block">
               <img
                 src={imagePreview}
                 alt="Preview"
@@ -432,6 +534,7 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
               />
               <button
                 onClick={removeImage}
+                type="button"
                 className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
               >
                 <X className="w-4 h-4" />
@@ -456,34 +559,49 @@ const OrderReviewCard = ({ order, index, onSubmit }) => {
   );
 };
 
-// Edit Review Form Component
+// ─── EditReviewForm ───────────────────────────────────────────────────────────
 const EditReviewForm = ({ review, onSave, onCancel }) => {
   const [rating, setRating] = useState(review.rating);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState(review.reviewText || '');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(review.imageUrl || '');
+  const [errors, setErrors] = useState({});
+
+  // ── Per-field live validation ──────────────────────────────────────────────
+  const validateField = (field, value) => {
+    const newErrors = { ...errors };
+
+    if (field === 'rating') {
+      if (value === 0) newErrors.rating = 'Please select a star rating.';
+      else delete newErrors.rating;
+    }
+
+    if (field === 'reviewText') {
+      const trimmed = value.trim();
+      if (trimmed.length > 0 && trimmed.length < 10) {
+        newErrors.reviewText = 'Review must be at least 10 characters.';
+      } else if (trimmed.length > 0 && /^\d+$/.test(trimmed)) {
+        newErrors.reviewText = 'Review cannot contain only numbers.';
+      } else if (trimmed.length > 0 && /^[^a-zA-Z0-9]+$/.test(trimmed)) {
+        newErrors.reviewText = 'Review cannot contain only special characters.';
+      } else {
+        delete newErrors.reviewText;
+      }
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
+    if (!file) return;
+    if (!validateImageFile(file)) return;
 
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
-        return;
-      }
-
-      setImageFile(file);
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -492,65 +610,123 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
   };
 
   const handleSave = () => {
+    // Final validation before saving
+    if (!validateReviewFields(rating, reviewText)) return;
+
+    if (Object.keys(errors).length > 0) {
+      toast.error('⚠️ Please fix the errors before saving.');
+      return;
+    }
+
     onSave(review._id, rating, reviewText, imageFile);
   };
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-xl">Edit Review</h3>
-        <button onClick={onCancel} className="p-2 hover:bg-gray-200 rounded-lg transition-all">
+        <button
+          onClick={onCancel}
+          type="button"
+          className="p-2 hover:bg-gray-200 rounded-lg transition-all"
+        >
           <X className="w-5 h-5" />
         </button>
       </div>
 
+      {/* Rating */}
       <div>
-        <label className="block font-semibold mb-2">Rating</label>
+        <label className="block font-semibold mb-2">
+          Rating <span className="text-red-500">*</span>
+        </label>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <motion.button
               key={star}
               whileHover={{ scale: 1.2, rotate: 15 }}
-              onClick={() => setRating(star)}
+              onClick={() => {
+                setRating(star);
+                validateField('rating', star);
+              }}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(0)}
               type="button"
             >
-              <Star className={`w-8 h-8 ${star <= rating ? 'fill-gold text-gold' : 'text-gray-300'}`} />
+              <Star
+                className={`w-8 h-8 ${
+                  star <= (hoverRating || rating) ? 'fill-gold text-gold' : 'text-gray-300'
+                }`}
+              />
             </motion.button>
           ))}
         </div>
+        {errors.rating && (
+          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+            <span>⚠️</span> {errors.rating}
+          </p>
+        )}
       </div>
 
+      {/* Review Text */}
       <div>
         <label className="block font-semibold mb-2">Review Text</label>
         <textarea
           value={reviewText}
-          onChange={(e) => setReviewText(e.target.value)}
-          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl resize-none focus:border-primary focus:outline-none"
+          onChange={(e) => {
+            setReviewText(e.target.value);
+            validateField('reviewText', e.target.value);
+          }}
+          placeholder="Min 10 characters if provided..."
+          className={`w-full px-4 py-3 border-2 rounded-xl resize-none focus:outline-none transition-all ${
+            errors.reviewText
+              ? 'border-red-400 focus:border-red-500 bg-red-50'
+              : 'border-gray-200 focus:border-primary'
+          }`}
           rows="3"
           maxLength="500"
         />
+        <div className="flex justify-between items-center mt-1">
+          {errors.reviewText ? (
+            <p className="text-red-500 text-sm flex items-center gap-1">
+              <span>⚠️</span> {errors.reviewText}
+            </p>
+          ) : (
+            <span />
+          )}
+          <span
+            className={`text-sm ml-auto ${
+              reviewText.length >= 450 ? 'text-red-500 font-semibold' : 'text-gray-500'
+            }`}
+          >
+            {reviewText.length}/500
+          </span>
+        </div>
       </div>
 
+      {/* Image Upload */}
       <div>
         <label className="block font-semibold mb-2">Photo</label>
         {!imagePreview ? (
           <label className="block">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleImageChange}
               className="hidden"
             />
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-primary transition-all">
               <Upload className="w-10 h-10 mx-auto mb-2 text-gray-400" />
               <p className="text-gray-600">Click to upload new image</p>
+              <p className="text-sm text-gray-500 mt-1">JPG, PNG, GIF, WEBP — max 5MB</p>
             </div>
           </label>
         ) : (
-          <div className="relative">
+          <div className="relative inline-block">
             <img src={imagePreview} alt="Preview" className="w-full max-w-xs rounded-lg" />
             <button
               onClick={removeImage}
+              type="button"
               className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
             >
               <X className="w-4 h-4" />
@@ -559,6 +735,7 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
         )}
       </div>
 
+      {/* Actions */}
       <div className="flex gap-3">
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -581,24 +758,6 @@ const EditReviewForm = ({ review, onSave, onCancel }) => {
       </div>
     </div>
   );
-
-  {/* Empty State with Illustration */ }
-  {
-    orders.length === 0 && (
-      <div className="text-center py-12">
-        <img
-          src="https://illustrations.popsy.co/amber/shrug.svg"
-          alt="No orders"
-          className="w-64 h-64 mx-auto mb-6"
-        />
-        <h3 className="text-2xl font-bold mb-2">No Orders Yet</h3>
-        <p className="text-gray-600">
-          Order some delicious food and you'll be able to leave a review!
-        </p>
-      </div>
-    )
-  }
-
 };
 
 export default FeedbackTab;
