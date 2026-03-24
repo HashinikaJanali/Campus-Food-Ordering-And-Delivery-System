@@ -4,12 +4,16 @@ import Footer from './Footer';
 
 const UserLayout = ({ children }) => {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+        <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
             <UserHeader />
-            <main className="flex-1 w-full min-h-screen">
-                {children || <Outlet />}
+            <main className="flex-1 w-full overflow-y-auto scroll-smooth">
+                <div className="min-h-full flex flex-col">
+                    <div className="flex-1">
+                        {children || <Outlet />}
+                    </div>
+                    <Footer />
+                </div>
             </main>
-            <Footer />
         </div>
     );
 };

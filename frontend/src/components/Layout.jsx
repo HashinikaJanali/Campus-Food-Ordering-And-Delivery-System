@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
   const [logoError, setLogoError] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Top Header */}
       <motion.nav
         initial={{ y: -100 }}
@@ -80,11 +80,15 @@ const Layout = ({ children }) => {
         </div>
       </motion.nav>
 
-      <main className="flex-1 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">{children}</div>
-      </main>
-      {/* Footer */}
-      <Footer />
+      <div className="flex-1 overflow-y-auto scroll-smooth">
+        <div className="min-h-full flex flex-col">
+          <main className="flex-1 pb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">{children}</div>
+          </main>
+          {/* Footer */}
+          <Footer />
+        </div>
+      </div>
     </div>
   );
 };
