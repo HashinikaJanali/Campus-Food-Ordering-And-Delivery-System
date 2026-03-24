@@ -4,7 +4,6 @@ import { Star, CheckCircle, Edit2, Trash2, X, Upload } from 'lucide-react';
 import { reviewAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 
 // Mock orders for demo
 const mockOrders = [
@@ -93,9 +92,12 @@ const FeedbackTab = () => {
     }
 
     const order = orders.find(o => o.orderId === orderId);
+    if (!order) {
+        toast.error('Order not found');
+        return;
+    }
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('userId', currentUser.userId);
       formData.append('userName', currentUser.userName);
@@ -109,11 +111,7 @@ const FeedbackTab = () => {
         formData.append('image', imageFile);
       }
 
-      const response = await axios.post('http://localhost:5000/api/reviews', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await reviewAPI.create(formData);
 
       toast.success(response.data.message);
       setSuccessMessage(true);
@@ -121,7 +119,7 @@ const FeedbackTab = () => {
 
       fetchUserReviews();
       refreshLoyaltyData();
-      setOrders(orders.filter(o => o.orderId !== orderId));
+      setOrders(prev => prev.filter(o => o.orderId !== orderId));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit review');
     }
@@ -137,13 +135,9 @@ const FeedbackTab = () => {
         formData.append('image', imageFile);
       }
 
-      await axios.put(`http://localhost:5000/api/reviews/${reviewId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await reviewAPI.update(reviewId, formData);
 
-      toast.success('Review updated successfully!');
+      toast.success(response.data.message || 'Review updated successfully!');
       setEditingReview(null);
       fetchUserReviews();
     } catch (error) {

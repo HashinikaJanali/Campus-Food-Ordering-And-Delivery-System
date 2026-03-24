@@ -4,12 +4,16 @@ import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
+import UserLayout from './components/UserLayout';
 import FeedbackPage from './pages/FeedbackPage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
+import UserHomePage from './pages/UserHomePage';
+import AdminDashboard from './pages/AdminDashboard';
 
 import AdminLayout from './components/AdminLayout';
+import AdminSubLayout from './components/AdminSubLayout';
 import AdminLogin from './pages/inventory/AdminLoginPage';
 import DashboardPage from './pages/inventory/DashboardPage';
 import FoodItemsPage from './pages/inventory/FoodItemsPage';
@@ -48,11 +52,15 @@ function App() {
               <Routes>
                 {/* Student routes */}
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-                <Route path="/orders" element={<Layout><OrderManagementPage /></Layout>} />
-                <Route path="/track" element={<Layout><OrderTrackingPage /></Layout>} />
-                <Route path="/history" element={<Layout><OrderHistoryPage /></Layout>} />
-                <Route path="/menu" element={<Layout><StudentMenuPage /></Layout>} />
-
+                <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
+                <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
+                <Route path="/history" element={<AdminSubLayout><OrderHistoryPage /></AdminSubLayout>} />
+                <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
+                <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
+                <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
+                
+                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                
                 {/* Admin routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
@@ -74,7 +82,7 @@ function App() {
                   <Route path="canteens" element={<CanteensPage />} />
                 </Route>
 
-              <Route path="*" element={<Navigate to="/feedback" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
           </Router>
 

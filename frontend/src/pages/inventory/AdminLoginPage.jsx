@@ -1,11 +1,22 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ChefHat, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminLogin() {
-  const [mode, setMode] = useState('login'); // login | register
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
+  const [mode, setMode] = useState(initialMode);
+  
+  // Update mode when URL search params change
+  useEffect(() => {
+    const newMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
+    if (newMode !== mode) {
+      setMode(newMode);
+    }
+  }, [searchParams, mode]);
+
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);

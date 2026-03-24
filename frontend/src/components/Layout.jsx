@@ -16,7 +16,7 @@ const Layout = ({ children }) => {
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 w-full bg-white border-b-2 border-gray-200 px-4 py-4 z-50 shadow-md"
+        className="sticky top-0 w-full bg-white border-b-2 border-gray-200 px-4 py-4 z-50 shadow-md"
       >
         <div className="w-full px-4 sm:px-8 flex justify-between items-center">
           
@@ -81,7 +81,7 @@ const Layout = ({ children }) => {
       </motion.nav>
 
       <main className="flex-1 pb-8">
-        <div className="w-full">{children}</div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">{children}</div>
       </main>
       {/* Footer */}
       <Footer />

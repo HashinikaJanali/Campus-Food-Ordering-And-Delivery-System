@@ -261,10 +261,10 @@ export default function StudentMenuPage() {
   const menuCats = categories.filter(c => items.some(i => i.category?._id === c._id));
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 sm:pt-20">
+    <>
       {/* Hero header */}
       <div className="bg-gradient-to-br from-admin-500 via-admin-600 to-admin-700 text-white">
-        <div className="px-4 sm:pl-32 sm:pr-8 py-10 sm:py-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
               <ChefHat size={24} className="text-white" />
@@ -364,6 +364,6 @@ export default function StudentMenuPage() {
           onStockUpdate={handleStockUpdate}
         />
       )}
-    </div>
+    </>
   );
 }
