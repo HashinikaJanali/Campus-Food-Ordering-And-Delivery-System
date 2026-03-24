@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock } from "lucide-react";
+import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock, Check, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -13,6 +13,66 @@ const STEPS = [
 ];
 
 const DELIVERY_CHARGE = 200; // Rs. 200 for off-campus delivery
+
+// Helper functions for card validation
+const getCardType = (cardNumber) => {
+  const num = cardNumber.replace(/\s/g, "");
+  const patterns = {
+    visa: /^4[0-9]{12}(?:[0-9]{3})?$/,
+    mastercard: /^5[1-5][0-9]{14}$/,
+    amex: /^3[47][0-9]{13}$/,
+    discover: /^6(?:011|5[0-9]{2})[0-9]{12}$/,
+  };
+  
+  for (const [type, pattern] of Object.entries(patterns)) {
+    if (pattern.test(num)) return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+  return null;
+};
+
+const validateCardNumber = (cardNumber) => {
+  const num = cardNumber.replace(/\s/g, "");
+  if (!/^\d+$/.test(num) || num.length < 13) return false;
+  
+  // Luhn algorithm
+  let sum = 0, isEven = false;
+  for (let i = num.length - 1; i >= 0; i--) {
+    let digit = parseInt(num[i], 10);
+    if (isEven) digit *= 2;
+    if (digit > 9) digit -= 9;
+    sum += digit;
+    isEven = !isEven;
+  }
+  return sum % 10 === 0;
+};
+
+const validateExpiryDate = (expiryDate) => {
+  if (!expiryDate || expiryDate.length !== 5) return null; // null = invalid format
+  
+  const [month, year] = expiryDate.split("/");
+  const monthNum = parseInt(month, 10);
+  const yearNum = parseInt(year, 10);
+  
+  // Check month validity
+  if (monthNum < 1 || monthNum > 12) return false;
+  
+  // Check year (assume 2000s if YY < 50, otherwise 1900s)
+  const currentYear = new Date().getFullYear() % 100;
+  const currentMonth = new Date().getMonth() + 1;
+  const fullYear = yearNum > 50 ? 1900 + yearNum : 2000 + yearNum;
+  const currentFullYear = new Date().getFullYear();
+  
+  if (fullYear < currentFullYear) return false;
+  if (fullYear === currentFullYear && monthNum < currentMonth) return false;
+  
+  return true;
+};
+
+const getExpiryStatus = (expiryDate) => {
+  const isValid = validateExpiryDate(expiryDate);
+  if (isValid === null) return "invalid"; // Invalid format
+  return isValid ? "valid" : "expired";
+};
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -488,7 +548,45 @@ const CheckoutPage = () => {
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all tracking-wider"
                 />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1 px-1">Test card: 4242 4242 4242 4242</p>
+              
+              {/* Card Validation Badges */}
+              {paymentInfo.cardNumber.replace(/\s/g, "").length >= 13 && (
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {getCardType(paymentInfo.cardNumber) && (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[11px] font-black text-blue-700 uppercase tracking-widest"
+                    >
+                      <CreditCard size={12} />
+                      {getCardType(paymentInfo.cardNumber)}
+                    </motion.div>
+                  )}
+                  {validateCardNumber(paymentInfo.cardNumber) ? (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-[11px] font-black text-green-700 uppercase tracking-widest"
+                    >
+                      <Check size={12} />
+                      Valid
+                    </motion.div>
+                  ) : (
+                    paymentInfo.cardNumber.replace(/\s/g, "").length === 16 && (
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-full text-[11px] font-black text-red-700 uppercase tracking-widest"
+                      >
+                        <X size={12} />
+                        Invalid
+                      </motion.div>
+                    )
+                  )}
+                </div>
+              )}
+              
+              <p className="text-[10px] text-gray-500 mt-2 px-1">Test card: 4242 4242 4242 4242</p>
             </div>
 
             <div className="flex gap-4">
@@ -505,6 +603,31 @@ const CheckoutPage = () => {
                   maxLength="5"
                   className="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
+                
+                {/* Expiry Date Validation Badge */}
+                {paymentInfo.expiryDate.length === 5 && (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest mt-2 ${
+                      getExpiryStatus(paymentInfo.expiryDate) === "valid"
+                        ? "bg-green-50 border border-green-200 text-green-700"
+                        : "bg-red-50 border border-red-200 text-red-700"
+                    }`}
+                  >
+                    {getExpiryStatus(paymentInfo.expiryDate) === "valid" ? (
+                      <>
+                        <Check size={12} />
+                        Valid
+                      </>
+                    ) : (
+                      <>
+                        <X size={12} />
+                        {getExpiryStatus(paymentInfo.expiryDate) === "expired" ? "Expired" : "Invalid"}
+                      </>
+                    )}
+                  </motion.div>
+                )}
               </div>
 
               {/* CVV */}
