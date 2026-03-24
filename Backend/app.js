@@ -49,6 +49,9 @@ app.use('/api/analytics', require('./Routes/inventory/analyticsRoutes'));
 app.use('/api/cart', require('./Routes/cartRoutes'));
 
 app.use("/api/orders", require("./Routes/orderRoute"));
+console.log("🔹 Registering payments routes...");
+app.use("/api/payments", require("./Routes/paymentRoutes"));
+console.log("✅ Payments routes registered successfully");
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)

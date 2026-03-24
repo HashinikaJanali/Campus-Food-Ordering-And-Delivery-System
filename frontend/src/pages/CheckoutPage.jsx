@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft } from "lucide-react";
+import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
 const STEPS = [
   { label: "Delivery Info", icon: MapPin },
   { label: "Review Order", icon: FileText },
+  { label: "Payment", icon: CreditCard },
   { label: "Confirmed", icon: CheckCircle2 },
 ];
+
+const DELIVERY_CHARGE = 200; // Rs. 200 for off-campus delivery
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -29,8 +32,119 @@ const CheckoutPage = () => {
     phoneNumber: "",
     landmark: "",
   });
+  const [paymentInfo, setPaymentInfo] = useState({
+    cardNumber: "",
+    cardName: "",
+    expiryDate: "",
+    cvv: "",
+  });
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
+
+  const handlePaymentChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === "cardNumber") {
+      // Format card number with spaces every 4 digits
+      const formatted = value.replace(/\s/g, "").replace(/(\d{4})/g, "$1 ").trim();
+      setPaymentInfo({ ...paymentInfo, [name]: formatted.slice(0, 19) });
+    } else if (name === "expiryDate") {
+      // Format expiry date (MM/YY)
+      const formatted = value.replace(/\D/g, "").slice(0, 4);
+      if (formatted.length >= 2) {
+        setPaymentInfo({ ...paymentInfo, [name]: `${formatted.slice(0, 2)}/${formatted.slice(2, 4)}` });
+      } else {
+        setPaymentInfo({ ...paymentInfo, [name]: formatted });
+      }
+    } else if (name === "cvv") {
+      // Only numeric, max 4 digits
+      setPaymentInfo({ ...paymentInfo, [name]: value.replace(/\D/g, "").slice(0, 4) });
+    } else {
+      setPaymentInfo({ ...paymentInfo, [name]: value });
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Validate payment info
+      if (!paymentInfo.cardNumber || !paymentInfo.cardName || !paymentInfo.expiryDate || !paymentInfo.cvv) {
+        throw new Error("Please fill in all payment details");
+      }
+
+      // Step 1: Create payment intent on backend
+      const paymentIntentResponse = await fetch("http://localhost:5001/api/payments/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: finalTotal,
+          currency: "inr",
+          email: admin?.email || "user@example.com",
+          cartItems: cart,
+          deliveryInfo,
+          addressType,
+        }),
+      });
+
+      if (!paymentIntentResponse.ok) {
+        const errorData = await paymentIntentResponse.json();
+        throw new Error(errorData.message || "Failed to create payment intent");
+      }
+
+      const paymentIntentData = await paymentIntentResponse.json();
+      const paymentIntentId = paymentIntentData.paymentIntentId;
+
+      // Step 2: Simulate card charge (In production, use Stripe Elements for safe tokenization)
+      // For testing, we'll directly confirm the payment
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 3: Confirm payment on backend
+      const confirmResponse = await fetch("http://localhost:5001/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId,
+          cart,
+          deliveryInfo,
+          addressType,
+          cartTotal,
+          deliveryCharge,
+        }),
+      });
+
+      if (!confirmResponse.ok) {
+        const errorData = await confirmResponse.json();
+        throw new Error(errorData.message || "Payment confirmation failed");
+      }
+
+      const orderData = await confirmResponse.json();
+      
+      setPlacedOrder({
+        _id: orderData.order._id,
+        createdAt: orderData.order.createdAt || new Date().toISOString(),
+        items: cart,
+        subtotal: cartTotal,
+        deliveryCharge: deliveryCharge,
+        total: finalTotal,
+        deliveryInfo,
+        addressType,
+        paymentMethod: "Credit Card",
+        paymentStatus: "Completed",
+      });
+      
+      clearCart();
+      setStep(3);
+    } catch (err) {
+      setError(err.message || "Payment failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate delivery charge
+  const deliveryCharge = addressType === "off-campus" ? DELIVERY_CHARGE : 0;
+  const finalTotal = cartTotal + deliveryCharge;
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -41,8 +155,11 @@ const CheckoutPage = () => {
         _id: "ORD-" + Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         items: cart,
-        total: cartTotal,
+        subtotal: cartTotal,
+        deliveryCharge: deliveryCharge,
+        total: finalTotal,
         deliveryInfo,
+        addressType,
       };
       setPlacedOrder(fakeOrder);
       clearCart();
@@ -275,9 +392,23 @@ const CheckoutPage = () => {
             )}
           </div>
 
-          <div className="flex justify-between font-black text-gray-900 text-base border-t-2 border-dashed border-gray-100 pt-4 mb-6">
-            <span>Total</span>
-            <span className="text-primary">Rs. {cartTotal?.toFixed(2)}</span>
+          <div className="flex justify-between font-black text-gray-900 text-base border-t-2 border-dashed border-gray-100 pt-4 mb-6 space-y-2">
+            <div className="w-full space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal</span>
+                <span className="font-bold text-gray-800">Rs. {cartTotal?.toFixed(2)}</span>
+              </div>
+              {deliveryCharge > 0 && (
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Delivery Charge</span>
+                  <span className="font-bold text-primary">Rs. {deliveryCharge.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-black text-gray-900 pt-2 border-t border-dashed border-gray-100">
+                <span>Total</span>
+                <span className="text-primary">Rs. {finalTotal.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -293,10 +424,10 @@ const CheckoutPage = () => {
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={handlePlaceOrder} disabled={loading}
+              onClick={() => setStep(2)} disabled={loading}
               className="flex-1 py-3.5 bg-primary hover:bg-primary-500 disabled:opacity-60 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition-all"
             >
-              {loading ? "Placing order..." : `Place Order · Rs. ${cartTotal?.toFixed(2)}`}
+              {loading ? "Processing..." : `Proceed to Payment · Rs. ${finalTotal.toFixed(2)}`}
             </motion.button>
           </div>
         </motion.div>
@@ -304,7 +435,137 @@ const CheckoutPage = () => {
     </div>
   );
 
-  // STEP 2 — Confirmed
+  // STEP 2 — Payment
+  if (step === 2) return (
+    <div className="min-h-screen bg-[#FFF9F5] font-body py-10 px-4">
+      <div className="max-w-lg mx-auto">
+        <StepBar />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-10"
+        >
+          <h2 className="font-display text-2xl font-bold text-gray-900 mb-6">Payment Details</h2>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+            <div className="flex items-start gap-2">
+              <Lock size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-700 font-medium">
+                Secure payment powered by Stripe. Your card details are encrypted and secure.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-5 mb-6">
+            {/* Card Holder Name */}
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Cardholder Name</label>
+              <input
+                type="text"
+                name="cardName"
+                value={paymentInfo.cardName}
+                onChange={handlePaymentChange}
+                placeholder="John Doe"
+                required
+                className="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+              />
+            </div>
+
+            {/* Card Number */}
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Card Number</label>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  name="cardNumber"
+                  value={paymentInfo.cardNumber}
+                  onChange={handlePaymentChange}
+                  placeholder="4242 4242 4242 4242"
+                  required
+                  maxLength="19"
+                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all tracking-wider"
+                />
+              </div>
+              <p className="text-[10px] text-gray-500 mt-1 px-1">Test card: 4242 4242 4242 4242</p>
+            </div>
+
+            <div className="flex gap-4">
+              {/* Expiry Date */}
+              <div className="flex-1">
+                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Expiry Date</label>
+                <input
+                  type="text"
+                  name="expiryDate"
+                  value={paymentInfo.expiryDate}
+                  onChange={handlePaymentChange}
+                  placeholder="MM/YY"
+                  required
+                  maxLength="5"
+                  className="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                />
+              </div>
+
+              {/* CVV */}
+              <div className="flex-1">
+                <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">CVV</label>
+                <input
+                  type="text"
+                  name="cvv"
+                  value={paymentInfo.cvv}
+                  onChange={handlePaymentChange}
+                  placeholder="123"
+                  required
+                  maxLength="4"
+                  className="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-6">
+            <div className="flex justify-between mb-2 text-xs text-gray-600">
+              <span>Subtotal</span>
+              <span className="font-bold text-gray-800">Rs. {cartTotal?.toFixed(2)}</span>
+            </div>
+            {deliveryCharge > 0 && (
+              <div className="flex justify-between text-xs text-gray-600 mb-2">
+                <span>Delivery Charge</span>
+                <span className="font-bold text-primary">Rs. {deliveryCharge.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-black text-gray-900 pt-2 border-t border-dashed border-gray-200">
+              <span>Total Amount</span>
+              <span className="text-primary text-lg">Rs. {finalTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium rounded-2xl px-4 py-3 mb-4">{error}</div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStep(1)}
+              className="flex items-center gap-2 px-5 py-3.5 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all"
+            >
+              <ArrowLeft size={15} /> Back
+            </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={handleProcessPayment}
+              disabled={loading || !paymentInfo.cardNumber || !paymentInfo.cardName || !paymentInfo.expiryDate || !paymentInfo.cvv}
+              className="flex-1 py-3.5 bg-primary hover:bg-primary-500 disabled:opacity-50 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition-all"
+            >
+              {loading ? "Processing Payment..." : `Pay Rs. ${finalTotal.toFixed(2)}`}
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+
+  // STEP 3 — Confirmed
   return (
     <div className="min-h-screen bg-[#FFF9F5] font-body flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -325,7 +586,7 @@ const CheckoutPage = () => {
             Your order <span className="font-black text-gray-800">{placedOrder?._id}</span> has been received.
           </p>
           <div className="bg-gray-50 rounded-2xl p-5 text-left text-sm mb-8 space-y-2 border border-gray-100">
-            {placedOrder?.deliveryInfo?.onCampusLocation ? (
+            {placedOrder?.addressType === "on-campus" ? (
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-500 font-medium">Type</span>
@@ -362,9 +623,21 @@ const CheckoutPage = () => {
                 )}
               </>
             )}
-            <div className="flex justify-between border-t border-dashed border-gray-200 pt-2">
-              <span className="font-black text-gray-700">Total</span>
-              <span className="font-black text-primary">Rs. {placedOrder?.total?.toFixed(2)}</span>
+            <div className="border-t border-dashed border-gray-200 pt-2 space-y-1 mt-2">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Subtotal</span>
+                <span className="font-bold">Rs. {placedOrder?.subtotal?.toFixed(2)}</span>
+              </div>
+              {placedOrder?.deliveryCharge > 0 && (
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Delivery Charge</span>
+                  <span className="font-bold text-primary">Rs. {placedOrder?.deliveryCharge?.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-black text-gray-700 text-sm">
+                <span>Total</span>
+                <span className="text-primary">Rs. {placedOrder?.total?.toFixed(2)}</span>
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
