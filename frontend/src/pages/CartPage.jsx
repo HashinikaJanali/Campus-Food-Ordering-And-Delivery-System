@@ -159,6 +159,14 @@ const CartPage = () => {
           >
             Proceed to Checkout <ArrowRight size={16} />
           </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={() => navigate("/menu")}
+            className="w-full py-4 mt-3 bg-white border-2 border-primary text-primary hover:bg-orange-50 font-black text-sm uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all"
+          >
+            Back to Menu
+          </motion.button>
         </motion.div>
 
       </div>
