@@ -69,7 +69,7 @@ const UserHomePage = () => {
                                     <TrendingUp size={18} /> EXPLORE MENU
                                 </button>
                                 <button
-                                    onClick={() => window.location.href = '#'}
+                                    onClick={() => window.location.href = '/signup'}
                                     className="w-full sm:w-auto px-10 py-5 bg-gray-900/40 backdrop-blur-md text-white border border-white/20 rounded-[1.5rem] font-black text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                                 >
                                     <TrendingUp size={18} /> CREATE ACCOUNT

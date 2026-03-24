@@ -58,13 +58,13 @@ const UserHeader = () => {
                     {/* Auth Buttons */}
                     <div className="hidden sm:flex items-center gap-3 mr-2">
                         <a
-                            href="#"
+                            href="/login"
                             className="text-xs font-black text-gray-400 hover:text-orange-600 px-4 py-2 transition-colors uppercase tracking-widest"
                         >
                             Log In
                         </a>
                         <a
-                            href="#"
+                            href="/signup"
                             className="text-xs font-black bg-orange-600 text-white px-6 py-2.5 rounded-xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-200 uppercase tracking-widest"
                         >
                             Sign Up
@@ -74,7 +74,7 @@ const UserHeader = () => {
                     <div className="flex items-center gap-2 sm:gap-4">
                         <motion.a
                             whileHover={{ scale: 1.1, rotate: 5 }}
-                            href="#" className="relative p-2 text-gray-600 hover:text-orange-500 transition-colors bg-gray-50 rounded-xl hover:bg-orange-50"
+                            href="/cart" className="relative p-2 text-gray-600 hover:text-orange-500 transition-colors bg-gray-50 rounded-xl hover:bg-orange-50"
                         >
                             <ShoppingCart className="w-6 h-6" />
                         </motion.a>
