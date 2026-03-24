@@ -2,23 +2,23 @@ import { Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useState } from 'react';
-import Footer from './Footer';
 import NotificationBell from './NotificationBell';
 import logoImage from '../assets/logo.png';
+import Footer from './Footer';
 
 const Layout = ({ children }) => {
   const { loyaltyData, loading } = useApp();
   const [logoError, setLogoError] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Navigation */}
+    <div className="flex flex-col min-h-screen">
+      {/* Top Header */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 w-full bg-white border-b-2 border-gray-200 px-4 sm:px-8 py-4 z-50 shadow-md"
+        className="sticky top-0 w-full bg-white border-b-2 border-gray-200 px-4 py-4 z-50 shadow-md"
       >
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <div className="w-full px-4 sm:px-8 flex justify-between items-center">
           
           {/* Left Section (Logo + Title) */}
           <div className="flex items-center gap-4">
@@ -58,7 +58,7 @@ const Layout = ({ children }) => {
           {/* Right Section (Notification Bell + Points Badge) */}
           <div className="flex items-center gap-4">
 
-            {/* 🔔 Notification Bell Added Here */}
+            {/* 🔔 Notification Bell */}
             <NotificationBell />
 
             {/* ⭐ Points Badge */}
@@ -80,11 +80,9 @@ const Layout = ({ children }) => {
         </div>
       </motion.nav>
 
-      {/* Main Content */}
-      <main className="flex-1 pt-24 sm:pt-28 pb-8 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto">{children}</div>
+      <main className="flex-1 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">{children}</div>
       </main>
-
       {/* Footer */}
       <Footer />
     </div>
