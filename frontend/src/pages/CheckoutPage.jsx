@@ -6,7 +6,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
 const STEPS = [
-  { label: "Delivery Info", icon: MapPin },
+  { label: "Pickup Info", icon: MapPin },
   { label: "Review Order", icon: FileText },
   { label: "Payment", icon: CreditCard },
   { label: "Confirmed", icon: CheckCircle2 },
@@ -119,9 +119,11 @@ const CheckoutPage = () => {
       }
 
       const orderData = await confirmResponse.json();
+      const simpleOrderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
       
       setPlacedOrder({
-        _id: orderData.order._id,
+        _id: simpleOrderId,
+        _dbId: orderData.order._id,
         createdAt: orderData.order.createdAt || new Date().toISOString(),
         items: cart,
         subtotal: cartTotal,
@@ -202,7 +204,7 @@ const CheckoutPage = () => {
     </div>
   );
 
-  // STEP 0 — Delivery Info
+  // STEP 0 — Pickup Info
   if (step === 0) return (
     <div className="min-h-screen bg-[#FFF9F5] font-body py-10 px-4">
       <div className="max-w-lg mx-auto">
@@ -211,11 +213,11 @@ const CheckoutPage = () => {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-10"
         >
-          <h2 className="font-display text-2xl font-bold text-gray-900 mb-6">Pickup and Delivery Information</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-900 mb-6">Pickup Information</h2>
           
           {/* Address Type Selection */}
           <div className="mb-8">
-            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Select delivery type</label>
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Select pickup type</label>
             <div className="flex gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -375,7 +377,7 @@ const CheckoutPage = () => {
 
           <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 mb-6 text-sm space-y-1.5">
             <div className="flex items-center gap-2 font-black text-primary text-[10px] uppercase tracking-widest mb-2">
-              <MapPin size={12} /> Pickup & Delivery Details
+              <MapPin size={12} /> Pickup Details
             </div>
             {addressType === "on-campus" && (
               <p className="text-gray-700 font-medium"><span className="font-black text-gray-900">Type:</span> Pickup from Campus Canteen</p>
@@ -641,10 +643,12 @@ const CheckoutPage = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => navigate("/order-history")}
-              className="flex-1 py-3.5 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-black text-sm rounded-2xl transition-all">
-              View Orders
-            </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/track")}
+              className="flex-1 py-3.5 border-2 border-primary hover:border-primary text-primary font-black text-sm rounded-2xl transition-all">
+              Track Order
+            </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               onClick={() => navigate("/")}

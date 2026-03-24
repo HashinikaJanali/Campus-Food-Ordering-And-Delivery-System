@@ -142,10 +142,6 @@ const CartPage = () => {
               <span>Subtotal</span>
               <span className="text-gray-800 font-bold">Rs. {cartTotal?.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm font-medium text-gray-500">
-              <span>Delivery fee</span>
-              <span className="text-success font-bold">Free</span>
-            </div>
             <div className="flex justify-between text-base font-black text-gray-900 border-t-2 border-dashed border-gray-100 pt-3">
               <span>Total</span>
               <span className="text-primary">Rs. {cartTotal?.toFixed(2)}</span>
