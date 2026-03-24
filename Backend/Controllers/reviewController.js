@@ -5,11 +5,16 @@ const aiService = require("../services/aiService");
 
 // Create a new review with AI analysis
 const createReview = async (req, res) => {
-  try {
-    console.log("📝 Creating review...");
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
+  console.log("=== CREATE REVIEW REQUEST RECEIVED ===");
+  console.log("Body:", req.body);
+  console.log("File:", req.file ? {
+    filename: req.file.filename,
+    originalname: req.file.originalname,
+    mimetype: req.file.mimetype,
+    size: req.file.size
+  } : "NO FILE RECEIVED");
 
+  try {
     const { userId, userName, orderId, foodItem, vendor, rating, reviewText } = req.body;
 
     if (!userId || !userName || !orderId || !foodItem || !vendor || !rating) {
@@ -21,7 +26,7 @@ const createReview = async (req, res) => {
 
     let imageUrl = "";
     if (req.file) {
-      imageUrl = `http://localhost:5001/uploads/${req.file.filename}`;
+      imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
       console.log("✅ Image uploaded:", imageUrl);
     }
 

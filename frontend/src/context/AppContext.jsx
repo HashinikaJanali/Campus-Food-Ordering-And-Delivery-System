@@ -16,7 +16,7 @@ export const AppProvider = ({ children }) => {
   // Mock user (replace with real auth later)
   const [currentUser, setCurrentUser] = useState({
     userId: 'USER001',
-    userName: 'John Doe',
+    userName: 'Saduni Perera',
   });
 
   const [loyaltyData, setLoyaltyData] = useState(null);

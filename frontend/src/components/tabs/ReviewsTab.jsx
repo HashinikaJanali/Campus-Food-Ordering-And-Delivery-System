@@ -650,7 +650,7 @@ const ReviewCard = ({ review, index }) => {
 
       {/* ⭐⭐⭐ AI SENTIMENT ANALYSIS - THIS IS THE NEW PART! ⭐⭐⭐ */}
       {review.aiAnalysis && (
-        <SentimentBadge aiAnalysis={review.aiAnalysis} />
+        <SentimentBadge aiAnalysis={review.aiAnalysis} sentiment={review.sentiment} />
       )}
       {/* ⭐⭐⭐ END OF NEW PART ⭐⭐⭐ */}
 
