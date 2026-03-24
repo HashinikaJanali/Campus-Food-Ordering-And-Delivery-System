@@ -7,14 +7,12 @@ import toast from 'react-hot-toast';
 
 // Mock orders for demo
 const mockOrders = [
-  { orderId: 'ORD-017', foodItem: 'Chicken Burger', vendor: 'Main Canteen', deliveredAt: '20 minutes ago', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-018', foodItem: 'Chicken Kottu', vendor: 'Engineering Canteen', deliveredAt: '1 hour ago', image: 'https://images.unsplash.com/photo-1606755962770-9e6ef2b4b91f?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-019', foodItem: 'Veg Fried Rice', vendor: 'New Building Canteen', deliveredAt: '2 hours ago', image: 'https://images.unsplash.com/photo-1604908177522-42f9d5eb08a0?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-020', foodItem: 'Chicken Sandwich', vendor: 'P&S Canteen', deliveredAt: '45 minutes ago', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-021', foodItem: 'Fish Bun', vendor: 'Anohana Canteen', deliveredAt: '30 minutes ago', image: 'https://images.unsplash.com/photo-1562967916-eb82221dfb29?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-022', foodItem: 'Rice & Curry', vendor: 'Main Canteen', deliveredAt: '3 hours ago', image: 'https://images.unsplash.com/photo-1604908177522-42f9d5eb08a0?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-023', foodItem: 'Egg Rotti', vendor: 'New Building Canteen', deliveredAt: '1 hour ago', image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-024', foodItem: 'Chicken Pasta', vendor: 'P&S Canteen', deliveredAt: '2 hours ago', image: 'https://images.unsplash.com/photo-1606755962770-9e6ef2b4b91f?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-101', foodItem: 'Cheese Pizza Slice', vendor: 'P&S Canteen', deliveredAt: '15 minutes ago', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-102', foodItem: 'Iced Coffee', vendor: 'Main Canteen', deliveredAt: '30 minutes ago', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-103', foodItem: 'Vegetable Noodles', vendor: 'Engineering Canteen', deliveredAt: '2 hours ago', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-104', foodItem: 'Chicken Submarine', vendor: 'Anohana Canteen', deliveredAt: '1 hour ago', image: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-105', foodItem: 'Chocolate Milkshake', vendor: 'New Building Canteen', deliveredAt: '10 minutes ago', image: 'https://images.unsplash.com/photo-1572490122703-0c4e0e5c839f?w=200&h=200&fit=crop' },
+  { orderId: 'ORD-106', foodItem: 'Chicken Biryani', vendor: 'Main Canteen', deliveredAt: '1.5 hours ago', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&h=200&fit=crop' },
 ];
 
 // Validation Helpers
