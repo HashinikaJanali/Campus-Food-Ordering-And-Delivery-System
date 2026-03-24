@@ -25,6 +25,13 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+
+
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const { admin, loading } = useAuth();
@@ -51,6 +58,11 @@ function App() {
           <Router>
               <Routes>
                 {/* Student routes */}
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/order-success" element={<OrderSuccessPage />} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
@@ -81,6 +93,9 @@ function App() {
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="canteens" element={<CanteensPage />} />
                 </Route>
+
+                
+
 
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

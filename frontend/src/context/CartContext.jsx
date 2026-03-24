@@ -51,6 +51,20 @@ export const CartProvider = ({ children }) => {
         }
     };
 
+    const updateQuantity = (productId, newQuantity) => {
+        if (newQuantity <= 0) {
+            removeFromCart(productId, '');
+            return;
+        }
+        setCart(prevCart =>
+            prevCart.map(item =>
+                (item.id === productId || item._id === productId)
+                    ? { ...item, quantity: newQuantity }
+                    : item
+            )
+        );
+    };
+
     const clearCart = async () => {
         // Release all stock in cart before clearing
         for (const item of cart) {
@@ -65,14 +79,17 @@ export const CartProvider = ({ children }) => {
     };
 
     const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     return (
         <CartContext.Provider value={{
             cart,
             addToCart,
             removeFromCart,
+            updateQuantity,
             clearCart,
-            cartCount
+            cartCount,
+            cartTotal
         }}>
             {children}
         </CartContext.Provider>
