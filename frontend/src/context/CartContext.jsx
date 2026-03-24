@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -8,88 +9,184 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(() => {
-        const savedCart = localStorage.getItem('cart');
-        return savedCart ? JSON.parse(savedCart) : [];
+        // Initialize from localStorage for guests
+        const savedCart = localStorage.getItem('guestCart');
+        return savedCart ? JSON.parse(savedCart) : { items: [], totalAmount: 0 };
     });
+    const [loading, setLoading] = useState(false);
+    const { admin } = useAuth();
 
+    // Save cart to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cart));
+        localStorage.setItem('guestCart', JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = async (product) => {
+    // Load cart when user logs in
+    useEffect(() => {
+        if (admin) {
+            loadCart();
+        }
+    }, [admin]);
+
+    const loadCart = async () => {
         try {
-            const response = await api.post(`/inventory/${product._id}/reserve`, { quantity: 1 });
-            if (response.data.success) {
-                setCart(prevCart => {
-                    const existingItem = prevCart.find(item => item._id === product._id);
-                    if (existingItem) {
-                        return prevCart.map(item =>
-                            item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
-                        );
-                    }
-                    return [...prevCart, { ...product, quantity: 1 }];
+            const response = await api.get('/cart');
+            setCart(response.data);
+        } catch (error) {
+            console.error('Error loading cart:', error);
+        }
+    };
+
+    const addToCart = async (product) => {
+        // For authenticated users, send to backend
+        if (admin) {
+            setLoading(true);
+            try {
+                const response = await api.post('/cart/add', {
+                    foodItemId: product._id,
+                    quantity: 1
                 });
+                setCart(response.data);
                 toast.success(`Added ${product.name} to cart!`);
                 return true;
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to add to cart');
+                return false;
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to add to cart');
-            return false;
+        } else {
+            // For guest users, store in localStorage
+            setCart(prevCart => {
+                const existingItem = prevCart.items?.find(item => item.foodItem?._id === product._id);
+                let updatedItems;
+
+                if (existingItem) {
+                    updatedItems = prevCart.items.map(item =>
+                        item.foodItem?._id === product._id
+                            ? { ...item, quantity: item.quantity + 1 }
+                            : item
+                    );
+                } else {
+                    updatedItems = [...(prevCart.items || []), {
+                        foodItem: { _id: product._id, ...product },
+                        quantity: 1,
+                        price: product.price,
+                        name: product.name,
+                        image: product.image,
+                        canteen: product.canteen || { name: "Main Canteen" }
+                    }];
+                }
+
+                const totalAmount = updatedItems.reduce((total, item) => 
+                    total + (item.price * item.quantity), 0
+                );
+
+                return { items: updatedItems, totalAmount };
+            });
+
+            toast.success(`Added ${product.name} to cart!`);
+            return true;
         }
     };
 
-    const removeFromCart = async (productId, name) => {
-        try {
-            const item = cart.find(i => i._id === productId);
-            if (!item) return;
+    const updateQuantity = (foodItemId, newQuantity) => {
+        if (admin) {
+            // For authenticated users, update on backend
+            (async () => {
+                try {
+                    const response = await api.put('/cart/update', {
+                        foodItemId,
+                        quantity: newQuantity
+                    });
+                    setCart(response.data);
+                } catch (error) {
+                    toast.error(error.response?.data?.message || 'Failed to update quantity');
+                }
+            })();
+        } else {
+            // For guest users, update in localStorage
+            if (newQuantity <= 0) {
+                removeFromCart(foodItemId);
+                return;
+            }
 
-            await api.post(`/inventory/${productId}/release`, { quantity: item.quantity });
-            setCart(prevCart => prevCart.filter(item => item._id !== productId));
-            toast.success(`Removed ${name} from cart and released stock.`);
-        } catch (error) {
-            toast.error('Failed to update inventory while removing item');
+            setCart(prevCart => {
+                const updatedItems = prevCart.items.map(item =>
+                    item.foodItem?._id === foodItemId
+                        ? { ...item, quantity: newQuantity }
+                        : item
+                );
+
+                const totalAmount = updatedItems.reduce((total, item) => 
+                    total + (item.price * item.quantity), 0
+                );
+
+                return { items: updatedItems, totalAmount };
+            });
         }
     };
 
-    const updateQuantity = (productId, newQuantity) => {
-        if (newQuantity <= 0) {
-            removeFromCart(productId, '');
-            return;
+    const removeFromCart = (foodItemId) => {
+        if (admin) {
+            // For authenticated users, remove from backend
+            (async () => {
+                try {
+                    const response = await api.delete(`/cart/remove/${foodItemId}`);
+                    setCart(response.data);
+                    toast.success('Item removed from cart');
+                } catch (error) {
+                    toast.error('Failed to remove item from cart');
+                }
+            })();
+        } else {
+            // For guest users, remove from localStorage
+            setCart(prevCart => {
+                const updatedItems = prevCart.items.filter(item => 
+                    item.foodItem?._id !== foodItemId
+                );
+
+                const totalAmount = updatedItems.reduce((total, item) => 
+                    total + (item.price * item.quantity), 0
+                );
+
+                return { items: updatedItems, totalAmount };
+            });
+
+            toast.success('Item removed from cart');
         }
-        setCart(prevCart =>
-            prevCart.map(item =>
-                (item.id === productId || item._id === productId)
-                    ? { ...item, quantity: newQuantity }
-                    : item
-            )
-        );
     };
 
     const clearCart = async () => {
-        // Release all stock in cart before clearing
-        for (const item of cart) {
+        if (admin) {
+            // For authenticated users, clear on backend
             try {
-                await api.post(`/inventory/${item._id}/release`, { quantity: item.quantity });
+                await api.delete('/cart/clear');
+                setCart({ items: [], totalAmount: 0 });
+                toast.success('Cart cleared');
             } catch (error) {
-                console.error(`Failed to release stock for ${item.name}`);
+                toast.error('Failed to clear cart');
             }
+        } else {
+            // For guest users, clear localStorage
+            setCart({ items: [], totalAmount: 0 });
+            toast.success('Cart cleared');
         }
-        setCart([]);
-        toast.success('Cart cleared and stock released.');
     };
 
-    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
-    const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const cartCount = cart.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+    const cartTotal = cart.totalAmount || 0;
 
     return (
         <CartContext.Provider value={{
-            cart,
+            cart: cart.items || [],
             addToCart,
             removeFromCart,
             updateQuantity,
             clearCart,
             cartCount,
-            cartTotal
+            cartTotal,
+            loading
         }}>
             {children}
         </CartContext.Provider>

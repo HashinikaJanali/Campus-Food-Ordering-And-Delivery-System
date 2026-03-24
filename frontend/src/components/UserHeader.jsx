@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import logoImage from '../assets/logo.png';
+import { useCart } from '../context/CartContext';
 
 const UserHeader = () => {
     const [logoError, setLogoError] = useState(false);
     const location = useLocation();
+    const { cartCount } = useCart();
 
     return (
         <motion.nav
@@ -77,6 +79,15 @@ const UserHeader = () => {
                             href="/cart" className="relative p-2 text-gray-600 hover:text-orange-500 transition-colors bg-gray-50 rounded-xl hover:bg-orange-50"
                         >
                             <ShoppingCart className="w-6 h-6" />
+                            {cartCount > 0 && (
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center ring-2 ring-white"
+                                >
+                                    {cartCount > 99 ? '99+' : cartCount}
+                                </motion.div>
+                            )}
                         </motion.a>
                         <motion.a
                             whileHover={{ scale: 1.1, rotate: -5 }}

@@ -64,7 +64,7 @@ const CartPage = () => {
           <AnimatePresence>
             {cart.map((item, i) => (
               <motion.div
-                key={item.id || item._id}
+                key={item.foodItem._id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
@@ -72,29 +72,42 @@ const CartPage = () => {
                 className="flex items-center gap-4 px-8 py-5 border-b border-gray-50 last:border-0 group"
               >
                 <div className="w-16 h-16 rounded-2xl overflow-hidden bg-orange-50 flex-shrink-0">
-                  {item.image
-                    ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>
-                  }
+                  {item.image ? (
+                    <img
+                      src={
+                        item.image.startsWith('http')
+                          ? item.image
+                          : `http://localhost:5001/uploads/${item.image}`
+                      }
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xl">🍽️</div>';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl">🍽️</div>
+                  )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-gray-900 text-sm uppercase tracking-tight leading-tight truncate">{item.name}</p>
                   <p className="text-[10px] text-primary font-black uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                    <Store size={11} /> {item.canteen?.name || item.canteen || "Main Canteen"}
+                    <Store size={11} /> {item.canteen?.name || "Main Canteen"}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => updateQuantity(item.id || item._id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.foodItem._id, item.quantity - 1)}
                     className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-orange-100 hover:text-primary flex items-center justify-center transition-all"
                   >
                     <Minus size={14} />
                   </button>
                   <span className="w-6 text-center text-sm font-black text-gray-800">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.id || item._id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.foodItem._id, item.quantity + 1)}
                     className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-orange-100 hover:text-primary flex items-center justify-center transition-all"
                   >
                     <Plus size={14} />
@@ -106,7 +119,7 @@ const CartPage = () => {
                 </p>
 
                 <button
-                  onClick={() => removeFromCart(item.id || item._id)}
+                  onClick={() => removeFromCart(item.foodItem._id)}
                   className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                 >
                   <Trash2 size={15} />
