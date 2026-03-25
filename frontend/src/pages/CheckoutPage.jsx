@@ -710,7 +710,55 @@ const CheckoutPage = () => {
           <p className="text-gray-500 text-sm font-medium mb-6">
             Your order <span className="font-black text-gray-800">{placedOrder?._id}</span> has been received.
           </p>
+          {/* Order Items */}
+          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-4 mb-6 border border-orange-100">
+            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Order Items</h3>
+            <div className="space-y-3">
+              {placedOrder?.items?.map((item) => (
+                <motion.div
+                  key={item.id || item._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 bg-white rounded-xl p-3 border border-orange-100 hover:shadow-md transition-shadow"
+                >
+                  {/* Item Image */}
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-lg">🍽️</div>
+                    )}
+                  </div>
+
+                  {/* Item Details - Middle */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-gray-900 uppercase tracking-tight whitespace-nowrap">
+                      {item.name}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] mt-0.5">
+                      <span className="font-black text-white bg-primary px-1.5 py-0.5 rounded text-xs">
+                        ×{item.quantity}
+                      </span>
+                      <span className="text-gray-600 font-medium">
+                        Rs. {item.price?.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Item Total Price - Right */}
+                  <div className="text-right flex flex-col justify-center flex-shrink-0">
+                    <p className="text-xs font-black text-gray-900">
+                      Rs. {(item.price * item.quantity)?.toFixed(2)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Delivery Information */}
           <div className="bg-gray-50 rounded-2xl p-5 text-left text-sm mb-8 space-y-2 border border-gray-100">
+            <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Delivery Details</h3>
             {placedOrder?.addressType === "on-campus" ? (
               <div>
                 <div className="flex justify-between mb-2">
@@ -748,7 +796,7 @@ const CheckoutPage = () => {
                 )}
               </>
             )}
-            <div className="border-t border-dashed border-gray-200 pt-2 space-y-1 mt-2">
+            <div className="border-t border-dashed border-gray-200 pt-2 space-y-1 mt-3">
               <div className="flex justify-between text-xs text-gray-600">
                 <span>Subtotal</span>
                 <span className="font-bold">Rs. {placedOrder?.subtotal?.toFixed(2)}</span>
@@ -759,8 +807,8 @@ const CheckoutPage = () => {
                   <span className="font-bold text-primary">Rs. {placedOrder?.deliveryCharge?.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-black text-gray-700 text-sm">
-                <span>Total</span>
+              <div className="flex justify-between font-black text-gray-700 text-sm pt-1">
+                <span>Total Amount</span>
                 <span className="text-primary">Rs. {placedOrder?.total?.toFixed(2)}</span>
               </div>
             </div>
