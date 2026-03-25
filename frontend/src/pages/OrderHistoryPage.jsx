@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronDown, RotateCcw } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import StatusBadge from '../components/orders/StatusBadge';
+import OrderManagementSidebar from '../components/OrderManagementSidebar';
 
 const OrderHistoryPage = () => {
-  const [expandedId, setExpandedId] = useState(null);
   const [filterDate, setFilterDate] = useState('all');
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const historyOrders = MOCK_ORDERS.filter(o =>
     ['picked_up', 'cancelled'].includes(o.status)
@@ -16,175 +19,251 @@ const OrderHistoryPage = () => {
 
   const dates = [...new Set(historyOrders.map(o => o.date))].sort((a, b) => b.localeCompare(a));
 
-  const filtered = filterDate === 'all'
+  const filtered = (filterDate === 'all'
     ? historyOrders
-    : historyOrders.filter(o => o.date === filterDate);
+    : historyOrders.filter(o => o.date === filterDate)).filter(o => {
+    const matchSearch = search === '' ||
+      (o.id || '').toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer || '').toLowerCase().includes(search.toLowerCase());
+    return matchSearch;
+  });
 
+  const completedCount = filtered.filter(o => o.status === 'picked_up').length;
   const totalSpent = filtered
     .filter(o => o.status === 'picked_up')
     .reduce((sum, o) => sum + o.total, 0);
 
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = filtered.slice(startIdx, startIdx + itemsPerPage);
+
+  const handlePageChange = (pageNum) => {
+    setCurrentPage(pageNum);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 py-10">
-      {/* Hero Banner */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-gradient-primary rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 text-9xl opacity-10">📋</div>
-        <motion.div
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-        />
-        <div className="relative z-10">
-          <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="font-display text-3xl sm:text-5xl font-bold mb-3"
-          >
-            📋 Order History
-          </motion.h1>
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg sm:text-xl opacity-95"
-          >
-            View all past completed and cancelled orders
-          </motion.p>
-        </div>
-      </motion.div>
+    <div className="min-h-screen bg-gray-50">
+      <OrderManagementSidebar />
+      <div className="overflow-y-auto ml-80">  
+        <div className="space-y-6 p-8">
 
-      {/* Summary + Date Filter */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="flex flex-col sm:flex-row gap-4"
-      >
-        {/* Summary */}
-        <div className="flex-1 grid grid-cols-2 gap-4">
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{filtered.filter(o => o.status === 'picked_up').length}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed</p>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold font-display text-gray-900">Order History</h1>
+              <p className="text-gray-500 text-sm mt-1">View all past completed and cancelled orders</p>
+            </div>
+            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
+              <RefreshCw size={15} />
+              Refresh
+            </button>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center">
-            <p className="text-2xl font-bold text-blue-600">Rs. {totalSpent.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Total Spent</p>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Total Orders</p>
+              <p className="text-3xl font-bold text-gray-900">{filtered.length.toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-2">Total history last 365 days</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Completed Orders</p>
+              <p className="text-3xl font-bold text-emerald-600">{completedCount.toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-2">Completed Order last 365 days</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Cancelled Orders</p>
+              <p className="text-3xl font-bold text-red-600">{(filtered.length - completedCount).toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-2">Cancelled Order last 365 days</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Total Spent</p>
+              <p className="text-3xl font-bold text-blue-600">₹{totalSpent.toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-2">Total Spent last 365 days</p>
+            </div>
           </div>
-        </div>
 
-        {/* Date Filter */}
-        <div className="flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
-          <Calendar className="w-5 h-5 text-gray-400 shrink-0" />
-          <select
-            value={filterDate}
-            onChange={e => setFilterDate(e.target.value)}
-            className="bg-transparent text-gray-700 font-medium text-sm focus:outline-none"
-          >
-            <option value="all">All Dates</option>
-            {dates.map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </div>
-      </motion.div>
+          {/* Search and Filter Bar */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, Order ID..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm
+                    focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700 placeholder-gray-400 transition-colors"
+                />
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <select
+                  value={filterDate}
+                  onChange={(e) => {
+                    setFilterDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-transparent text-gray-700 font-medium text-sm focus:outline-none cursor-pointer"
+                >
+                  <option value="all">All Dates</option>
+                  {dates.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <button className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200">
+                More Filter
+              </button>
+            </div>
+          </div>
 
-      {/* History List */}
-      <AnimatePresence>
-        {filtered.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white rounded-2xl p-12 text-center shadow-md"
-          >
-            <p className="text-5xl mb-4">📭</p>
-            <p className="text-gray-500 font-medium">No order history found</p>
-          </motion.div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden"
-              >
-                {/* Header */}
-                <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-bold text-gray-800">{order.id}</span>
-                      <StatusBadge status={order.status} />
-                    </div>
-                    <p className="text-sm text-gray-500">{order.customer} · {order.date} · {order.time}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">📍 {order.location}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400">Total</p>
-                      <p className="font-bold text-gray-800 text-lg">Rs. {order.total}</p>
-                    </div>
-                    <button
-                      onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
-                      className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
-                      <motion.div animate={{ rotate: expandedId === order.id ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
-                      </motion.div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded */}
-                <AnimatePresence>
-                  {expandedId === order.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="border-t border-gray-100 px-5 py-4 space-y-4">
+          {/* Table */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left text-gray-700 font-semibold px-6 py-4">Canteen / Item Name</th>
+                    <th className="text-left text-gray-700 font-semibold px-6 py-4">Customer Name</th>
+                    <th className="text-left text-gray-700 font-semibold px-6 py-4">Order Id</th>
+                    <th className="text-left text-gray-700 font-semibold px-6 py-4">Amount</th>
+                    <th className="text-left text-gray-700 font-semibold px-6 py-4">Status</th>
+                    <th className="text-center text-gray-700 font-semibold px-6 py-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {paginatedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12">
                         <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Items</p>
-                          <div className="space-y-1.5">
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="flex justify-between text-sm">
-                                <span className="text-gray-600">{item.name} <span className="text-gray-400">×{item.qty}</span></span>
-                                <span className="font-medium text-gray-700">Rs. {item.price * item.qty}</span>
+                          <p className="text-4xl mb-3">📭</p>
+                          <p className="font-semibold text-gray-600">No order history found</p>
+                          <p className="text-sm text-gray-400 mt-1">Try a different date or search term</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        {/* Item */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                              <div className="w-full h-full bg-gradient-to-br from-orange-200 to-orange-100 flex items-center justify-center text-xs font-bold">
+                                {(order.items?.[0]?.name || 'F')[0]}
                               </div>
-                            ))}
-                            <div className="flex justify-between text-sm font-semibold border-t border-dashed border-gray-200 pt-1.5 mt-1.5">
-                              <span>Total</span>
-                              <span>Rs. {order.total}</span>
+                            </div>
+                            <div>
+                              <p className="text-gray-900 font-medium">{order.items?.[0]?.name || 'Food Item'}</p>
+                              <p className="text-gray-500 text-xs">Canteen</p>
                             </div>
                           </div>
-                        </div>
-
-                        {order.status === 'picked_up' && (
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-600 font-semibold text-sm rounded-xl transition-all"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                            Reorder
-                          </motion.button>
-                        )}
-                      </div>
-                    </motion.div>
+                        </td>
+                        
+                        {/* Customer Name */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                              {(order.customer || 'U')[0]}
+                            </div>
+                            <div>
+                              <p className="text-gray-900 font-medium">{order.customer || 'Unknown'}</p>
+                              <p className="text-gray-500 text-xs">Student</p>
+                            </div>
+                          </div>
+                        </td>
+                        
+                        {/* Order ID */}
+                        <td className="px-6 py-4">
+                          <p className="text-gray-900 font-medium">{order.id}</p>
+                          <p className="text-gray-500 text-xs">{order.date}</p>
+                        </td>
+                        
+                        {/* Amount */}
+                        <td className="px-6 py-4">
+                          <p className="text-gray-900 font-semibold">₹{order.total.toFixed(2)}</p>
+                          <p className="text-gray-500 text-xs">Paid in Full</p>
+                        </td>
+                        
+                        {/* Status */}
+                        <td className="px-6 py-4">
+                          <StatusBadge status={order.status} />
+                        </td>
+                        
+                        {/* Action */}
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                              <MoreHorizontal size={16} className="text-gray-500" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {paginatedOrders.length > 0 && (
+              <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 bg-gray-50">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return pageNum >= 1 && pageNum <= totalPages ? (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-orange-600 text-white'
+                            : 'text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ) : null;
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };

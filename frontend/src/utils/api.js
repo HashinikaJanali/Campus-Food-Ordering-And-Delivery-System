@@ -62,6 +62,12 @@ api.interceptors.response.use(
     // 2. We're NOT on the login page
     // 3. The request was specifically an admin-session request
     if (is401 && !isLoginPage && error.config?._isAdminRequest) {
+// Response interceptor - handle auth errors (ADMIN ONLY)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Only redirect to admin/login if it's an ADMIN endpoint getting 401
+    if (error.response?.status === 401 && !error.config.url.includes('/users/')) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
       
