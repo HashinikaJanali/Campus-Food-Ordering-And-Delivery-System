@@ -84,11 +84,11 @@ function App() {
             <Router>
               <Routes>
                 {/* Student routes */}
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<UserProtectedRoute><CheckoutPage /></UserProtectedRoute>} />
-                <Route path="/order-success" element={<OrderSuccessPage />} />
+                <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
+                <Route path="/login" element={<UserLayout><LoginPage /></UserLayout>} />
+                <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
+                <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
