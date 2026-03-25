@@ -33,6 +33,7 @@ import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
+import UserProfilePage from "./pages/UserProfilePage";
 
 
 // Protected Route
@@ -91,6 +92,7 @@ function App() {
                 <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
+                <Route path="/profile" element={<UserLayout><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/order/:orderId" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />

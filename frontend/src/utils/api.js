@@ -14,11 +14,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor - handle auth errors
+// Response interceptor - handle auth errors (ADMIN ONLY)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only redirect to admin/login if it's an ADMIN endpoint getting 401
+    if (error.response?.status === 401 && !error.config.url.includes('/users/')) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
       window.location.href = '/admin/login';
