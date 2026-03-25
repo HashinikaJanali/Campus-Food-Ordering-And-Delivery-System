@@ -102,10 +102,10 @@ function App() {
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
-                
-                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                
+
+
                 {/* Admin routes */}
+                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
@@ -127,46 +127,44 @@ function App() {
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
 
-                
 
-
-              <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-          </Router>
+            </Router>
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3500,
-              style: {
-                background: '#fff',
-                color: '#111827',
-                fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
-                fontSize: '14px',
-                borderRadius: '12px',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#f97316',
-                  secondary: '#fff',
-                },
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3500,
                 style: {
-                  borderLeft: '4px solid #f97316',
+                  background: '#fff',
+                  color: '#111827',
+                  fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
+                  fontSize: '14px',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#EF4444',
-                  secondary: '#fff',
+                success: {
+                  iconTheme: {
+                    primary: '#f97316',
+                    secondary: '#fff',
+                  },
+                  style: {
+                    borderLeft: '4px solid #f97316',
+                  },
                 },
-                style: {
-                  borderLeft: '4px solid #ef4444',
+                error: {
+                  iconTheme: {
+                    primary: '#EF4444',
+                    secondary: '#fff',
+                  },
+                  style: {
+                    borderLeft: '4px solid #ef4444',
+                  },
                 },
-              },
-            }}
-          />
-        </CartProvider>
+              }}
+            />
+          </CartProvider>
         </UserAuthProvider>
       </AuthProvider>
     </AppProvider>

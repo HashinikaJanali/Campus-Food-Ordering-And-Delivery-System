@@ -72,7 +72,7 @@ export default function AdminLogin() {
         await register(form.name, form.email, form.password);
         toast.success('Account created!');
       }
-      navigate('/admin/dashboard');
+      navigate('/admin/management');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Authentication failed');
     } finally {
