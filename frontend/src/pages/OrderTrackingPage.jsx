@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatRs } from '../utils/currency';
 import { Search, MapPin, RefreshCw } from 'lucide-react';
 import { MOCK_ORDERS, STATUS_CONFIG } from '../constants/orderConstants';
 import OrderManagementSidebar from '../components/OrderManagementSidebar';
@@ -103,7 +104,7 @@ const OrderTrackingPage = () => {
                           </div>
                           <p className="text-sm text-gray-500">Ordered at {order.time}</p>
                         </div>
-                        <p className="font-semibold text-gray-900 text-lg">₹{order.total.toFixed(2)}</p>
+                        <p className="font-semibold text-gray-900 text-lg">{formatRs(order.total)}</p>
                       </div>
 
                       {/* ETA and Pickup Info */}
@@ -119,7 +120,7 @@ const OrderTrackingPage = () => {
                           {order.items.map((item, i) => (
                             <div key={i} className="flex justify-between text-sm text-gray-600">
                               <span>{item.name} ×{item.qty}</span>
-                              <span className="font-medium">₹{(item.price * item.qty).toFixed(2)}</span>
+                              <span className="font-medium">{formatRs(item.price * item.qty)}</span>
                             </div>
                           ))}
                         </div>
@@ -154,7 +155,7 @@ const OrderTrackingPage = () => {
                     </div>
                     <p className="text-sm text-gray-500">Ordered at {trackedOrder.time}</p>
                   </div>
-                  <p className="font-semibold text-gray-900 text-lg">₹{trackedOrder.total.toFixed(2)}</p>
+                  <p className="font-semibold text-gray-900 text-lg">{formatRs(trackedOrder.total)}</p>
                 </div>
 
                 {/* ETA and Pickup Info */}
@@ -170,7 +171,7 @@ const OrderTrackingPage = () => {
                     {trackedOrder.items.map((item, i) => (
                       <div key={i} className="flex justify-between text-sm text-gray-600">
                         <span>{item.name} ×{item.qty}</span>
-                        <span className="font-medium">₹{(item.price * item.qty).toFixed(2)}</span>
+                        <span className="font-medium">{formatRs(item.price * item.qty)}</span>
                       </div>
                     ))}
                   </div>

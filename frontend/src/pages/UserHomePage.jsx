@@ -134,22 +134,8 @@ const UserHomePage = () => {
                                 >
                                     <TrendingUp size={18} /> EXPLORE MENU
                                 </button>
-                                {!isAuthenticated && (
-                                    <>
-                                        <button
-                                            onClick={() => setShowLoginModal(true)}
-                                            className="w-full sm:w-auto px-10 py-5 bg-gray-900/40 backdrop-blur-md text-white border border-white/20 rounded-[1.5rem] font-black text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <User size={18} /> LOG IN
-                                        </button>
-                                        <button
-                                            onClick={() => setShowSignupModal(true)}
-                                            className="w-full sm:w-auto px-10 py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-sm hover:bg-orange-700 transition-all shadow-2xl flex items-center justify-center gap-2"
-                                        >
-                                            <UserPlus size={18} /> SIGN UP
-                                        </button>
-                                    </>
-                                )}
+                                
+                            
                             </div>
                         </div>
 

@@ -10,6 +10,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+import DeliveryStaffPage from './pages/DeliveryStaffPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import UserHomePage from './pages/UserHomePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -102,6 +103,10 @@ function App() {
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
+
+
+
+                <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
 
 
                 {/* Admin routes */}
