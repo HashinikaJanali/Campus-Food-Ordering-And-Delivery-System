@@ -38,6 +38,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/ai", aiRoutes);
+<<<<<<<<< Temporary merge branch 1
+app.use("/api/users", userRoutes);
+=========
+app.use("/api/promotions", require("./Routes/promotionRoutes"));
+>>>>>>>>> Temporary merge branch 2
 
 
 app.use('/api/auth', require('./Routes/authRoutes'));

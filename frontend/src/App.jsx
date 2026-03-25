@@ -26,6 +26,16 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
+
+import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+
+
+
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const { admin, loading } = useAuth();
