@@ -4,6 +4,13 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock, Check, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
+<<<<<<<<< Temporary merge branch 1
+import { loyaltyAPI } from "../services/api";
+import { useApp } from "../context/AppContext";
+import { RefreshCw } from "lucide-react";
+=========
+>>>>>>>>> Temporary merge branch 2
 
 const STEPS = [
   { label: "Pickup Info", icon: MapPin },
@@ -78,6 +85,11 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, cartTotal, clearCart } = useCart();
   const { admin } = useAuth();
+  const { user } = useUserAuth();
+<<<<<<<<< Temporary merge branch 1
+  const { loyaltyData, refreshLoyaltyData, loading: loyaltyLoading } = useApp();
+=========
+>>>>>>>>> Temporary merge branch 2
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -109,6 +121,19 @@ const CheckoutPage = () => {
     expiryDate: "",
     cvv: "",
   });
+
+<<<<<<<<< Temporary merge branch 1
+=========
+  // If user is not logged in and has items in cart, redirect to login with checkout redirect
+  const handleCheckoutAuth = () => {
+    if (!user) {
+      localStorage.setItem('login_redirect_path', '/checkout');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
+>>>>>>>>> Temporary merge branch 2
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
 
