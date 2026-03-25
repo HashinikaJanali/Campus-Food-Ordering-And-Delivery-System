@@ -142,6 +142,17 @@ const UserHeader = () => {
                                             <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
                                         </div>
 
+                                        {/* View Profile Button */}
+                                        <motion.a
+                                            href="/profile"
+                                            onClick={() => setProfileOpen(false)}
+                                            whileHover={{ backgroundColor: 'rgba(249, 115, 22, 0.05)' }}
+                                            className="w-full px-4 py-3 text-left text-sm font-black text-primary hover:bg-orange-50 transition-colors flex items-center gap-2 uppercase tracking-widest"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            View Profile
+                                        </motion.a>
+
                                         {/* Logout Button */}
                                         <motion.button
                                             onClick={() => {

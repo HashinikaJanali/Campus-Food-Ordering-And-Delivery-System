@@ -116,6 +116,15 @@ const CheckoutPage = () => {
     cvv: "",
   });
 
+  // If user is not logged in and has items in cart, redirect to login with checkout redirect
+  const handleCheckoutAuth = () => {
+    if (!user) {
+      localStorage.setItem('login_redirect_path', '/checkout');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
 
@@ -416,7 +425,11 @@ const CheckoutPage = () => {
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setStep(1)} 
+              onClick={() => {
+                if (handleCheckoutAuth()) {
+                  setStep(1);
+                }
+              }} 
               disabled={
                 !addressType ||
                 (addressType === "off-campus" && (!deliveryInfo.boardingName || !deliveryInfo.street || !deliveryInfo.area || !deliveryInfo.phoneNumber))
