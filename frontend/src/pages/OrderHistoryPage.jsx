@@ -1,6 +1,7 @@
 //history for both vendor and student
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { formatRs } from '../utils/currency';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
 import { MOCK_ORDERS } from '../constants/orderConstants';
@@ -78,9 +79,9 @@ const OrderHistoryPage = () => {
               <p className="text-gray-400 text-xs mt-2">Cancelled Order last 365 days</p>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-              <p className="text-gray-500 text-sm mb-1">Total Spent</p>
-              <p className="text-3xl font-bold text-blue-600">₹{totalSpent.toLocaleString()}</p>
-              <p className="text-gray-400 text-xs mt-2">Total Spent last 365 days</p>
+              <p className="text-gray-500 text-sm mb-1">Total Revenue</p>
+              <p className="text-3xl font-bold text-blue-600">{formatRs(totalSpent)}</p>
+              <p className="text-gray-400 text-xs mt-2">Total gain last 365 days</p>
             </div>
           </div>
 
@@ -187,7 +188,7 @@ const OrderHistoryPage = () => {
                         
                         {/* Amount */}
                         <td className="px-6 py-4">
-                          <p className="text-gray-900 font-semibold">₹{order.total.toFixed(2)}</p>
+                          <p className="text-gray-900 font-semibold">{formatRs(order.total)}</p>
                           <p className="text-gray-500 text-xs">Paid in Full</p>
                         </td>
                         

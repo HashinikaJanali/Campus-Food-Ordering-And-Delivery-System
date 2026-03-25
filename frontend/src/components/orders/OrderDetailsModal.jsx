@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, ShoppingBag, CheckCircle, AlertCircle, MapPin, Calendar, DollarSign, User } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import toast from 'react-hot-toast';
+import { formatRs } from '../../utils/currency';
 
 const STATUS_OPTIONS = [
   { key: 'pending', label: 'Pending', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
@@ -75,7 +76,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusChange }) => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-gray-500 font-semibold uppercase tracking-wide">Order Total</p>
-                      <p className="text-3xl font-bold text-emerald-600 mt-1">₹{(order.totalAmount || order.total || 0).toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-emerald-600 mt-1">{formatRs(order.totalAmount || order.total || 0)}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-emerald-200">
                       <div>
@@ -117,8 +118,8 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusChange }) => {
                                 {item.qty}
                               </span>
                             </td>
-                            <td className="px-6 py-3 text-right font-medium text-gray-700">₹{(item.price).toFixed(2)}</td>
-                            <td className="px-6 py-3 text-right font-bold text-gray-900">₹{(item.price * item.qty).toFixed(2)}</td>
+                            <td className="px-6 py-3 text-right font-medium text-gray-700">{formatRs(item.price)}</td>
+                            <td className="px-6 py-3 text-right font-bold text-gray-900">{formatRs(item.price * item.qty)}</td>
                           </tr>
                         ))}
                       </tbody>
