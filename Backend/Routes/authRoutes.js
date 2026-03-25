@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../Controllers/authController');
-const authMiddleware = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Register admin
 router.post('/register', authController.registerAdmin);
@@ -10,6 +10,6 @@ router.post('/register', authController.registerAdmin);
 router.post('/login', authController.loginAdmin);
 
 // Get current admin
-router.get('/me', authMiddleware, authController.getMe);
+router.get('/me', protect, authController.getMe);
 
 module.exports = router;

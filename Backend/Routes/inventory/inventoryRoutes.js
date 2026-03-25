@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const inventoryController = require('../../Controllers/inventory/inventoryController');
-const authMiddleware = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth');
 
 // Update stock quantity
-router.patch('/:id/stock', authMiddleware, inventoryController.updateStock);
+router.patch('/:id/stock', protect, inventoryController.updateStock);
 
 // Get full inventory overview
-router.get('/overview', authMiddleware, inventoryController.getInventoryOverview);
+router.get('/overview', protect, inventoryController.getInventoryOverview);
 
 // Bulk stock update
-router.patch('/bulk-update', authMiddleware, inventoryController.bulkUpdateStock);
+router.patch('/bulk-update', protect, inventoryController.bulkUpdateStock);
 
 // Reserve stock (Public for students)
 router.post('/:id/reserve', inventoryController.reserveStock);
