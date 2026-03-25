@@ -241,7 +241,7 @@ export default function AdminLogin() {
               {' '}
               <button
                 onClick={() => {
-                  setMode(mode === 'login' ? 'register' : 'login');
+                  setSearchParams({ mode: mode === 'login' ? 'register' : 'login' });
                   setErrors({});
                 }}
                 className="text-admin-600 font-semibold hover:underline font-display"

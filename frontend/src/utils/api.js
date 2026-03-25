@@ -1,5 +1,22 @@
 import axios from 'axios';
 
+const BACKEND_URL = 'http://localhost:5001';
+
+/**
+ * Returns the full URL for a food image.
+ * Images are stored as relative paths like `/uploads/food-images/filename.jpg`.
+ * This helper prefixes the backend base URL so images always load directly
+ * from the backend, regardless of Vite proxy state.
+ */
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  // Already a full URL (e.g. http:// or https://)
+  if (imagePath.startsWith('http')) return imagePath;
+  // Relative path - prepend backend origin
+  return `${BACKEND_URL}${imagePath}`;
+};
+
+
 const api = axios.create({
   baseURL: '/api',
   timeout: 30000,

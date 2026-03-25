@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChefHat, Clock, Leaf, Search, ShoppingCart, Star, X, PlusCircle, MapPin } from 'lucide-react';
-import api from '../../utils/api';
+import api, { getImageUrl } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
 
@@ -28,11 +28,7 @@ const FoodCard = ({ item, onClick, onStockUpdate }) => {
       <div className="h-48 relative bg-orange-50 overflow-hidden shrink-0">
         {item.image ? (
           <img
-            src={
-              item.image.startsWith('http')
-                ? item.image
-                : `http://localhost:5001/uploads/${item.image}`
-            }
+            src={getImageUrl(item.image)}
             alt={item.name}
             className={`w-full h-full object-cover transition-transform duration-300 ${!isOutOfStock ? 'group-hover:scale-105' : ''}`}
           />
@@ -128,11 +124,7 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
         <div className="h-64 sm:h-72 relative">
           {item.image ? (
             <img
-              src={
-                item.image.startsWith('http')
-                  ? item.image
-                  : `http://localhost:5001/uploads/${item.image}`
-              }
+              src={getImageUrl(item.image)}
               alt={item.name}
               className="w-full h-full object-cover"
             />
