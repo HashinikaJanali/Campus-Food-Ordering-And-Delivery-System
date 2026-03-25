@@ -46,5 +46,12 @@ export const notificationAPI = {
   delete: (id) => api.delete(`/notifications/${id}`),
 };
 
+export const promotionAPI = {
+  getAll: (params) => api.get('/promotions', { params }),
+  create: (data) => api.post('/promotions', data),
+  update: (id, data) => api.put(`/promotions/${id}`, data),
+  delete: (id) => api.delete(`/promotions/${id}`),
+};
+
 
 export default api;
