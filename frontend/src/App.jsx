@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserAuthProvider, useUserAuth } from './context/UserAuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
 import UserLayout from './components/UserLayout';
@@ -26,6 +27,12 @@ import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
 import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
+import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/LoginPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -45,14 +52,44 @@ const ProtectedRoute = ({ children }) => {
   return admin ? children : <Navigate to="/admin/login" replace />;
 };
 
+// User Protected Route
+const UserProtectedRoute = ({ children }) => {
+  const { user, loading, setLoginRedirect } = useUserAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-primary-600 font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    setLoginRedirect(location.pathname);
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <AppProvider>
       <AuthProvider>
-        <CartProvider>
-          <Router>
+        <UserAuthProvider>
+          <CartProvider>
+            <Router>
               <Routes>
                 {/* Student routes */}
+                <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
+                <Route path="/login" element={<UserLayout><LoginPage /></UserLayout>} />
+                <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
+                <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
@@ -84,6 +121,9 @@ function App() {
                   <Route path="canteens" element={<CanteensPage />} />
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
+
+                
+
 
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
@@ -122,6 +162,7 @@ function App() {
             }}
           />
         </CartProvider>
+        </UserAuthProvider>
       </AuthProvider>
     </AppProvider>
   );

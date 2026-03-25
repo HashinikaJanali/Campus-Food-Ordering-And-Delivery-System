@@ -48,7 +48,7 @@ const AdminHeader = ({ className = "" }) => {
                 {/* Center Section (Admin Navigation) */}
                 <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
                     <AdminNavLink href="/admin/management" label="Dashboard" active={location.pathname === '/admin/management'} />
-                    <AdminNavLink href="/admin/dashboard" label="Inventory" active={location.pathname === '/admin/dashboard'} />
+                    <AdminNavLink href="/admin/dashboard" label="Inventory" active={location.pathname.startsWith('/admin') && location.pathname !== '/admin/management' && location.pathname !== '/admin/login'} />
                     <AdminNavLink href="/orders" label="Orders" active={location.pathname === '/orders'} />
                 </div>
 

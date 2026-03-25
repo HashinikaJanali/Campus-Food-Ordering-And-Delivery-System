@@ -62,7 +62,7 @@ const OrderManagementPage = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 py-10 mb-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 py-10">
       {/* Hero Banner */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}

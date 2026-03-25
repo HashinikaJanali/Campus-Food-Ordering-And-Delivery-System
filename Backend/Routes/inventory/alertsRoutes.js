@@ -1,21 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const alertController = require('../../Controllers/inventory/alertController');
-const authMiddleware = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth');
 
 // Get all alerts
-router.get('/', authMiddleware, alertController.getAlerts);
+router.get('/', protect, alertController.getAlerts);
 
 // Mark as read
-router.patch('/:id/read', authMiddleware, alertController.markAsRead);
+router.patch('/:id/read', protect, alertController.markAsRead);
 
 // Mark all as read
-router.patch('/mark-all-read', authMiddleware, alertController.markAllRead);
+router.patch('/mark-all-read', protect, alertController.markAllRead);
 
 // Resolved alerts
-router.patch('/:id/resolve', authMiddleware, alertController.resolveAlert);
+router.patch('/:id/resolve', protect, alertController.resolveAlert);
 
 // Delete resolved alerts
-router.delete('/clear-resolved', authMiddleware, alertController.clearResolved);
+router.delete('/clear-resolved', protect, alertController.clearResolved);
 
 module.exports = router;
