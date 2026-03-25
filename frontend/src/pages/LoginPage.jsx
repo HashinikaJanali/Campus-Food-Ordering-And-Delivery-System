@@ -6,7 +6,7 @@ import { useUserAuth } from "../context/UserAuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, getLoginRedirect } = useUserAuth();
+  const { login } = useUserAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -22,8 +22,16 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      const redirectPath = getLoginRedirect();
-      navigate(redirectPath);
+      // Check if there's a redirect path stored (e.g., from checkout)
+      const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
+      localStorage.removeItem('login_redirect_path');
+      localStorage.removeItem('login_redirect');
+      
+      if (redirectPath) {
+        navigate(redirectPath);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || "Invalid email or password.");
     } finally {

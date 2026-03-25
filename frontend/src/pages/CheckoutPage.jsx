@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock, Check, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
 
 const STEPS = [
   { label: "Pickup Info", icon: MapPin },
@@ -78,6 +79,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, cartTotal, clearCart } = useCart();
   const { admin } = useAuth();
+  const { user } = useUserAuth();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -98,6 +100,16 @@ const CheckoutPage = () => {
     expiryDate: "",
     cvv: "",
   });
+
+  // If user is not logged in and has items in cart, redirect to login with checkout redirect
+  const handleCheckoutAuth = () => {
+    if (!user) {
+      localStorage.setItem('login_redirect_path', '/checkout');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
 
@@ -391,7 +403,11 @@ const CheckoutPage = () => {
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setStep(1)} 
+              onClick={() => {
+                if (handleCheckoutAuth()) {
+                  setStep(1);
+                }
+              }} 
               disabled={
                 !addressType ||
                 (addressType === "off-campus" && (!deliveryInfo.boardingName || !deliveryInfo.street || !deliveryInfo.area || !deliveryInfo.phoneNumber))
