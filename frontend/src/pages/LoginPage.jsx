@@ -20,9 +20,19 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(""); // Clear previous errors
+    
     try {
+      // Validate fields first
+      if (!form.email.trim() || !form.password.trim()) {
+        setError("Please enter both email and password.");
+        setLoading(false);
+        return;
+      }
+
       await login(form.email, form.password);
-      // Check if there's a redirect path stored (e.g., from checkout)
+      
+      // Only navigate on SUCCESSFUL login
       const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
       localStorage.removeItem('login_redirect_path');
       localStorage.removeItem('login_redirect');
@@ -33,9 +43,10 @@ const LoginPage = () => {
         navigate('/');
       }
     } catch (err) {
+      // Show error message - DO NOT NAVIGATE
       setError(err.message || "Invalid email or password.");
-    } finally {
       setLoading(false);
+      return;
     }
   };
 

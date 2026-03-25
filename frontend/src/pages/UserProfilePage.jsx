@@ -108,8 +108,8 @@ const UserProfilePage = () => {
       setPasswordError("All password fields are required.");
       return;
     }
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters.");
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters.");
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -118,7 +118,7 @@ const UserProfilePage = () => {
     }
     setPasswordLoading(true);
     try {
-      await api.patch(`/users/${user._id}/password`, {
+      await api.put('/users/profile', {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
@@ -269,7 +269,7 @@ const UserProfilePage = () => {
               icon={Lock} placeholder="Your current password" />
             <InputField label="New password" name="newPassword" type="password"
               value={passwordForm.newPassword} onChange={handlePasswordChange}
-              icon={KeyRound} placeholder="Min. 8 characters" extra="Must be at least 8 characters" />
+              icon={KeyRound} placeholder="Min. 6 characters" extra="Must be at least 6 characters" />
             <InputField label="Confirm new password" name="confirmPassword" type="password"
               value={passwordForm.confirmPassword} onChange={handlePasswordChange}
               icon={KeyRound} placeholder="Re-enter new password" />
