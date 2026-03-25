@@ -6,6 +6,17 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+// Request interceptor for User Authentication
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('user_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 // Review API
 export const reviewAPI = {
   create: (data, config) => api.post('/reviews', data, config),

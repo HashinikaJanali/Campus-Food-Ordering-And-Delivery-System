@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { loyaltyAPI } from '../services/api';
+import { useUserAuth } from './UserAuthContext';
 import toast from 'react-hot-toast';
 
 const AppContext = createContext();
@@ -13,23 +14,29 @@ export const useApp = () => {
 };
     
 export const AppProvider = ({ children }) => {
-  // Mock user (replace with real auth later)
-  const [currentUser, setCurrentUser] = useState({
-    userId: 'USER001',
-    userName: 'Saduni Perera',
-  });
+  const { user: authUser } = useUserAuth();
+  
+  // Map authUser to the format expected by legacy components if needed,
+  // but better to use authUser directly.
+  const currentUser = authUser ? {
+    userId: authUser._id,
+    userName: authUser.name || authUser.userName || 'Student',
+  } : null;
 
   const [loyaltyData, setLoyaltyData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Fetch loyalty details
   const fetchLoyaltyData = async () => {
+    if (!currentUser?.userId) {
+      setLoyaltyData(null);
+      return;
+    }
+    
     try {
       setLoading(true);
-
       const res = await loyaltyAPI.get(currentUser.userId);
       setLoyaltyData(res.data.data);
-
     } catch (error) {
       // If account does not exist → create one
       if (error.response?.status === 404) {
@@ -56,6 +63,7 @@ export const AppProvider = ({ children }) => {
 
   // Redeem points
   const redeemReward = async (amount, rewardName) => {
+    if (!currentUser?.userId) return false;
     try {
       const res = await loyaltyAPI.redeem({
         userId: currentUser.userId,
@@ -75,19 +83,21 @@ export const AppProvider = ({ children }) => {
 
   // Force refresh loyalty data
   const refreshLoyaltyData = async () => {
-    return await fetchLoyaltyData();
+    await fetchLoyaltyData();
   };
 
-  // Load on startup
+  // Load on startup and when user changes
   useEffect(() => {
-    if (currentUser.userId) {
+    if (currentUser?.userId) {
       fetchLoyaltyData();
+    } else {
+      setLoyaltyData(null);
     }
-  }, [currentUser.userId]);
+  }, [currentUser?.userId]);
 
   const value = {
     currentUser,
-    setCurrentUser,
+    setCurrentUser: () => {}, // No-op since it's driven by UserAuthContext
     loyaltyData,
     loading,
     redeemReward,

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, CheckCircle, Edit2, Trash2, X, Upload } from 'lucide-react';
-import { reviewAPI } from '../../services/api';
+import { reviewAPI, orderAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
+import { useUserAuth } from '../../context/UserAuthContext';
 import toast from 'react-hot-toast';
 
 // Mock orders for demo
@@ -55,31 +56,87 @@ const validateReviewFields = (rating, reviewText) => {
 // Main Component
 const FeedbackTab = () => {
   const { currentUser, refreshLoyaltyData } = useApp();
-  const [orders, setOrders] = useState(mockOrders);
+  const { user } = useUserAuth();
+  const [orders, setOrders] = useState([]);
   const [reviewedOrders, setReviewedOrders] = useState([]);
   const [editingReview, setEditingReview] = useState(null);
   const [successMessage, setSuccessMessage] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUserReviews();
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUserReviews(), fetchActualOrders()]);
+      setLoading(false);
+    };
+    fetchData();
+  }, [user]);
 
   const fetchUserReviews = async () => {
+    if (!currentUser?.userId) return [];
     try {
       const response = await reviewAPI.getUserReviews(currentUser.userId);
-      setReviewedOrders(response.data.data || []);
+      const reviews = response.data.data || [];
+      setReviewedOrders(reviews);
+      return reviews;
     } catch (error) {
       console.error('Error fetching reviews:', error);
+      return [];
     }
   };
+
+  const fetchActualOrders = async () => {
+    try {
+      let actualOrders = [];
+      if (user && user.email) {
+        const response = await orderAPI.getAll({ customerEmail: user.email });
+        const userOrders = Array.isArray(response.data) ? response.data : [];
+        
+        // Map order items to the display format
+        userOrders.forEach(order => {
+          // Show all delivered/active orders for feedback
+          // Only skip cancelled orders
+          if (order.orderStatus !== 'Cancelled' && order.status !== 'cancelled') {
+            order.items.forEach(item => {
+              actualOrders.push({
+                orderId: order._id,
+                foodItem: item.name,
+                vendor: order.vendorName || 'Campus Canteen', 
+                deliveredAt: order.orderStatus === 'Pending' ? 'Just placed' : new Date(order.updatedAt).toLocaleString(),
+                image: item.image?.startsWith('/uploads') ? `http://localhost:5001${item.image}` : (item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop'),
+                isReal: true
+              });
+            });
+          }
+        });
+      }
+
+      // Merge with mock orders
+      const combinedOrders = [...actualOrders, ...mockOrders];
+      setOrders(combinedOrders);
+    } catch (error) {
+      console.error('Error fetching actual orders:', error);
+      setOrders(mockOrders);
+    }
+  };
+
+  // Filter orders whenever reviewedOrders or orders changes
+  const displayOrders = orders.filter(order => 
+    !reviewedOrders.some(review => review.orderId === order.orderId && review.foodItem === order.foodItem)
+  );
 
   const handleSubmitReview = async (orderId, rating, reviewText, imageFile) => {
     if (!validateReviewFields(rating, reviewText)) return;
 
-    const order = orders.find(o => o.orderId === orderId);
+    const order = displayOrders.find(o => o.orderId === orderId);
     if (!order) return;
 
     try {
+      if (!currentUser?.userId) {
+        toast.error('Please log in again');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('userId', currentUser.userId);
       formData.append('userName', currentUser.userName);
@@ -98,7 +155,7 @@ const FeedbackTab = () => {
 
       fetchUserReviews();
       refreshLoyaltyData();
-      setOrders(prev => prev.filter(o => o.orderId !== orderId));
+      // No need to manually filter here as displayOrders will update via fetchUserReviews
     } catch (error) {
       console.error("=== FULL ERROR DETAILS ===", {
         status: error.response?.status,
@@ -145,6 +202,15 @@ const FeedbackTab = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-500 font-medium">Fetching your orders...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <AnimatePresence>
@@ -158,13 +224,13 @@ const FeedbackTab = () => {
         )}
       </AnimatePresence>
 
-      {orders.length > 0 && (
+      {displayOrders.length > 0 && (
         <div className="bg-white rounded-2xl p-6 shadow-lg">
           <h2 className="text-2xl font-display font-bold mb-4">📝 Rate Your Recent Orders</h2>
           <p className="text-gray-600 mb-6">Your feedback helps us improve our service! <strong className="text-gold">✨ Earn 5 bonus points for each review you write!</strong></p>
           <div className="space-y-6">
-            {orders.map((order, index) => (
-              <OrderReviewCard key={order.orderId} order={order} index={index} onSubmit={handleSubmitReview} />
+            {displayOrders.map((order, index) => (
+              <OrderReviewCard key={`${order.orderId}-${order.foodItem}`} order={order} index={index} onSubmit={handleSubmitReview} />
             ))}
           </div>
         </div>
@@ -213,7 +279,7 @@ const FeedbackTab = () => {
         </div>
       )}
 
-      {orders.length === 0 && reviewedOrders.length === 0 && (
+      {displayOrders.length === 0 && reviewedOrders.length === 0 && (
         <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
           <div className="text-6xl mb-4">📝</div>
           <h3 className="text-2xl font-bold mb-2">No Orders to Review</h3>

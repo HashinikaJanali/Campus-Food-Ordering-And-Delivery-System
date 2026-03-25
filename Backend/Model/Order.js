@@ -43,6 +43,8 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'preparing', 'ready', 'delivered', 'cancelled'],
     default: 'pending'
   },
+  pointsRedeemed: { type: Number, default: 0 },
+  discountAmount: { type: Number, default: 0 },
   pickupTime: { type: String },
   notes: { type: String }
 }, { timestamps: true });
