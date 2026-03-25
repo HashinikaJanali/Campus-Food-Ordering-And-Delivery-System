@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, MapPin, Calendar, DollarSign, User, Clock, ShoppingBag, CheckCircle, AlertCircle } from 'lucide-react';
 import { formatRs } from '../utils/currency';
 import { TIME_SLOTS } from '../constants/orderConstants';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import AdminSidebar from '../components/AdminSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import { orderAPI } from '../services/api';
@@ -153,7 +153,7 @@ const OrderDetailsPage = () => {
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <OrderManagementSidebar />
+        <AdminSidebar />
         <div className="ml-80 overflow-y-auto">
           <div className="p-8 text-center">
             <p className="text-gray-500 font-medium">Order not found</p>
@@ -171,7 +171,7 @@ const OrderDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrderManagementSidebar />
+      <AdminSidebar />
       <div className="ml-80 overflow-y-auto">
         <div className="space-y-6 p-8">
           {/* Header */}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Plus, Edit2, Trash2, X, Star, Calendar, CheckCircle } from 'lucide-react';
-import { promotionAPI } from '../../services/api';
+import { promotionAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AdminPromotionsPage = () => {
@@ -163,7 +163,7 @@ const AdminPromotionsPage = () => {
                                 </div>
                             </div>
                             <p className="text-sm font-medium text-gray-500 mb-4 line-clamp-2">{promo.description}</p>
-                            
+
                             <div className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
                                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest block mb-1">Promo Code</span>
                                 <span className="text-lg font-black text-gray-900 tracking-wider">{promo.code}</span>
@@ -186,12 +186,12 @@ const AdminPromotionsPage = () => {
                         </div>
                     </div>
                 ))}
-                
+
                 {promotions.length === 0 && (
                     <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-gray-300">
-                         <Gift size={48} className="mx-auto text-gray-300 mb-4" />
-                         <h3 className="text-xl font-bold text-gray-500 mb-2">No promotions found</h3>
-                         <p className="text-gray-400">Click "Create Deal" to add your first promotion.</p>
+                        <Gift size={48} className="mx-auto text-gray-300 mb-4" />
+                        <h3 className="text-xl font-bold text-gray-500 mb-2">No promotions found</h3>
+                        <p className="text-gray-400">Click "Create Deal" to add your first promotion.</p>
                     </div>
                 )}
             </div>
@@ -220,7 +220,7 @@ const AdminPromotionsPage = () => {
                                             required
                                             type="text"
                                             value={formData.title}
-                                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-0 transition-colors"
                                             placeholder="e.g. Weekend Mega Sale"
                                         />
@@ -231,7 +231,7 @@ const AdminPromotionsPage = () => {
                                             required
                                             type="text"
                                             value={formData.badge}
-                                            onChange={(e) => setFormData({...formData, badge: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-0 transition-colors"
                                             placeholder="e.g. 50% OFF"
                                         />
@@ -242,7 +242,7 @@ const AdminPromotionsPage = () => {
                                             required
                                             type="text"
                                             value={formData.code}
-                                            onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                                            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-0 transition-colors uppercase"
                                             placeholder="e.g. SAVE50"
                                         />
@@ -253,7 +253,7 @@ const AdminPromotionsPage = () => {
                                             required
                                             type="text"
                                             value={formData.timer}
-                                            onChange={(e) => setFormData({...formData, timer: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, timer: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-0 transition-colors"
                                             placeholder="e.g. Ends in 2 Days"
                                         />
@@ -286,18 +286,18 @@ const AdminPromotionsPage = () => {
                                         required
                                         rows="3"
                                         value={formData.description}
-                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-0 transition-colors resize-none"
                                         placeholder="Details of the promotion..."
                                     />
                                 </div>
-                                
+
                                 <div className="flex items-center gap-6 pt-2 pb-4">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={formData.featured}
-                                            onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                                            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                                             className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                                         />
                                         <span className="font-bold text-gray-700">Featured (Hot Deal)</span>
@@ -306,13 +306,13 @@ const AdminPromotionsPage = () => {
                                         <input
                                             type="checkbox"
                                             checked={formData.active}
-                                            onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                                            onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                             className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                                         />
                                         <span className="font-bold text-gray-700">Active</span>
                                     </label>
                                 </div>
-                                
+
                                 <div className="pt-4 border-t border-gray-100 flex gap-3">
                                     <button
                                         type="button"
