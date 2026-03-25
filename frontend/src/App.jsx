@@ -10,6 +10,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+import DeliveryStaffPage from './pages/DeliveryStaffPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import UserHomePage from './pages/UserHomePage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -27,16 +28,13 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
-
-import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
+import AdminPromotionsPage from './pages/AdminPromotionsPage';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
-
-
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -80,7 +78,7 @@ const UserProtectedRoute = ({ children }) => {
   return children;
 };
 
-  function App() {
+function App() {
   return (
     <Router>
       <UserAuthProvider>
@@ -96,18 +94,19 @@ const UserProtectedRoute = ({ children }) => {
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/profile" element={<UserLayout><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-                <Route path="/orders" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
-                <Route path="/order/:orderId" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
+                <Route path="/orders" element={<AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
+                <Route path="/order/:orderId" element={<AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
-                <Route path="/tracking" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
-                <Route path="/history" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
+                <Route path="/tracking" element={<AdminSubLayout showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
+                <Route path="/history" element={<AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
                 
-                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                
+                <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
+
                 {/* Admin routes */}
+                <Route path="/admin/management" element={<ProtectedRoute><AdminSubLayout showFooter={false}><AdminDashboard /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
@@ -172,4 +171,4 @@ const UserProtectedRoute = ({ children }) => {
   );
 }
 
-export default App;
+export default App;

@@ -3,7 +3,7 @@ import {
   Plus, Search, Filter, Edit2, Trash2, Eye, EyeOff,
   CheckCircle, XCircle, AlertTriangle, SlidersHorizontal
 } from 'lucide-react';
-import api from '../../utils/api';
+import api, { getImageUrl } from '../../utils/api';
 import toast from 'react-hot-toast';
 import FoodItemModal from '../../components/FoodItemModal';
 
@@ -180,7 +180,7 @@ export default function FoodItemsPage() {
               {/* Image */}
               <div className="relative h-44 bg-gray-100">
                 {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-admin-50 to-orange-50">
                     🍽️
@@ -265,7 +265,7 @@ export default function FoodItemsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-9 h-9 rounded-lg object-cover" />
+                          <img src={getImageUrl(item.image)} alt={item.name} className="w-9 h-9 rounded-lg object-cover" />
                         ) : (
                           <div className="w-9 h-9 bg-admin-50 rounded-lg flex items-center justify-center text-base">🍽️</div>
                         )}

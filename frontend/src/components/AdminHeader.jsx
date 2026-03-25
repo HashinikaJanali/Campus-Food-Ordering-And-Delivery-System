@@ -1,12 +1,35 @@
-import { User } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { User, LogOut, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import logoImage from '../assets/logo.png';
+import toast from 'react-hot-toast';
 
 const AdminHeader = ({ className = "" }) => {
     const [logoError, setLogoError] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { admin, logout } = useAuth();
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowProfileMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = () => {
+        logout();
+        localStorage.removeItem('admin_sidebar_expanded');
+        toast.success('Logged out successfully');
+        navigate('/admin/login');
+    };
 
     return (
         <motion.nav
@@ -18,7 +41,7 @@ const AdminHeader = ({ className = "" }) => {
 
                 {/* Left Section (Logo + Title) */}
                 <div className="flex items-center gap-4 text-decoration-none transition-transform hover:scale-105 active:scale-95">
-                    <a href="/admin/management" className="flex items-center gap-3 no-underline">
+                    <Link to="/admin/management" className="flex items-center gap-3 no-underline">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center"
@@ -42,59 +65,70 @@ const AdminHeader = ({ className = "" }) => {
                         >
                             Grab & Go
                         </motion.h1>
-                    </a>
+                    </Link>
                 </div>
 
-                {/* Center Section (Admin Navigation) */}
-                <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
-                    <AdminNavLink href="/admin/management" label="Dashboard" active={location.pathname === '/admin/management'} />
-                    <AdminNavLink href="/admin/dashboard" label="Inventory" active={location.pathname.startsWith('/admin') && location.pathname !== '/admin/management' && location.pathname !== '/admin/login'} />
-                    <AdminNavLink href="/orders" label="Orders" active={location.pathname === '/orders'} />
+                {/* Middle Section (Title) */}
+                <div className="hidden lg:flex flex-1 justify-center">
+                    <h2 className="text-sm font-black uppercase tracking-[0.3em] text-gray-400 bg-gray-50 px-6 py-2 rounded-full border border-gray-100 shadow-inner">
+                        Admin Dashboard
+                    </h2>
                 </div>
 
                 {/* Right Section (Auth + Profile) */}
                 <div className="flex items-center gap-3 sm:gap-6">
-                    {/* Admin Auth Buttons */}
-                    <div className="hidden sm:flex items-center gap-3 mr-2">
-                        <Link
-                            to="/admin/login?mode=login"
-                            className="text-xs font-black text-gray-400 hover:text-orange-600 px-4 py-2 transition-colors uppercase tracking-widest"
+                    <div className="relative" ref={menuRef}>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowProfileMenu(!showProfileMenu)}
+                            className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
                         >
-                            Log In
-                        </Link>
-                        <Link
-                            to="/admin/login?mode=register"
-                            className="text-xs font-black bg-orange-600 text-white px-6 py-2.5 rounded-xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-200 uppercase tracking-widest"
-                        >
-                            Sign Up
-                        </Link>
-                    </div>
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-100">
+                                <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                            </div>
+                            <span className="text-xs font-black uppercase tracking-widest hidden md:block max-w-[150px] truncate">
+                                {admin?.name || 'Admin'}
+                            </span>
+                            <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                        </motion.button>
 
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <motion.a
-                            whileHover={{ scale: 1.1, rotate: -5 }}
-                            href="#" className="p-2.5 text-gray-500 hover:text-orange-600 bg-gray-50 rounded-xl transition-all"
-                        >
-                            <User className="w-6 h-6" />
-                        </motion.a>
+                        <AnimatePresence>
+                            {showProfileMenu && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+                                >
+                                    {/* Profile Header */}
+                                    <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-yellow-50">
+                                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Admin Account</p>
+                                        <p className="text-sm font-black text-gray-900 truncate">{admin?.name}</p>
+                                        <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mt-0.5">{admin?.role || 'System Admin'}</p>
+                                        <p className="text-xs text-gray-400 mt-1 truncate">{admin?.email || 'admin@grabgo.com'}</p>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="py-1">
+                                        <motion.button
+                                            onClick={handleLogout}
+                                            whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
+                                            className="w-full px-5 py-3.5 text-left text-sm font-black text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 uppercase tracking-widest group"
+                                        >
+                                            <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                            Logout
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>
         </motion.nav>
     );
 };
-
-// Admin Nav Link Helper
-const AdminNavLink = ({ href, label, active }) => (
-    <Link
-        to={href}
-        className={`text-xs font-black tracking-widest uppercase transition-all relative group ${active ? 'text-orange-600' : 'text-gray-400 hover:text-orange-600'}`}
-    >
-        {label}
-        {active && (
-            <motion.div layoutId="headerTab" className="absolute -bottom-1 lg:-bottom-2 left-0 w-full h-1 bg-orange-500 rounded-full shadow-sm" />
-        )}
-    </Link>
-);
 
 export default AdminHeader;

@@ -5,10 +5,10 @@ import {
     TrendingUp, AlertCircle, CheckCircle2,
     Clock, Star, ArrowUpRight, ArrowDownRight,
     ChefHat, UtensilsCrossed, Store, ChevronRight,
-    Search, Filter, Calendar, RefreshCw
+    Search, Filter, Calendar, RefreshCw, Gift
 } from 'lucide-react';
 import api from '../utils/api';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState({
@@ -59,7 +59,7 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-row">
-                <OrderManagementSidebar />
+                <AdminSidebar />
                 <div className="flex-1 ml-80 flex items-center justify-center">
                     <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
                 </div>
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-row">
-            <OrderManagementSidebar />
+            <AdminSidebar />
             <div className="overflow-y-auto ml-80 flex-1">
                 <main className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
                 {/* Header Section */}

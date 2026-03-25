@@ -72,7 +72,7 @@ export default function AdminLogin() {
         await register(form.name, form.email, form.password);
         toast.success('Account created!');
       }
-      navigate('/admin/dashboard');
+      navigate('/admin/management');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Authentication failed');
     } finally {
@@ -241,7 +241,7 @@ export default function AdminLogin() {
               {' '}
               <button
                 onClick={() => {
-                  setMode(mode === 'login' ? 'register' : 'login');
+                  setSearchParams({ mode: mode === 'login' ? 'register' : 'login' });
                   setErrors({});
                 }}
                 className="text-admin-600 font-semibold hover:underline font-display"

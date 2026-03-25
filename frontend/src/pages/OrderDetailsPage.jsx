@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, MapPin, Calendar, DollarSign, User, Clock, ShoppingBag, CheckCircle, AlertCircle } from 'lucide-react';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import { formatRs } from '../utils/currency';
+import { TIME_SLOTS } from '../constants/orderConstants';
+import AdminSidebar from '../components/AdminSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import { orderAPI } from '../services/api';
@@ -11,6 +13,7 @@ const STATUS_OPTIONS = [
   { key: 'pending', label: 'Pending', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
   { key: 'preparing', label: 'Preparing', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
   { key: 'ready', label: 'Ready', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  { key: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-200' },
   { key: 'cancelled', label: 'Cancelled', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
 ];
 
@@ -37,10 +40,13 @@ const OrderDetailsPage = () => {
         qty: item.qty || item.quantity,
         price: item.price
       })),
+      deliveryInfo: rawOrder.deliveryInfo || null,
+      addressType: rawOrder.addressType || rawOrder.address_type || null,
       location: rawOrder.location || 'Not specified',
       time: rawOrder.time || rawOrder.pickupTime || 'Not specified',
       status: rawOrder.status,
       notes: rawOrder.notes || rawOrder.note || '',
+      isDelivery: !!(rawOrder.deliveryInfo || rawOrder.addressType === 'delivery' || rawOrder.address_type === 'delivery' || rawOrder.isDelivery || rawOrder.type === 'delivery' || rawOrder.addressType === 'off-campus'),
     };
   };
 
@@ -74,20 +80,66 @@ const OrderDetailsPage = () => {
     fetchOrder();
   }, [orderId]);
 
+  // Define status progression to prevent moving backwards
+  const STATUS_ORDER = {
+    pending: 0,
+    preparing: 1,
+    ready: 2,
+    completed: 3,
+    cancelled: 4,
+  };
+
   const handleStatusUpdate = async (newStatus) => {
-    if (order) {
-      try {
-        // Update on backend using the actual MongoDB _id
-        await orderAPI.updateStatus(order._id, newStatus);
-        setOrder(prev => ({ ...prev, status: newStatus }));
-        toast.success(`✓ Order status updated to ${newStatus}`);
-      } catch (err) {
-        // Fallback: just update local state if API fails
-        setOrder(prev => ({ ...prev, status: newStatus }));
-        toast.success(`✓ Order status updated to ${newStatus}`);
-        console.error('Failed to update status on backend:', err);
-      }
+    if (!order) return;
+    const currIndex = STATUS_ORDER[order.status] ?? 0;
+    const newIndex = STATUS_ORDER[newStatus] ?? 0;
+    if (newIndex < currIndex) {
+      return toast.error('Cannot move order status backwards');
     }
+
+    try {
+      // Update on backend using the actual MongoDB _id
+      await orderAPI.updateStatus(order._id, newStatus);
+      setOrder(prev => ({ ...prev, status: newStatus }));
+      toast.success(`✓ Order status updated to ${newStatus}`);
+    } catch (err) {
+      // Fallback: just update local state if API fails
+      setOrder(prev => ({ ...prev, status: newStatus }));
+      toast.success(`✓ Order status updated to ${newStatus}`);
+      console.error('Failed to update status on backend:', err);
+    }
+  };
+
+  // Delivery assignment state (local until backend endpoint available)
+  const [assignedStaff, setAssignedStaff] = useState('');
+  const [staffList] = useState(['Rider A', 'Rider B', 'Rider C']);
+
+  const handleAssignStaff = async () => {
+    if (!assignedStaff) return toast.error('Select a delivery staff');
+    try {
+      // TODO: call backend API to assign delivery staff when endpoint exists
+      setOrder(prev => ({ ...prev, assignedTo: assignedStaff }));
+      toast.success(`Assigned to ${assignedStaff}`);
+    } catch (err) {
+      toast.error('Failed to assign staff');
+    }
+  };
+
+  // Pickup time editing
+  const [editingTime, setEditingTime] = useState(false);
+  const [selectedTime, setSelectedTime] = useState('');
+
+  // Sync selectedTime when order loads
+  useEffect(() => {
+    if (order) setSelectedTime(order.time || '');
+  }, [order]);
+
+  const handleSaveTime = () => {
+    if (!selectedTime) return toast.error('Please select a time');
+    setOrder(prev => ({ ...prev, time: selectedTime }));
+    setEditingTime(false);
+    toast.success('Pickup time updated');
+    // TODO: persist to backend when API available
   };
 
   if (loading) {
@@ -101,8 +153,8 @@ const OrderDetailsPage = () => {
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <OrderManagementSidebar />
-        <div className="ml-64 overflow-y-auto">
+        <AdminSidebar />
+        <div className="ml-80 overflow-y-auto">
           <div className="p-8 text-center">
             <p className="text-gray-500 font-medium">Order not found</p>
             <button
@@ -119,8 +171,8 @@ const OrderDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrderManagementSidebar />
-      <div className="ml-64 overflow-y-auto">
+      <AdminSidebar />
+      <div className="ml-80 overflow-y-auto">
         <div className="space-y-6 p-8">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -140,20 +192,20 @@ const OrderDetailsPage = () => {
           {/* Status Update Section - Right after header */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Update Order Status</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {STATUS_OPTIONS.map(({ key, label, icon: Icon, color, bg, border }) => (
                 <button
                   key={key}
                   onClick={() => handleStatusUpdate(key)}
-                  disabled={order.status === key}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 font-semibold ${
-                    order.status === key
+                  disabled={(STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key}
+                  className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-1 font-semibold ${
+                    ((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key)
                       ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-50'
                       : `bg-white ${border} hover:shadow-lg hover:border-orange-400`
                   }`}
                 >
-                  <Icon size={24} className={order.status === key ? 'text-gray-400' : color} />
-                  <span className={order.status === key ? 'text-gray-500' : 'text-gray-700'}>{label}</span>
+                  <Icon size={20} className={((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key) ? 'text-gray-400' : color} />
+                  <span className={((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key) ? 'text-gray-500' : 'text-gray-700'}>{label}</span>
                   {order.status === key && <span className="text-xs text-gray-400">(Current)</span>}
                 </button>
               ))}
@@ -201,7 +253,7 @@ const OrderDetailsPage = () => {
                 </tr>
                 <tr>
                   <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Order Total</td>
-                  <td className="px-6 py-4 text-2xl font-bold text-emerald-600">₹{(order.total || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-2xl font-bold text-emerald-600">{formatRs(order.total || 0)}</td>
                 </tr>
 
                 {/* Notes Row */}
@@ -244,8 +296,8 @@ const OrderDetailsPage = () => {
                             {item.qty}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right font-medium text-gray-700">₹{(item.price).toFixed(2)}</td>
-                        <td className="px-6 py-4 text-right font-bold text-gray-900">₹{(item.price * item.qty).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-right font-medium text-gray-700">{formatRs(item.price)}</td>
+                        <td className="px-6 py-4 text-right font-bold text-gray-900">{formatRs(item.price * item.qty)}</td>
                       </tr>
                     ))}
                     {/* Total Row */}
@@ -254,7 +306,7 @@ const OrderDetailsPage = () => {
                         Grand Total:
                       </td>
                       <td className="px-6 py-4 text-right text-emerald-600 text-lg">
-                        ₹{(order.total || 0).toFixed(2)}
+                        {formatRs(order.total || 0)}
                       </td>
                     </tr>
                   </tbody>
@@ -262,6 +314,60 @@ const OrderDetailsPage = () => {
               </div>
             </div>
           )}
+
+          {/* Delivery / Pickup Details */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Delivery Information</h3>
+            {order.isDelivery ? (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-700">
+                  <div className="font-medium">Delivery Location</div>
+                  <div className="text-gray-900 mt-1">
+                    {order.deliveryInfo?.onCampusLocation && <div>{order.deliveryInfo.onCampusLocation}</div>}
+                    {order.deliveryInfo?.boardingName && <div>{order.deliveryInfo.boardingName}</div>}
+                    {order.deliveryInfo?.street && <div>{order.deliveryInfo.street}</div>}
+                    {order.deliveryInfo?.area && <div>{order.deliveryInfo.area}</div>}
+                    {order.deliveryInfo?.landmark && <div className="text-gray-500 text-xs">Landmark: {order.deliveryInfo.landmark}</div>}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="font-medium text-sm text-gray-700 mb-2">Assign Delivery Staff</div>
+                  <div className="flex gap-2">
+                    <select value={assignedStaff} onChange={e => setAssignedStaff(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg">
+                      <option value="">Select staff...</option>
+                      {staffList.map(s => (<option key={s} value={s}>{s}</option>))}
+                    </select>
+                    <button onClick={handleAssignStaff} className="px-4 py-2 bg-orange-600 text-white rounded-lg">Assign</button>
+                  </div>
+                  {order.assignedTo && <div className="text-sm text-gray-600 mt-2">Currently assigned to: <strong>{order.assignedTo}</strong></div>}
+                </div>
+              </div>
+              ) : (
+              <div>
+                <div className="font-medium text-gray-700">Pickup</div>
+                <div className="mt-2">
+                  {editingTime ? (
+                    <div className="flex items-center gap-2">
+                      <select value={selectedTime} onChange={e => setSelectedTime(e.target.value)} className="px-3 py-2 border rounded-lg">
+                        <option value="">Select time...</option>
+                        {TIME_SLOTS.map(t => (<option key={t} value={t}>{t}</option>))}
+                      </select>
+                      <button onClick={handleSaveTime} className="px-3 py-2 bg-orange-600 text-white rounded-lg">Save</button>
+                      <button onClick={() => { setEditingTime(false); setSelectedTime(order.time || ''); }} className="px-3 py-2 border rounded-lg">Cancel</button>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-purple-50 border border-purple-200 text-purple-700">
+                      <Clock size={16} />
+                      <span className="font-medium">Pickup: {order.time || 'Not specified'}</span>
+                      <span className="hidden sm:inline">· {order.location || 'Pickup at counter'}</span>
+                      <button onClick={() => setEditingTime(true)} className="ml-3 text-sm text-purple-700 underline">Edit</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Footer Buttons */}
           <div className="border-t border-gray-200 pt-8 flex gap-4">
