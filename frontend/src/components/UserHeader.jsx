@@ -1,7 +1,7 @@
 import { User, ShoppingCart, Search, LogOut, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import logoImage from '../assets/logo.png';
 import { useCart } from '../context/CartContext';
 import { useUserAuth } from '../context/UserAuthContext';
@@ -11,6 +11,7 @@ const UserHeader = () => {
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef(null);
     const location = useLocation();
+    const navigate = useNavigate();
     const { cartCount } = useCart();
     const { user, logout, isAuthenticated } = useUserAuth();
 
@@ -146,6 +147,7 @@ const UserHeader = () => {
                                             onClick={() => {
                                                 logout();
                                                 setProfileOpen(false);
+                                                navigate('/');
                                             }}
                                             whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
                                             className="w-full px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 uppercase tracking-widest"
