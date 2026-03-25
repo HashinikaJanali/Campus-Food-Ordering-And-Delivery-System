@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { orderAPI } from '../services/api';
+import { formatRs } from '../utils/currency';
 import OrderManagementSidebar from '../components/OrderManagementSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
 import { MOCK_ORDERS } from '../constants/orderConstants';
+import { matchesOrder } from '../utils/orderSearch';
 import { ClipboardList, Clock, ShoppingBag, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -67,12 +69,7 @@ const OrderManagementPage = () => {
 
   const filtered = orders.filter(o => {
     const matchTab = activeTab === 'all' || o.status === activeTab;
-    const orderId = o._id || o.id || '';
-    const customerName = o.customerName || o.customer || '';
-    const matchSearch = search === '' ||
-      orderId.toLowerCase().includes(search.toLowerCase()) ||
-      customerName.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
+    return matchTab && matchesOrder(o, search);
   });
 
   // Pagination
@@ -238,7 +235,7 @@ const OrderManagementPage = () => {
                           
                           {/* Amount */}
                           <td className="px-6 py-4">
-                            <p className="text-gray-900 font-semibold">₹{total.toFixed(2)}</p>
+                            <p className="text-gray-900 font-semibold">{formatRs(total)}</p>
                             <p className="text-gray-500 text-xs">
                               {order.paymentMethod || 'Not specified'}
                             </p>
