@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -53,7 +53,8 @@ const ProtectedRoute = ({ children }) => {
 
 // User Protected Route
 const UserProtectedRoute = ({ children }) => {
-  const { user, loading } = useUserAuth();
+  const { user, loading, setLoginRedirect } = useUserAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -66,7 +67,12 @@ const UserProtectedRoute = ({ children }) => {
     );
   }
 
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) {
+    setLoginRedirect(location.pathname);
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 };
 
 function App() {

@@ -6,7 +6,7 @@ import { useUserAuth } from "../context/UserAuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useUserAuth();
+  const { login, getLoginRedirect } = useUserAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -22,7 +22,8 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate("/");
+      const redirectPath = getLoginRedirect();
+      navigate(redirectPath);
     } catch (err) {
       setError(err.message || "Invalid email or password.");
     } finally {

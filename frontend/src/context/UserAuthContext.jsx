@@ -6,6 +6,7 @@ const UserAuthContext = createContext(null);
 export const UserAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [redirectTo, setRedirectTo] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('user_token');
@@ -16,6 +17,19 @@ export const UserAuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, []);
+
+  const setLoginRedirect = (path) => {
+    localStorage.setItem('login_redirect', path);
+    setRedirectTo(path);
+  };
+
+  const getLoginRedirect = () => {
+    const path = localStorage.getItem('login_redirect');
+    if (path) {
+      localStorage.removeItem('login_redirect');
+    }
+    return path || '/';
+  };
 
   const login = async (email, password) => {
     try {
@@ -72,7 +86,9 @@ export const UserAuthProvider = ({ children }) => {
       logout,
       updateProfile,
       loading,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      setLoginRedirect,
+      getLoginRedirect
     }}>
       {children}
     </UserAuthContext.Provider>
