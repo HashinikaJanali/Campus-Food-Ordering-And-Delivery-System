@@ -28,7 +28,11 @@ const FoodCard = ({ item, onClick, onStockUpdate }) => {
       <div className="h-48 relative bg-orange-50 overflow-hidden shrink-0">
         {item.image ? (
           <img
-            src={item.image}
+            src={
+              item.image.startsWith('http')
+                ? item.image
+                : `http://localhost:5001/uploads/${item.image}`
+            }
             alt={item.name}
             className={`w-full h-full object-cover transition-transform duration-300 ${!isOutOfStock ? 'group-hover:scale-105' : ''}`}
           />
@@ -123,7 +127,15 @@ const ItemDetailModal = ({ item, onClose, onStockUpdate }) => {
       >
         <div className="h-64 sm:h-72 relative">
           {item.image ? (
-            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+            <img
+              src={
+                item.image.startsWith('http')
+                  ? item.image
+                  : `http://localhost:5001/uploads/${item.image}`
+              }
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-orange-50 to-admin-100 flex items-center justify-center text-7xl">
               {item.category?.icon || '🍽️'}

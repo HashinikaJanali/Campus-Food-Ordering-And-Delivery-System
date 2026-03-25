@@ -170,6 +170,12 @@ const AdminDashboard = () => {
                                 icon={Clock}
                                 link="/history"
                             />
+                            <QuickLinkCard
+                                title="Promotions"
+                                description="Manage discount codes and deals"
+                                icon={Gift}
+                                link="/admin/promotions"
+                            />
                         </div>
                     </div>
 

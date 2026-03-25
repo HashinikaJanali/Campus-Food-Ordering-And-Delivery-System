@@ -30,6 +30,7 @@ const reviewRoutes = require("./Routes/reviewRoutes");
 const loyaltyRoutes = require("./Routes/loyaltyRoutes");
 const notificationRoutes = require("./Routes/notificationRoutes");
 const aiRoutes = require("./Routes/aiRoutes");
+const userRoutes = require("./Routes/userRoutes");
 
 app.use("/api/notifications", notificationRoutes);
 
@@ -37,6 +38,9 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/promotions", require("./Routes/promotionRoutes"));
+app.use("/api/users", userRoutes);
+
 
 
 app.use('/api/auth', require('./Routes/authRoutes'));
@@ -46,8 +50,12 @@ app.use('/api/canteens', require('./Routes/inventory/canteensRoutes'));
 app.use('/api/inventory', require('./Routes/inventory/inventoryRoutes'));
 app.use('/api/alerts', require('./Routes/inventory/alertsRoutes'));
 app.use('/api/analytics', require('./Routes/inventory/analyticsRoutes'));
+app.use('/api/cart', require('./Routes/cartRoutes'));
 
 app.use("/api/orders", require("./Routes/orderRoute"));
+console.log("🔹 Registering payments routes...");
+app.use("/api/payments", require("./Routes/paymentRoutes"));
+console.log("✅ Payments routes registered successfully");
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
