@@ -8,7 +8,7 @@ const AdminSubLayout = ({ children, showHeader = true, showFooter = true }) => {
             {showHeader && <AdminHeader />}
             <main className="flex-1 w-full overflow-y-auto scroll-smooth">
                 <div className="min-h-full flex flex-col">
-                    <div className="flex-1 px-4 sm:px-8">
+                    <div className="flex-1">
                         {children || <Outlet />}
                     </div>
                     {showFooter && <Footer />}

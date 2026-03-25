@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { orderAPI } from '../services/api';
 import { formatRs } from '../utils/currency';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import AdminSidebar from '../components/AdminSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import { matchesOrder } from '../utils/orderSearch';
@@ -83,7 +83,7 @@ const OrderManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrderManagementSidebar />
+      <AdminSidebar />
       <div className="overflow-y-auto ml-80">  
         <div className="space-y-6 p-8">
 

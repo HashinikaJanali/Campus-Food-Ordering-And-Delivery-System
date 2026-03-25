@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import StatusBadge from '../components/orders/StatusBadge';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import AdminSidebar from '../components/AdminSidebar';
 
 const OrderHistoryPage = () => {
   const [filterDate, setFilterDate] = useState('all');
@@ -45,7 +45,7 @@ const OrderHistoryPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrderManagementSidebar />
+      <AdminSidebar />
       <div className="overflow-y-auto ml-80">  
         <div className="space-y-6 p-8">
 

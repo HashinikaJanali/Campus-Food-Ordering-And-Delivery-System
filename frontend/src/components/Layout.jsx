@@ -2,6 +2,7 @@ import { Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import logoImage from '../assets/logo.png';
 import Footer from './Footer';
@@ -9,6 +10,20 @@ import Footer from './Footer';
 const Layout = ({ children }) => {
   const { loyaltyData, loading } = useApp();
   const [logoError, setLogoError] = useState(false);
+  const location = useLocation();
+
+  // Helper for Nav Links
+  const NavLinkComp = ({ href, label, active }) => (
+    <a
+      href={href}
+      className={`text-xs font-black tracking-widest uppercase transition-all relative group ${active ? 'text-orange-600' : 'text-gray-400 hover:text-orange-600'}`}
+    >
+      {label}
+      {active && (
+        <motion.div layoutId="headerTab" className="absolute -bottom-1 lg:-bottom-2 left-0 w-full h-1 bg-orange-500 rounded-full shadow-sm" />
+      )}
+    </a>
+  );
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -53,6 +68,14 @@ const Layout = ({ children }) => {
               <div className="font-semibold text-gray-900">Rewards & Promotions</div>
               <div className="text-sm text-gray-500">Earn points, get rewards!</div>
             </div>
+          </div>
+
+          {/* Center Section (Navigation) */}
+          <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
+            <NavLinkComp href="/" label="Home" active={location.pathname === '/' || location.pathname === '/home'} />
+            <NavLinkComp href="/menu" label="Menu" active={location.pathname === '/menu'} />
+            <NavLinkComp href="/track" label="Tracks" active={location.pathname === '/track'} />
+            <NavLinkComp href="/feedback" label="Feedback" active={location.pathname === '/feedback'} />
           </div>
 
           {/* Right Section (Notification Bell + Points Badge) */}
