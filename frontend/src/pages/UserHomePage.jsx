@@ -3,15 +3,25 @@ import {
     Zap, Trophy, TrendingUp, Sparkles, Gift,
     MessageCircle, ShieldCheck, Truck, Headphones,
     Smartphone, ArrowRight, MapPin, CheckCircle2,
-    Store
+    Store, UserPlus, Mail, Lock, User, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useUserAuth } from '../context/UserAuthContext';
 
 const UserHomePage = () => {
     const [popularItems, setPopularItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showSignupModal, setShowSignupModal] = useState(false);
+    const [authLoading, setAuthLoading] = useState(false);
+    const [authError, setAuthError] = useState('');
+    const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+    const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+    const { login, register, isAuthenticated } = useUserAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchHomeData = async () => {
@@ -28,6 +38,62 @@ const UserHomePage = () => {
         };
         fetchHomeData();
     }, []);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            // User is logged in, can stay on home
+        }
+    }, [isAuthenticated]);
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!loginForm.email || !loginForm.password) {
+            setAuthError('Please fill in all fields');
+            return;
+        }
+        setAuthLoading(true);
+        setAuthError('');
+        try {
+            await login(loginForm.email, loginForm.password);
+            setShowLoginModal(false);
+            setLoginForm({ email: '', password: '' });
+        } catch (error) {
+            setAuthError(error.message);
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
+    const handleSignup = async (e) => {
+        e.preventDefault();
+        if (!signupForm.name || !signupForm.email || !signupForm.password) {
+            setAuthError('Please fill in all fields');
+            return;
+        }
+        if (signupForm.password !== signupForm.confirmPassword) {
+            setAuthError('Passwords do not match');
+            return;
+        }
+        if (signupForm.password.length < 6) {
+            setAuthError('Password must be at least 6 characters');
+            return;
+        }
+        if (signupForm.name.length < 2) {
+            setAuthError('Name must be at least 2 characters');
+            return;
+        }
+        setAuthLoading(true);
+        setAuthError('');
+        try {
+            await register(signupForm.name, signupForm.email, signupForm.password);
+            setShowSignupModal(false);
+            setSignupForm({ name: '', email: '', password: '', confirmPassword: '' });
+        } catch (error) {
+            setAuthError(error.message);
+        } finally {
+            setAuthLoading(false);
+        }
+    };
 
     return (
         <div className="flex flex-col min-h-screen bg-[#FFF9F5] overflow-x-hidden font-body">
@@ -68,12 +134,22 @@ const UserHomePage = () => {
                                 >
                                     <TrendingUp size={18} /> EXPLORE MENU
                                 </button>
-                                <button
-                                    onClick={() => window.location.href = '#'}
-                                    className="w-full sm:w-auto px-10 py-5 bg-gray-900/40 backdrop-blur-md text-white border border-white/20 rounded-[1.5rem] font-black text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <TrendingUp size={18} /> CREATE ACCOUNT
-                                </button>
+                                {!isAuthenticated && (
+                                    <>
+                                        <button
+                                            onClick={() => setShowLoginModal(true)}
+                                            className="w-full sm:w-auto px-10 py-5 bg-gray-900/40 backdrop-blur-md text-white border border-white/20 rounded-[1.5rem] font-black text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <User size={18} /> LOG IN
+                                        </button>
+                                        <button
+                                            onClick={() => setShowSignupModal(true)}
+                                            className="w-full sm:w-auto px-10 py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-sm hover:bg-orange-700 transition-all shadow-2xl flex items-center justify-center gap-2"
+                                        >
+                                            <UserPlus size={18} /> SIGN UP
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -192,7 +268,140 @@ const UserHomePage = () => {
                     />
                 </div>
             </section>
-        </div>
+        {/* Auth Modals */}
+        {showLoginModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white rounded-[3rem] p-8 w-full max-w-md relative"
+                >
+                    <button
+                        onClick={() => setShowLoginModal(false)}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    >
+                        <X size={24} />
+                    </button>
+                    <h2 className="text-2xl font-black text-center mb-6">Welcome Back</h2>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input
+                                type="email"
+                                value={loginForm.email}
+                                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input
+                                type="password"
+                                value={loginForm.password}
+                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        {authError && <p className="text-red-500 text-sm">{authError}</p>}
+                        <button
+                            type="submit"
+                            disabled={authLoading}
+                            className="w-full bg-orange-600 text-white py-3 rounded-xl font-black hover:bg-orange-700 transition-colors disabled:opacity-50"
+                        >
+                            {authLoading ? 'Logging in...' : 'Log In'}
+                        </button>
+                    </form>
+                    <p className="text-center mt-4 text-sm text-gray-600">
+                        Don't have an account?{' '}
+                        <button
+                            onClick={() => { setShowLoginModal(false); setShowSignupModal(true); }}
+                            className="text-orange-600 font-medium hover:underline"
+                        >
+                            Sign up
+                        </button>
+                    </p>
+                </motion.div>
+            </div>
+        )}
+
+        {showSignupModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white rounded-[3rem] p-8 w-full max-w-md relative max-h-[90vh] overflow-y-auto"
+                >
+                    <button
+                        onClick={() => setShowSignupModal(false)}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    >
+                        <X size={24} />
+                    </button>
+                    <h2 className="text-2xl font-black text-center mb-6">Create Account</h2>
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input
+                                type="text"
+                                value={signupForm.name}
+                                onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input
+                                type="email"
+                                value={signupForm.email}
+                                onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input
+                                type="password"
+                                value={signupForm.password}
+                                onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input
+                                type="password"
+                                value={signupForm.confirmPassword}
+                                onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+                        {authError && <p className="text-red-500 text-sm">{authError}</p>}
+                        <button
+                            type="submit"
+                            disabled={authLoading}
+                            className="w-full bg-orange-600 text-white py-3 rounded-xl font-black hover:bg-orange-700 transition-colors disabled:opacity-50"
+                        >
+                            {authLoading ? 'Creating account...' : 'Sign Up'}
+                        </button>
+                    </form>
+                    <p className="text-center mt-4 text-sm text-gray-600">
+                        Already have an account?{' '}
+                        <button
+                            onClick={() => { setShowSignupModal(false); setShowLoginModal(true); }}
+                            className="text-orange-600 font-medium hover:underline"
+                        >
+                            Log in
+                        </button>
+                    </p>
+                </motion.div>
+            </div>
+        )}        </div>
     );
 };
 
