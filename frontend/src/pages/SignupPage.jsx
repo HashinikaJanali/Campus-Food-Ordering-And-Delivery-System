@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UserPlus, Mail, Lock, User, Sparkles } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register } = useUserAuth();
 
   const [form, setForm] = useState({
-    name: "", email: "", password: "", confirmPassword: "", role: "student",
+    name: "", email: "", password: "", confirmPassword: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const SignupPage = () => {
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       setError(err.message || "Signup failed. Please try again.");
     } finally {
@@ -96,7 +96,7 @@ const SignupPage = () => {
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="password" name="password" value={form.password} onChange={handleChange}
-                  placeholder="Min. 8 characters" required minLength={8}
+                  placeholder="Min. 6 characters" required minLength={6}
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>
@@ -112,17 +112,6 @@ const SignupPage = () => {
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Account type</label>
-              <select
-                name="role" value={form.role} onChange={handleChange}
-                className="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 outline-none transition-all appearance-none"
-              >
-                <option value="student">Student</option>
-                <option value="admin">Admin / Canteen Staff</option>
-              </select>
             </div>
 
             <motion.button

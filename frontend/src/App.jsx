@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserAuthProvider, useUserAuth } from './context/UserAuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
 import UserLayout from './components/UserLayout';
@@ -50,18 +51,37 @@ const ProtectedRoute = ({ children }) => {
   return admin ? children : <Navigate to="/admin/login" replace />;
 };
 
+// User Protected Route
+const UserProtectedRoute = ({ children }) => {
+  const { user, loading } = useUserAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-primary-600 font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
+};
+
 function App() {
   return (
     <AppProvider>
       <AuthProvider>
-        <CartProvider>
-          <Router>
+        <UserAuthProvider>
+          <CartProvider>
+            <Router>
               <Routes>
                 {/* Student routes */}
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/checkout" element={<UserProtectedRoute><CheckoutPage /></UserProtectedRoute>} />
                 <Route path="/order-success" element={<OrderSuccessPage />} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
@@ -134,6 +154,7 @@ function App() {
             }}
           />
         </CartProvider>
+        </UserAuthProvider>
       </AuthProvider>
     </AppProvider>
   );

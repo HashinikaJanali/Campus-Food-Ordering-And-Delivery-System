@@ -30,6 +30,7 @@ const reviewRoutes = require("./Routes/reviewRoutes");
 const loyaltyRoutes = require("./Routes/loyaltyRoutes");
 const notificationRoutes = require("./Routes/notificationRoutes");
 const aiRoutes = require("./Routes/aiRoutes");
+const userRoutes = require("./Routes/userRoutes");
 
 app.use("/api/notifications", notificationRoutes);
 
@@ -37,6 +38,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/users", userRoutes);
 
 
 app.use('/api/auth', require('./Routes/authRoutes'));

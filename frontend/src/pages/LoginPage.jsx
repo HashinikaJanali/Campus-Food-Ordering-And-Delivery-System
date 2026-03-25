@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, LogIn, Sparkles } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useUserAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -21,9 +21,8 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
-      if (user?.role === "admin") navigate("/admin/dashboard");
-      else navigate("/");
+      await login(form.email, form.password);
+      navigate("/");
     } catch (err) {
       setError(err.message || "Invalid email or password.");
     } finally {

@@ -1,10 +1,11 @@
+// @ts-nocheck
 const express = require('express');
 const router = express.Router();
 const cartController = require('../Controllers/cartController');
-const auth = require('../middleware/auth');
+const { protectUser } = require('../middleware/auth');
 
 // All cart routes require authentication
-router.use(auth);
+router.use(protectUser);
 
 // Get user's cart
 router.get('/', cartController.getCart);
