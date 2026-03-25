@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, History, Search, ChefHat, ChevronDown, Settings, HelpCircle, MapPin } from 'lucide-react';
+import { ClipboardList, History, Search, ChefHat, ChevronDown, Settings, HelpCircle, MapPin, LayoutDashboard, UtensilsCrossed, Package, Tag, Bell, Store, Eye, BarChart3, Edit3 } from 'lucide-react';
 import { useState } from 'react';
 import logoImage from '../assets/logo.png';
 
@@ -9,6 +9,18 @@ const mainMenuItems = [
   { path: '/tracking', icon: MapPin, label: 'Order Tracking' },
 ];
 
+const inventoryMenuItems = [
+  { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/admin/food-items', icon: UtensilsCrossed, label: 'Food Items' },
+  { path: '/admin/inventory', icon: Package, label: 'Inventory' },
+  { path: '/admin/categories', icon: Tag, label: 'Categories' },
+  { path: '/admin/alerts', icon: Bell, label: 'Alerts' },
+  { path: '/admin/canteens', icon: Store, label: 'Canteens' },
+  { path: '/admin/menu-preview', icon: Eye, label: 'Menu Preview' },
+  { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { path: '/admin/student-menu', icon: Edit3, label: 'Student Menu View' },
+];
+
 const otherMenuItems = [
   { path: '/settings', icon: Settings, label: 'Settings' },
   { path: '/help', icon: HelpCircle, label: 'Help & Support' },
@@ -16,10 +28,14 @@ const otherMenuItems = [
 
 export default function OrderManagementSidebar() {
   const [logoError, setLogoError] = useState(false);
-  const [expandedSection, setExpandedSection] = useState('order-management');
+  const [expandedSections, setExpandedSections] = useState(['order-management', 'inventory-management']);
 
   const toggleSection = (section) => {
-    setExpandedSection(expandedSection === section ? null : section);
+    setExpandedSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
   };
 
   return (
@@ -78,15 +94,52 @@ export default function OrderManagementSidebar() {
               <ChevronDown 
                 size={16}
                 className={`shrink-0 transition-transform duration-200 ${
-                  expandedSection === 'order-management' ? 'rotate-180' : ''
+                  expandedSections.includes('order-management') ? 'rotate-180' : ''
                 }`}
               />
             </button>
 
             {/* Nested Order Management Items */}
-            {expandedSection === 'order-management' && (
+            {expandedSections.includes('order-management') && (
               <div className="space-y-1 pl-3">
                 {mainMenuItems.map(({ path, icon: Icon, label }) => (
+                  <NavLink
+                    key={path}
+                    to={path}
+                    className={({ isActive }) => `
+                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                      ${isActive
+                        ? 'bg-orange-50 text-orange-600 shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <Icon size={18} className="shrink-0" />
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+
+            {/* Inventory Management Expandable Section */}
+            <button
+              onClick={() => toggleSection('inventory-management')}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200"
+            >
+              <Package size={18} className="shrink-0" />
+              <span className="flex-1 text-left">Inventory Management</span>
+              <ChevronDown 
+                size={16}
+                className={`shrink-0 transition-transform duration-200 ${
+                  expandedSections.includes('inventory-management') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* Nested Inventory Management Items */}
+            {expandedSections.includes('inventory-management') && (
+              <div className="space-y-1 pl-3">
+                {inventoryMenuItems.map(({ path, icon: Icon, label }) => (
                   <NavLink
                     key={path}
                     to={path}
@@ -141,7 +194,7 @@ export default function OrderManagementSidebar() {
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">Admin</p>
-            <p className="text-xs text-gray-500 truncate">Order Manager</p>
+            <p className="text-xs text-gray-500 truncate">Order/Inventory Manager</p>
           </div>
           <ChevronDown size={16} className="text-gray-400 group-hover:text-gray-600 shrink-0" />
         </button>
