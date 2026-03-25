@@ -37,6 +37,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/promotions", require("./Routes/promotionRoutes"));
 
 
 app.use('/api/auth', require('./Routes/authRoutes'));

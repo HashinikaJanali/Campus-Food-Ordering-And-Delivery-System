@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Copy } from 'lucide-react';
+import { Clock, Copy, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { promotionAPI } from '../../services/api';
 
-const promotions = [
+const samplePromotions = [
   {
-    id: 1,
+    _id: 'sample-1',
     badge: '50% OFF',
     title: 'Pizza Weekend Special',
     description: 'On all Pizza orders above Rs. 1000 this weekend!',
@@ -14,7 +16,7 @@ const promotions = [
     featured: true,
   },
   {
-    id: 2,
+    _id: 'sample-2',
     badge: '10% OFF',
     title: 'Rice & Curry Special',
     description: 'Get 10% off on all Rice & Curry orders from Main Canteen today!',
@@ -23,7 +25,7 @@ const promotions = [
     timer: 'Ends in 4 hours',
   },
   {
-    id: 3,
+    _id: 'sample-3',
     badge: 'BUY 2 GET 1 FREE',
     title: 'Kottu Madness',
     description: 'Order 2 Chicken Kottu and get 1 FREE! Only at Spice Kitchen.',
@@ -32,7 +34,7 @@ const promotions = [
     timer: 'Ends tomorrow',
   },
   {
-    id: 4,
+    _id: 'sample-4',
     badge: 'Rs. 200 OFF',
     title: 'Burger Bonanza',
     description: 'Save Rs. 200 on orders above Rs. 800 from Burger Station!',
@@ -41,7 +43,7 @@ const promotions = [
     timer: 'Valid all week',
   },
   {
-    id: 5,
+    _id: 'sample-5',
     badge: 'FREE DELIVERY',
     title: 'Free Delivery Day',
     description: 'No delivery charges on all orders today! Order anything you want.',
@@ -50,7 +52,7 @@ const promotions = [
     timer: 'Today only',
   },
   {
-    id: 6,
+    _id: 'sample-6',
     badge: '15% OFF',
     title: 'Student Discount',
     description: 'Show your student ID and get 15% off on all submarine orders!',
@@ -61,12 +63,57 @@ const promotions = [
 ];
 
 const PromotionsTab = () => {
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
+
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+      const res = await promotionAPI.getAll(); // Gets only active promotions
+      const apiPromotions = res.data.data.map(p => ({
+          ...p,
+          image: p.image.startsWith('/uploads') ? `http://localhost:5001${p.image}` : p.image
+      }));
+      setPromotions([...apiPromotions, ...samplePromotions]);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load promotions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copyCode = (code) => {
     navigator.clipboard.writeText(code);
     toast.success(`Promo code ${code} copied! 🎉`);
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center flex-col items-center py-20 gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-500 font-medium">Loading amazing deals...</p>
+      </div>
+    );
+  }
+
   const featuredPromo = promotions.find(p => p.featured);
+
+  if (promotions.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100 flex flex-col items-center">
+        <div className="w-20 h-20 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle size={40} />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">No Active Promotions</h2>
+        <p className="text-gray-500">Check back later for exciting new deals and discounts!</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

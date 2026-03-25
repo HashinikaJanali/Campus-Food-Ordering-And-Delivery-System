@@ -5,7 +5,7 @@ import {
     TrendingUp, AlertCircle, CheckCircle2,
     Clock, Star, ArrowUpRight, ArrowDownRight,
     ChefHat, UtensilsCrossed, Store, ChevronRight,
-    Search, Filter, Calendar
+    Search, Filter, Calendar, Gift
 } from 'lucide-react';
 import api from '../utils/api';
 import AdminHeader from '../components/AdminHeader';
@@ -179,6 +179,12 @@ const AdminDashboard = () => {
                                 description="View past orders and records"
                                 icon={Clock}
                                 link="/history"
+                            />
+                            <QuickLinkCard
+                                title="Promotions"
+                                description="Manage discount codes and deals"
+                                icon={Gift}
+                                link="/admin/promotions"
                             />
                         </div>
                     </div>

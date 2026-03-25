@@ -25,6 +25,8 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
+import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
+
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const { admin, loading } = useAuth();
@@ -80,6 +82,7 @@ function App() {
                   <Route path="menu-preview" element={<MenuPreviewPage />} />
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="canteens" element={<CanteensPage />} />
+                  <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
