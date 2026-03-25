@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import UserLayout from './components/UserLayout';
 import FeedbackPage from './pages/FeedbackPage';
 import OrderManagementPage from './pages/OrderManagementPage';
+import OrderDetailsPage from './pages/OrderDetailsPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import UserHomePage from './pages/UserHomePage';
@@ -91,9 +92,11 @@ function App() {
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-                <Route path="/orders" element={<AdminSubLayout><OrderManagementPage /></AdminSubLayout>} />
+                <Route path="/orders" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
+                <Route path="/order/:orderId" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
-                <Route path="/history" element={<AdminSubLayout><OrderHistoryPage /></AdminSubLayout>} />
+                <Route path="/tracking" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
+                <Route path="/history" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />

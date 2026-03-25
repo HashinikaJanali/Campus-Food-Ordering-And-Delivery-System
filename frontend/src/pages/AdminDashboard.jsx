@@ -5,11 +5,10 @@ import {
     TrendingUp, AlertCircle, CheckCircle2,
     Clock, Star, ArrowUpRight, ArrowDownRight,
     ChefHat, UtensilsCrossed, Store, ChevronRight,
-    Search, Filter, Calendar, Gift
+    Search, Filter, Calendar, RefreshCw
 } from 'lucide-react';
 import api from '../utils/api';
-import AdminHeader from '../components/AdminHeader';
-import Footer from '../components/Footer';
+import OrderManagementSidebar from '../components/OrderManagementSidebar';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState({
@@ -59,9 +58,9 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-orange-50/30 flex flex-col">
-                <AdminHeader />
-                <div className="flex-1 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex flex-row">
+                <OrderManagementSidebar />
+                <div className="flex-1 ml-80 flex items-center justify-center">
                     <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
                 </div>
             </div>
@@ -69,32 +68,23 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#FFF9F5] flex flex-col font-body">
-            <AdminHeader />
-
-            <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+        <div className="min-h-screen bg-gray-50 flex flex-row">
+            <OrderManagementSidebar />
+            <div className="overflow-y-auto ml-80 flex-1">
+                <main className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
                 {/* Header Section */}
-                <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="flex items-center justify-between mb-8">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2.5 bg-orange-500 rounded-2xl shadow-lg shadow-orange-200">
-                                <LayoutDashboard className="text-white w-6 h-6" />
-                            </div>
-                            <h2 className="text-3xl font-black font-display text-gray-900 tracking-tight">
-                                Admin Dashboard
-                            </h2>
-                        </div>
-                        <p className="text-gray-500 font-medium">Monitoring <span className="text-orange-600 font-bold">{stats.activeCanteens} canteens</span> across the campus.</p>
+                        <h1 className="text-2xl font-bold font-display text-gray-900">Admin Dashboard</h1>
+                        <p className="text-gray-500 text-sm mt-1">Monitoring {stats.activeCanteens} canteens across the campus</p>
                     </div>
-
-                    <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl shadow-sm border border-orange-100">
-                        <button className="px-4 py-2 bg-orange-500 text-white rounded-xl font-bold text-sm shadow-md">Today</button>
-                        <button className="px-4 py-2 text-gray-500 hover:text-orange-600 font-bold text-sm transition-colors">Weekly</button>
-                        <button className="p-2 text-gray-400 hover:bg-orange-50 rounded-xl transition-colors">
-                            <Calendar size={18} />
-                        </button>
-                    </div>
-                </header>
+                    <button 
+                        onClick={fetchDashboardData}
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
+                        <RefreshCw size={15} />
+                        Refresh
+                    </button>
+                </div>
 
                 {/* Primary Stats Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -222,7 +212,7 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </main>
-            <Footer />
+            </div>
         </div>
     );
 };
