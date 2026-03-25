@@ -36,7 +36,6 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
 
-
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const { admin, loading } = useAuth();
@@ -81,11 +80,11 @@ const UserProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <AppProvider>
-      <AuthProvider>
-        <UserAuthProvider>
-          <CartProvider>
-            <Router>
+    <Router>
+      <UserAuthProvider>
+        <AppProvider>
+          <AuthProvider>
+            <CartProvider>
               <Routes>
                 {/* Student routes */}
                 <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
@@ -103,11 +102,8 @@ function App() {
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
-
-
-
+                
                 <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
-
 
                 {/* Admin routes */}
                 <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
@@ -132,48 +128,47 @@ function App() {
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
 
-
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </Router>
 
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3500,
-                style: {
-                  background: '#fff',
-                  color: '#111827',
-                  fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
-                  fontSize: '14px',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#f97316',
-                    secondary: '#fff',
-                  },
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3500,
                   style: {
-                    borderLeft: '4px solid #f97316',
+                    background: '#fff',
+                    color: '#111827',
+                    fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
+                    fontSize: '14px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
                   },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#EF4444',
-                    secondary: '#fff',
+                  success: {
+                    iconTheme: {
+                      primary: '#f97316',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #f97316',
+                    },
                   },
-                  style: {
-                    borderLeft: '4px solid #ef4444',
+                  error: {
+                    iconTheme: {
+                      primary: '#EF4444',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #ef4444',
+                    },
                   },
-                },
-              }}
-            />
-          </CartProvider>
-        </UserAuthProvider>
-      </AuthProvider>
-    </AppProvider>
+                }}
+              />
+            </CartProvider>
+          </AuthProvider>
+        </AppProvider>
+      </UserAuthProvider>
+    </Router>
   );
 }
 
-export default App;
+export default App;

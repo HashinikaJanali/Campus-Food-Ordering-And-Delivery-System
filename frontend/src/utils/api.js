@@ -22,44 +22,72 @@ const api = axios.create({
   timeout: 30000,
 });
 
-// Admin specific path prefixes
-const adminPaths = ['/admin', '/orders', '/order/', '/tracking', '/history'];
-
-const isAdminContext = () => {
-  const path = window.location.pathname;
-  return adminPaths.some(p => path.startsWith(p));
-};
-
-// Request interceptor - dynamically add correct auth token
+// Request interceptor - strictly separate admin and user context
 api.interceptors.request.use((config) => {
-  if (isAdminContext()) {
-    const adminToken = localStorage.getItem('admin_token');
-    if (adminToken) {
-      config.headers.Authorization = `Bearer ${adminToken}`;
+  const adminToken = localStorage.getItem('admin_token');
+  const userToken = localStorage.getItem('user_token');
+  const path = window.location.pathname;
+
+  // 1. Auth routes safety - never send tokens to login/register
+  const isAuthAction = config.url && (
+    config.url.includes('/login') ||
+    config.url.includes('/register')
+  );
+
+  if (isAuthAction) {
+    delete config.headers.Authorization;
+    return config;
+  }
+
+  // 2. Strict Token Selection
+  let token = null;
+
+  if (path.startsWith('/admin')) {
+    // We are in the admin panel - use admin token ONLY
+    token = adminToken;
+    if (token && token !== 'null' && token !== 'undefined') {
+      config.headers.Authorization = `Bearer ${token}`;
+      config._isAdminRequest = true;
+    } else {
+      // If no admin token but on admin page, don't fallback to user token
+      delete config.headers.Authorization;
     }
   } else {
-    const userToken = localStorage.getItem('user_token');
-    if (userToken) {
-      config.headers.Authorization = `Bearer ${userToken}`;
+    // We are on the student side - use user token primarily
+    token = userToken || adminToken;
+    if (token && token !== 'null' && token !== 'undefined') {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
   }
+
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-// Response interceptor - handle auth errors based on context
+// Response interceptor - handle auth errors (ADMIN ONLY)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only redirect to admin/login if it's an ADMIN endpoint getting 401
+    // or if it was specifically an admin-session request
     if (error.response?.status === 401) {
-      if (isAdminContext()) {
+      if (error.config?._isAdminRequest || (window.location.pathname.startsWith('/admin') && !error.config.url.includes('/users/'))) {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_user');
-        window.location.href = '/admin/login';
+
+        // Use a slight delay to allow the current app state to settle before reload
+        setTimeout(() => {
+          if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+            window.location.href = '/admin/login';
+          }
+        }, 50);
       } else {
+        // User side 401
         localStorage.removeItem('user_token');
         localStorage.removeItem('user_data');
-        // Do not redirect forcefully if not needed, or redirect to user login
-        // Removed aggressive user redirect to avoid disrupting guest carts
       }
     }
     return Promise.reject(error);
