@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, Upload, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 
 export default function FoodItemModal({ item, categories, onClose, onSaved }) {
   const isEdit = !!item;
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(item?.image || null);
+  const [imagePreview, setImagePreview] = useState(getImageUrl(item?.image) || null);
   const [imageFile, setImageFile] = useState(null);
   const [canteens, setCanteens] = useState([]);
   const [errors, setErrors] = useState({});

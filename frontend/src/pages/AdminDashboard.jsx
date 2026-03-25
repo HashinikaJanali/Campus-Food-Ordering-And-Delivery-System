@@ -5,7 +5,7 @@ import {
     TrendingUp, AlertCircle, CheckCircle2,
     Clock, Star, ArrowUpRight, ArrowDownRight,
     ChefHat, UtensilsCrossed, Store, ChevronRight,
-    Search, Filter, Calendar, RefreshCw
+    Search, Filter, Calendar, RefreshCw, Gift
 } from 'lucide-react';
 import api from '../utils/api';
 import OrderManagementSidebar from '../components/OrderManagementSidebar';

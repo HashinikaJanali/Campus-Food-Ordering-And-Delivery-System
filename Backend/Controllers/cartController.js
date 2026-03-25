@@ -65,7 +65,7 @@ exports.addToCart = async (req, res) => {
     await foodItem.save();
 
     await cart.save();
-    await cart.populate('items.foodItem').populate('items.canteen').execPopulate();
+    await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
 
     res.json(cart);
   } catch (err) {
@@ -114,7 +114,7 @@ exports.updateCartItem = async (req, res) => {
 
     await foodItem.save();
     await cart.save();
-    await cart.populate('items.foodItem').populate('items.canteen').execPopulate();
+    await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
 
     res.json(cart);
   } catch (err) {
@@ -150,7 +150,7 @@ exports.removeFromCart = async (req, res) => {
     // Remove item from cart
     cart.items.splice(itemIndex, 1);
     await cart.save();
-    await cart.populate('items.foodItem').populate('items.canteen').execPopulate();
+    await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
 
     res.json(cart);
   } catch (err) {

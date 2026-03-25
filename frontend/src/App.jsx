@@ -28,7 +28,6 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
-
 import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
@@ -36,8 +35,6 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
-
-
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -81,7 +78,7 @@ const UserProtectedRoute = ({ children }) => {
   return children;
 };
 
-  function App() {
+function App() {
   return (
     <Router>
       <UserAuthProvider>
@@ -107,10 +104,9 @@ const UserProtectedRoute = ({ children }) => {
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
                 
                 <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
-                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                
-                
+
                 {/* Admin routes */}
+                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
@@ -120,7 +116,7 @@ const UserProtectedRoute = ({ children }) => {
                     </ProtectedRoute>
                   }
                 >
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} /> 
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="food-items" element={<FoodItemsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
@@ -175,4 +171,4 @@ const UserProtectedRoute = ({ children }) => {
   );
 }
 
-export default App;
+export default App;
