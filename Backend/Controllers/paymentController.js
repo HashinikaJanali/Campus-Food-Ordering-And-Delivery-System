@@ -1,5 +1,6 @@
 // @ts-nocheck
 const Order = require("../Model/Order");
+const LoyaltyPoints = require("../Model/LoyaltyPoints");
 
 const normalizeAddressType = (value) => {
   if (value === "on-campus" || value === "off-campus") {
@@ -74,7 +75,19 @@ exports.createPaymentIntent = async (req, res) => {
  */
 exports.confirmPayment = async (req, res) => {
   try {
-    const { paymentIntentId, cart, deliveryInfo, addressType, cartTotal, deliveryCharge } = req.body;
+    const { 
+      paymentIntentId, 
+      cart, 
+      deliveryInfo, 
+      addressType, 
+      cartTotal, 
+      deliveryCharge, 
+      customerName, 
+      customerEmail,
+      userId,
+      pointsRedeemed = 0,
+      discountAmount = 0
+    } = req.body;
 
     // Validation
     if (!paymentIntentId) {
@@ -83,10 +96,6 @@ exports.confirmPayment = async (req, res) => {
 
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({ message: "Cart items are required" });
-    }
-
-    if (!cartTotal || cartTotal <= 0) {
-      return res.status(400).json({ message: "Valid cart total is required" });
     }
 
     const stripe = getStripe();
@@ -113,11 +122,29 @@ exports.confirmPayment = async (req, res) => {
       });
     }
 
+    // Handle Loyalty Points Redemption
+    if (pointsRedeemed > 0 && userId) {
+      try {
+        const loyaltyAccount = await LoyaltyPoints.findOne({ userId });
+        if (loyaltyAccount) {
+          loyaltyAccount.redeemPoints(pointsRedeemed, `Discount for Order ${paymentIntentId}`);
+          await loyaltyAccount.save();
+        }
+      } catch (loyaltyError) {
+        console.error("Loyalty Redemption Error:", loyaltyError);
+        // We don't block the order if loyalty points fail, but we log it
+      }
+    }
+
     // Create order in database
     const order = new Order({
+      customerName,
+      customerEmail,
       items: cart,
-      totalAmount: cartTotal + (deliveryCharge || 0),
+      totalAmount: cartTotal + (deliveryCharge || 0) - (discountAmount || 0),
       deliveryCharge: deliveryCharge || 0,
+      pointsRedeemed,
+      discountAmount,
       deliveryInfo: deliveryInfo || {},
       addressType: normalizeAddressType(addressType),
       paymentIntentId,

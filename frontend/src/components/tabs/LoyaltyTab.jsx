@@ -36,6 +36,7 @@ const LoyaltyTab = () => {
   }, []);
 
   const fetchHistory = async () => {
+    if (!currentUser?.userId) return;
     try {
       setLoadingHistory(true);
       const response = await loyaltyAPI.getHistory(loyaltyData?.userId || currentUser.userId);
@@ -48,6 +49,7 @@ const LoyaltyTab = () => {
   };
 
   const loadRedeemedRewards = () => {
+    if (!currentUser?.userId) return;
     const saved = localStorage.getItem(`redeemedRewards_${currentUser.userId}`);
     if (saved) {
       setRedeemedRewards(JSON.parse(saved));
@@ -55,6 +57,7 @@ const LoyaltyTab = () => {
   };
 
   const saveRedeemedRewards = (rewards) => {
+    if (!currentUser?.userId) return;
     localStorage.setItem(`redeemedRewards_${currentUser.userId}`, JSON.stringify(rewards));
     setRedeemedRewards(rewards);
   };

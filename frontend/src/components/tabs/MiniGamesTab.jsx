@@ -84,28 +84,35 @@ const fireConfetti = () => {
 const MiniGamesTab = () => {
   const { currentUser, loyaltyData, refreshLoyaltyData } = useApp();
   const [selectedGame, setSelectedGame] = useState(null);
-  const [dailyPlays, setDailyPlays] = useState(() => {
-    const today = new Date().toDateString();
-    const saved = localStorage.getItem(`dailyPlays_${currentUser.userId}_${today}`);
-    return saved ? JSON.parse(saved) : { spin: 0, scratch: 0, quiz: 0 };
-  });
-  const [totalPointsWon, setTotalPointsWon] = useState(() => {
-    const today = new Date().toDateString();
-    const saved = localStorage.getItem(`pointsWon_${currentUser.userId}_${today}`);
-    return saved ? parseInt(saved) : 0;
-  });
+  const [dailyPlays, setDailyPlays] = useState({ spin: 0, scratch: 0, quiz: 0 });
+  const [totalPointsWon, setTotalPointsWon] = useState(0);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [animatedPoints, setAnimatedPoints] = useState(0);
 
+  // Load from localStorage when currentUser is available
   useEffect(() => {
+    if (!currentUser?.userId) return;
+    const today = new Date().toDateString();
+    
+    const savedPlays = localStorage.getItem(`dailyPlays_${currentUser.userId}_${today}`);
+    if (savedPlays) setDailyPlays(JSON.parse(savedPlays));
+    
+    const savedPoints = localStorage.getItem(`pointsWon_${currentUser.userId}_${today}`);
+    if (savedPoints) setTotalPointsWon(parseInt(savedPoints));
+  }, [currentUser?.userId]);
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    if (!currentUser?.userId) return;
     const today = new Date().toDateString();
     localStorage.setItem(`dailyPlays_${currentUser.userId}_${today}`, JSON.stringify(dailyPlays));
-  }, [dailyPlays, currentUser.userId]);
+  }, [dailyPlays, currentUser?.userId]);
 
   useEffect(() => {
+    if (!currentUser?.userId) return;
     const today = new Date().toDateString();
     localStorage.setItem(`pointsWon_${currentUser.userId}_${today}`, totalPointsWon.toString());
-  }, [totalPointsWon, currentUser.userId]);
+  }, [totalPointsWon, currentUser?.userId]);
 
   const games = [
     {

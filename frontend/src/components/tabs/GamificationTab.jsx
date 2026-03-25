@@ -108,6 +108,7 @@ const GamificationTab = () => {
   }, [loyaltyData]);
 
   const fetchUserData = async () => {
+    if (!currentUser?.userId) return;
     try {
       // Get review count
       const reviewsResponse = await reviewAPI.getUserReviews(currentUser.userId);

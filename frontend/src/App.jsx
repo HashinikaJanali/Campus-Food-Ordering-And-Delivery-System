@@ -28,6 +28,7 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
+
 import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
@@ -35,6 +36,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
+
 
 
 // Protected Route
@@ -79,13 +81,13 @@ const UserProtectedRoute = ({ children }) => {
   return children;
 };
 
-function App() {
+  function App() {
   return (
-    <AppProvider>
-      <AuthProvider>
-        <UserAuthProvider>
-          <CartProvider>
-            <Router>
+    <Router>
+      <UserAuthProvider>
+        <AppProvider>
+          <AuthProvider>
+            <CartProvider>
               <Routes>
                 {/* Student routes */}
                 <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
@@ -130,49 +132,46 @@ function App() {
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
 
-                
-
-
-              <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-          </Router>
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3500,
-              style: {
-                background: '#fff',
-                color: '#111827',
-                fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
-                fontSize: '14px',
-                borderRadius: '12px',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#f97316',
-                  secondary: '#fff',
-                },
-                style: {
-                  borderLeft: '4px solid #f97316',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#EF4444',
-                  secondary: '#fff',
-                },
-                style: {
-                  borderLeft: '4px solid #ef4444',
-                },
-              },
-            }}
-          />
-        </CartProvider>
-        </UserAuthProvider>
-      </AuthProvider>
-    </AppProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3500,
+                  style: {
+                    background: '#fff',
+                    color: '#111827',
+                    fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
+                    fontSize: '14px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#f97316',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #f97316',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#EF4444',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #ef4444',
+                    },
+                  },
+                }}
+              />
+            </CartProvider>
+          </AuthProvider>
+        </AppProvider>
+      </UserAuthProvider>
+    </Router>
   );
 }
 
