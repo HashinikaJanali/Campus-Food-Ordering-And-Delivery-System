@@ -1,4 +1,5 @@
 const User = require('../Model/User');
+const Admin = require('../Model/Admin');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT Token
@@ -314,9 +315,151 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Admin: get all users + admins
+// @route   GET /api/users
+// @access  Private (Admin)
+const getAllUsersForAdmin = async (req, res) => {
+  try {
+    const students = await User.find({})
+      .select('_id name email role isVerified createdAt')
+      .sort({ createdAt: -1 });
+
+    const admins = await Admin.find({})
+      .select('_id name email role active createdAt')
+      .sort({ createdAt: -1 });
+
+    const normalizedStudents = students.map((u) => ({
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      role: u.role || 'student',
+      active: typeof u.isVerified === 'boolean' ? u.isVerified : true,
+      createdAt: u.createdAt,
+      accountType: 'user',
+    }));
+
+    const normalizedAdmins = admins.map((a) => ({
+      _id: a._id,
+      name: a.name,
+      email: a.email,
+      role: a.role || 'admin',
+      active: typeof a.active === 'boolean' ? a.active : true,
+      createdAt: a.createdAt,
+      accountType: 'admin',
+    }));
+
+    return res.json({
+      success: true,
+      data: [...normalizedAdmins, ...normalizedStudents],
+    });
+  } catch (error) {
+    console.error('Admin get users error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load users',
+    });
+  }
+};
+
+// @desc    Admin: update user/admin status
+// @route   PATCH /api/users/:id/status
+// @access  Private (Admin)
+const updateAccountStatusByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { active } = req.body;
+
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'active must be a boolean',
+      });
+    }
+
+    const user = await User.findById(id);
+    if (user) {
+      user.isVerified = active;
+      await user.save();
+      return res.json({
+        success: true,
+        message: `User ${active ? 'activated' : 'deactivated'} successfully`,
+      });
+    }
+
+    const admin = await Admin.findById(id);
+    if (admin) {
+      admin.active = active;
+      await admin.save();
+      return res.json({
+        success: true,
+        message: `Admin ${active ? 'activated' : 'deactivated'} successfully`,
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: 'Account not found',
+    });
+  } catch (error) {
+    console.error('Admin update status error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update status',
+    });
+  }
+};
+
+// @desc    Admin: delete user/admin
+// @route   DELETE /api/users/:id
+// @access  Private (Admin)
+const deleteAccountByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (user) {
+      await user.deleteOne();
+      return res.json({
+        success: true,
+        message: 'User deleted successfully',
+      });
+    }
+
+    const admin = await Admin.findById(id);
+    if (admin) {
+      // Prevent deleting yourself to avoid lockout.
+      if (req.admin && req.admin._id && req.admin._id.toString() === admin._id.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: 'You cannot delete your own admin account',
+        });
+      }
+      await admin.deleteOne();
+      return res.json({
+        success: true,
+        message: 'Admin deleted successfully',
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: 'Account not found',
+    });
+  } catch (error) {
+    console.error('Admin delete account error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete account',
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  getAllUsersForAdmin,
+  updateAccountStatusByAdmin,
+  deleteAccountByAdmin
 };

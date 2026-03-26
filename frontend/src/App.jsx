@@ -16,7 +16,6 @@ import AdminDashboard from './pages/AdminDashboard';
 
 import AdminLayout from './components/AdminLayout';
 import AdminSubLayout from './components/AdminSubLayout';
-import AdminLogin from './pages/inventory/AdminLoginPage';
 import DashboardPage from './pages/inventory/DashboardPage';
 import FoodItemsPage from './pages/inventory/FoodItemsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
@@ -35,6 +34,10 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
 
+import AdminPanelLayout from "./pages/AdminPanelLayout";
+import AdminPanelDashboard from "./pages/AdminPanelDashboard";
+import AdminPanelUsers     from "./pages/AdminPanelUsers";
+
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -51,7 +54,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return admin ? children : <Navigate to="/admin/login" replace />;
+  return admin ? children : <Navigate to="/login" replace />;
 };
 
 // User Protected Route
@@ -84,7 +87,7 @@ function App() {
       <AuthProvider>
         <UserAuthProvider>
           <CartProvider>
-            <Router>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Routes>
                 {/* Student routes */}
                 <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
@@ -103,18 +106,12 @@ function App() {
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
                 
-                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                
-                {/* Admin routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
+              
+
+                <Route path="/admin-panel" element={<ProtectedRoute><AdminPanelLayout /></ProtectedRoute>}>
+                  <Route index                    element={<AdminPanelDashboard />} />
+                  <Route path="users"             element={<AdminPanelUsers />} />
+
                   <Route index element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="food-items" element={<FoodItemsPage />} />
@@ -126,9 +123,6 @@ function App() {
                   <Route path="canteens" element={<CanteensPage />} />
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
-
-                
-
 
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

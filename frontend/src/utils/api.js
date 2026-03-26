@@ -18,11 +18,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only redirect to admin/login if it's an ADMIN endpoint getting 401
-    if (error.response?.status === 401 && !error.config.url.includes('/users/')) {
+    // Only redirect when currently in admin area and receiving unauthorized.
+    const isAdminArea = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/admin-panel');
+    if (error.response?.status === 401 && isAdminArea) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
-      window.location.href = '/admin/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

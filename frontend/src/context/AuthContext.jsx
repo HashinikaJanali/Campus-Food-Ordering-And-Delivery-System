@@ -25,8 +25,8 @@ export const AuthProvider = ({ children }) => {
     return admin;
   };
 
-  const register = async (name, email, password) => {
-    const res = await api.post('/auth/register', { name, email, password });
+  const register = async (name, email, password, role = "admin") => {
+    const res = await api.post('/auth/register', { name, email, password, role });
     const { token, admin } = res.data;
     localStorage.setItem('admin_token', token);
     localStorage.setItem('admin_user', JSON.stringify(admin));

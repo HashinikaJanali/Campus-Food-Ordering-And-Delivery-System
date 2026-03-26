@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { useAuth } from './AuthContext';
+import { useUserAuth } from './UserAuthContext';
 
 const CartContext = createContext();
 
@@ -14,7 +14,7 @@ export const CartProvider = ({ children }) => {
         return savedCart ? JSON.parse(savedCart) : { items: [], totalAmount: 0 };
     });
     const [loading, setLoading] = useState(false);
-    const { admin } = useAuth();
+    const { user } = useUserAuth();
 
     // Save cart to localStorage whenever it changes
     useEffect(() => {
@@ -23,10 +23,10 @@ export const CartProvider = ({ children }) => {
 
     // Load cart when user logs in
     useEffect(() => {
-        if (admin) {
+        if (user) {
             loadCart();
         }
-    }, [admin]);
+    }, [user]);
 
     const loadCart = async () => {
         try {
@@ -39,7 +39,7 @@ export const CartProvider = ({ children }) => {
 
     const addToCart = async (product) => {
         // For authenticated users, send to backend
-        if (admin) {
+        if (user) {
             setLoading(true);
             try {
                 const response = await api.post('/cart/add', {
@@ -91,7 +91,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const updateQuantity = (foodItemId, newQuantity) => {
-        if (admin) {
+        if (user) {
             // For authenticated users, update on backend
             (async () => {
                 try {
@@ -128,7 +128,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const removeFromCart = (foodItemId) => {
-        if (admin) {
+        if (user) {
             // For authenticated users, remove from backend
             (async () => {
                 try {
@@ -158,7 +158,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const clearCart = async () => {
-        if (admin) {
+        if (user) {
             // For authenticated users, clear on backend
             try {
                 await api.delete('/cart/clear');

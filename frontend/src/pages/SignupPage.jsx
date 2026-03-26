@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserPlus, Mail, Lock, User, Sparkles } from "lucide-react";
+import { UserPlus, Mail, Lock, User, Sparkles, Shield } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
+import { useAuth } from "../context/AuthContext";
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const { register } = useUserAuth();
+  const { register: registerStudent } = useUserAuth();
+  const { register: registerAdmin, logout: logoutAdmin } = useAuth();
 
+  const [role, setRole] = useState("student"); // "student" or "admin"
   const [form, setForm] = useState({
     name: "", email: "", password: "", confirmPassword: ""
   });
@@ -25,13 +28,27 @@ const SignupPage = () => {
       setError("Passwords do not match.");
       return;
     }
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     setLoading(true);
+    setError("");
     try {
-      await register(form.name, form.email, form.password);
-      navigate("/login");
+      if (role === "admin") {
+        await registerAdmin(form.name, form.email, form.password, "admin");
+        // Requirement: signup should always go to login, not auto-enter admin panel.
+        logoutAdmin();
+      } else {
+        await registerStudent(form.name, form.email, form.password);
+        // Requirement: signup should always go to login, not stay authenticated.
+        localStorage.removeItem('user_token');
+        localStorage.removeItem('user_data');
+      }
+
+      navigate(`/login?role=${role}`);
     } catch (err) {
-      setError(err.message || "Signup failed. Please try again.");
-    } finally {
+      setError(err.response?.data?.message || err.message || "Signup failed. Please try again.");
       setLoading(false);
     }
   };
@@ -64,6 +81,32 @@ const SignupPage = () => {
               {error}
             </motion.div>
           )}
+
+          {/* Role Selection Tabs */}
+          <div className="flex gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => { setRole("student"); setError(""); }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                role === "student"
+                  ? "bg-primary text-white shadow-lg shadow-orange-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <UserPlus size={16} /> Student
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRole("admin"); setError(""); }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                role === "admin"
+                  ? "bg-primary text-white shadow-lg shadow-orange-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Shield size={16} /> Admin
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -119,7 +162,7 @@ const SignupPage = () => {
               type="submit" disabled={loading}
               className="w-full py-4 bg-primary hover:bg-primary-500 disabled:opacity-60 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition-all mt-2"
             >
-              {loading ? "Creating account..." : <><UserPlus size={16} /> Create account</>}
+              {loading ? "Creating account..." : role === "admin" ? <><Shield size={16} /> Create admin account</> : <><UserPlus size={16} /> Create account</>}
             </motion.button>
           </form>
 
@@ -127,6 +170,19 @@ const SignupPage = () => {
             Already have an account?{" "}
             <Link to="/login" className="text-primary font-black hover:underline">Sign in</Link>
           </p>
+
+          {role === "student" && (
+            <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+              <p className="text-xs text-gray-500 mb-2">Are you an admin?</p>
+              <button
+                type="button"
+                onClick={() => setRole("admin")}
+                className="text-primary font-black text-sm hover:underline"
+              >
+                Switch to admin signup →
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

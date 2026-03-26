@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn, Sparkles } from "lucide-react";
+import { Mail, Lock, LogIn, Sparkles, Shield } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useUserAuth();
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get('role') === 'admin' ? 'admin' : 'student';
+  const { login: loginStudent, logout: logoutStudent } = useUserAuth();
+  const { login: loginAdmin, logout: logoutAdmin } = useAuth();
 
+  const [role, setRole] = useState(initialRole);
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,17 +35,24 @@ const LoginPage = () => {
         return;
       }
 
-      await login(form.email, form.password);
-      
-      // Only navigate on SUCCESSFUL login
-      const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
-      localStorage.removeItem('login_redirect_path');
-      localStorage.removeItem('login_redirect');
-      
-      if (redirectPath) {
-        navigate(redirectPath);
+      if (role === 'admin') {
+        // Ensure student session doesn't interfere with admin flow.
+        logoutStudent();
+        await loginAdmin(form.email, form.password);
+        navigate('/admin-panel');
       } else {
-        navigate('/');
+        // Ensure admin session doesn't interfere with student flow.
+        logoutAdmin();
+        await loginStudent(form.email, form.password);
+        const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
+        localStorage.removeItem('login_redirect_path');
+        localStorage.removeItem('login_redirect');
+
+        if (redirectPath) {
+          navigate(redirectPath);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       // Show error message - DO NOT NAVIGATE
@@ -79,6 +91,31 @@ const LoginPage = () => {
               {error}
             </motion.div>
           )}
+
+          <div className="flex gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => { setRole("student"); setError(""); }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                role === "student"
+                  ? "bg-primary text-white shadow-lg shadow-orange-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Mail size={16} /> Student
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRole("admin"); setError(""); }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                role === "admin"
+                  ? "bg-primary text-white shadow-lg shadow-orange-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Shield size={16} /> Admin
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

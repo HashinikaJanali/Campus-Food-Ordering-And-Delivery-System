@@ -26,6 +26,10 @@ const adminSchema = new mongoose.Schema({
     type: String,
     enum: ['admin', 'super_admin'],
     default: 'admin'
+  },
+  active: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

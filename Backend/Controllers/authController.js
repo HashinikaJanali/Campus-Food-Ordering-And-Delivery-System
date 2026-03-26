@@ -59,6 +59,9 @@ exports.loginAdmin = async (req, res) => {
         if (!admin || !(await admin.comparePassword(password))) {
             return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
+        if (admin.active === false) {
+            return res.status(403).json({ success: false, message: 'Admin account is inactive' });
+        }
         const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.json({
             success: true,
