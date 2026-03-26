@@ -1,19 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn, Sparkles, Shield } from "lucide-react";
+import { Mail, Lock, LogIn, Sparkles } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialRole = searchParams.get('role') === 'admin' ? 'admin' : 'student';
   const { login: loginStudent, logout: logoutStudent } = useUserAuth();
   const { login: loginAdmin, logout: logoutAdmin } = useAuth();
 
-  const [role, setRole] = useState(initialRole);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -29,30 +26,33 @@ const LoginPage = () => {
     
     try {
       // Validate fields first
-      if (!form.email.trim() || !form.password.trim()) {
-        setError("Please enter both email and password.");
+      if (!form.username.trim() || !form.password.trim()) {
+        setError("Please enter both username/email and password.");
         setLoading(false);
         return;
       }
 
-      if (role === 'admin') {
-        // Ensure student session doesn't interfere with admin flow.
-        logoutStudent();
-        await loginAdmin(form.email, form.password);
-        navigate('/admin-panel');
-      } else {
-        // Ensure admin session doesn't interfere with student flow.
-        logoutAdmin();
-        await loginStudent(form.email, form.password);
-        const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
-        localStorage.removeItem('login_redirect_path');
-        localStorage.removeItem('login_redirect');
+      // Clear existing sessions before processing a new login.
+      logoutAdmin(false);
+      logoutStudent(false);
 
-        if (redirectPath) {
-          navigate(redirectPath);
-        } else {
-          navigate('/');
-        }
+      try {
+        await loginAdmin(form.username, form.password);
+        navigate('/admin-panel');
+        return;
+      } catch {
+        // If admin login fails, continue with student login attempt.
+      }
+
+      await loginStudent(form.username, form.password);
+      const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
+      localStorage.removeItem('login_redirect_path');
+      localStorage.removeItem('login_redirect');
+
+      if (redirectPath) {
+        navigate(redirectPath);
+      } else {
+        navigate('/');
       }
     } catch (err) {
       // Show error message - DO NOT NAVIGATE
@@ -92,39 +92,14 @@ const LoginPage = () => {
             </motion.div>
           )}
 
-          <div className="flex gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => { setRole("student"); setError(""); }}
-              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                role === "student"
-                  ? "bg-primary text-white shadow-lg shadow-orange-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <Mail size={16} /> Student
-            </button>
-            <button
-              type="button"
-              onClick={() => { setRole("admin"); setError(""); }}
-              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                role === "admin"
-                  ? "bg-primary text-white shadow-lg shadow-orange-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <Shield size={16} /> Admin
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Email address</label>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Username or email</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email" name="email" value={form.email} onChange={handleChange}
-                  placeholder="you@university.edu" required
+                  type="text" name="username" value={form.username} onChange={handleChange}
+                  placeholder="admin username or user email" required
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>

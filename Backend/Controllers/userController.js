@@ -108,6 +108,13 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (user.isVerified === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is deactivated. Please contact admin support.'
+      });
+    }
+
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {

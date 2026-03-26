@@ -1,16 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserPlus, Mail, Lock, User, Sparkles, Shield } from "lucide-react";
+import { UserPlus, Mail, Lock, User, Sparkles } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
-import { useAuth } from "../context/AuthContext";
+
+const PASSWORD_RULES = {
+  minLength: 6,
+  upper: /[A-Z]/,
+  lower: /[a-z]/,
+  number: /\d/,
+  special: /[^A-Za-z0-9]/,
+  noSpaces: /^\S+$/,
+};
+
+const getPasswordValidationError = (password) => {
+  if (password.length < PASSWORD_RULES.minLength) {
+    return "Password must be at least 6 characters long.";
+  }
+  if (!PASSWORD_RULES.upper.test(password)) {
+    return "Password must include at least one uppercase letter.";
+  }
+  if (!PASSWORD_RULES.lower.test(password)) {
+    return "Password must include at least one lowercase letter.";
+  }
+  if (!PASSWORD_RULES.number.test(password)) {
+    return "Password must include at least one number.";
+  }
+  if (!PASSWORD_RULES.special.test(password)) {
+    return "Password must include at least one special character.";
+  }
+  if (!PASSWORD_RULES.noSpaces.test(password)) {
+    return "Password cannot contain spaces.";
+  }
+  return "";
+};
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { register: registerStudent } = useUserAuth();
-  const { register: registerAdmin, logout: logoutAdmin } = useAuth();
-
-  const [role, setRole] = useState("student"); // "student" or "admin"
   const [form, setForm] = useState({
     name: "", email: "", password: "", confirmPassword: ""
   });
@@ -24,29 +51,26 @@ const SignupPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const passwordError = getPasswordValidationError(form.password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+
     setLoading(true);
     setError("");
     try {
-      if (role === "admin") {
-        await registerAdmin(form.name, form.email, form.password, "admin");
-        // Requirement: signup should always go to login, not auto-enter admin panel.
-        logoutAdmin();
-      } else {
-        await registerStudent(form.name, form.email, form.password);
-        // Requirement: signup should always go to login, not stay authenticated.
-        localStorage.removeItem('user_token');
-        localStorage.removeItem('user_data');
-      }
+      await registerStudent(form.name, form.email, form.password);
+      // Signup should redirect to login, not keep the user session active.
+      localStorage.removeItem('user_token');
+      localStorage.removeItem('user_data');
 
-      navigate(`/login?role=${role}`);
+      navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Signup failed. Please try again.");
       setLoading(false);
@@ -82,32 +106,6 @@ const SignupPage = () => {
             </motion.div>
           )}
 
-          {/* Role Selection Tabs */}
-          <div className="flex gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => { setRole("student"); setError(""); }}
-              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                role === "student"
-                  ? "bg-primary text-white shadow-lg shadow-orange-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <UserPlus size={16} /> Student
-            </button>
-            <button
-              type="button"
-              onClick={() => { setRole("admin"); setError(""); }}
-              className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                role === "admin"
-                  ? "bg-primary text-white shadow-lg shadow-orange-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <Shield size={16} /> Admin
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Full name</label>
@@ -139,10 +137,13 @@ const SignupPage = () => {
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="password" name="password" value={form.password} onChange={handleChange}
-                  placeholder="Min. 6 characters" required minLength={6}
+                  placeholder="Strong password" required minLength={6}
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>
+              <p className="text-[11px] text-gray-500 font-medium mt-2 px-1">
+                Use 6+ chars with uppercase, lowercase, number, and special character.
+              </p>
             </div>
 
             <div>
@@ -162,7 +163,7 @@ const SignupPage = () => {
               type="submit" disabled={loading}
               className="w-full py-4 bg-primary hover:bg-primary-500 disabled:opacity-60 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 transition-all mt-2"
             >
-              {loading ? "Creating account..." : role === "admin" ? <><Shield size={16} /> Create admin account</> : <><UserPlus size={16} /> Create account</>}
+              {loading ? "Creating account..." : <><UserPlus size={16} /> Create account</>}
             </motion.button>
           </form>
 
@@ -170,19 +171,6 @@ const SignupPage = () => {
             Already have an account?{" "}
             <Link to="/login" className="text-primary font-black hover:underline">Sign in</Link>
           </p>
-
-          {role === "student" && (
-            <div className="mt-4 pt-4 border-t border-gray-200 text-center">
-              <p className="text-xs text-gray-500 mb-2">Are you an admin?</p>
-              <button
-                type="button"
-                onClick={() => setRole("admin")}
-                className="text-primary font-black text-sm hover:underline"
-              >
-                Switch to admin signup →
-              </button>
-            </div>
-          )}
         </motion.div>
       </div>
     </div>

@@ -16,8 +16,8 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+  const login = async (username, password) => {
+    const res = await api.post('/auth/login', { username, password });
     const { token, admin } = res.data;
     localStorage.setItem('admin_token', token);
     localStorage.setItem('admin_user', JSON.stringify(admin));
@@ -34,14 +34,25 @@ export const AuthProvider = ({ children }) => {
     return admin;
   };
 
-  const logout = () => {
+  const logout = (shouldRedirect = true) => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     setAdmin(null);
+    if (shouldRedirect && typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
+  };
+
+  const updateCredentials = async ({ username, currentPassword, newPassword }) => {
+    const res = await api.put('/auth/credentials', { username, currentPassword, newPassword });
+    const updatedAdmin = res.data.admin;
+    localStorage.setItem('admin_user', JSON.stringify(updatedAdmin));
+    setAdmin(updatedAdmin);
+    return updatedAdmin;
   };
 
   return (
-    <AuthContext.Provider value={{ admin, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ admin, login, register, logout, updateCredentials, loading }}>
       {children}
     </AuthContext.Provider>
   );

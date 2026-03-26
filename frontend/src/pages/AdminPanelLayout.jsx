@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, ShoppingBag, Package,
@@ -16,13 +16,11 @@ const NAV_ITEMS = [
 ];
 
 const AdminPanelLayout = () => {
-  const navigate = useNavigate();
   const { admin, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
   };
 
   const SidebarContent = () => (

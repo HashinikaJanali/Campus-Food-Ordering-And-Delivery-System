@@ -24,7 +24,6 @@ const navItems = [
 
 export default function AdminLayout() {
   const { admin, logout } = useAuth();
-  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const [unreadAlerts, setUnreadAlerts] = useState(0);
 
@@ -44,7 +43,6 @@ export default function AdminLayout() {
   const handleLogout = () => {
     logout();
     toast.success('Logged out successfully');
-    navigate('/admin/login');
   };
 
   return (

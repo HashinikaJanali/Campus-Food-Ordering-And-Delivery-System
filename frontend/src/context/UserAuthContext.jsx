@@ -59,11 +59,14 @@ export const UserAuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (shouldRedirect = true) => {
     localStorage.removeItem('user_token');
     localStorage.removeItem('user_data');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
+    if (shouldRedirect && typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   };
 
   const updateProfile = async (userData) => {
