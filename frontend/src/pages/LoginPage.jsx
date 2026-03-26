@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn, Sparkles } from "lucide-react";
+import { Mail, Lock, LogIn, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -13,6 +13,7 @@ const LoginPage = () => {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,7 +28,7 @@ const LoginPage = () => {
     try {
       // Validate fields first
       if (!form.username.trim() || !form.password.trim()) {
-        setError("Please enter both username/email and password.");
+        setError("Please enter both email and password.");
         setLoading(false);
         return;
       }
@@ -94,12 +95,12 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Username or email</label>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Your email</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text" name="username" value={form.username} onChange={handleChange}
-                  placeholder="admin username or user email" required
+                  placeholder="Your email" required
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>
@@ -110,10 +111,18 @@ const LoginPage = () => {
               <div className="relative">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  type="password" name="password" value={form.password} onChange={handleChange}
+                  type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange}
                   placeholder="Your password" required
-                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
+                  className="w-full pl-11 pr-20 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-primary hover:border-orange-200 text-[11px] font-black uppercase tracking-wider transition-all"
+                >
+                  {showPassword ? <EyeOff size={12} /> : <Eye size={12} />}
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 

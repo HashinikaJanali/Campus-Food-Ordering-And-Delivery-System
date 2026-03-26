@@ -9,6 +9,7 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import AdminHeader from './AdminHeader';
 import Footer from './Footer';
+import ConfirmDialog from './ConfirmDialog';
 
 
 const navItems = [
@@ -26,6 +27,7 @@ export default function AdminLayout() {
   const { admin, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     fetchAlertCount();
@@ -41,12 +43,23 @@ export default function AdminLayout() {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     toast.success('Logged out successfully');
   };
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Sign out of Admin?"
+        message="You will be redirected to home and your admin session will end securely."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
+
       <AdminHeader />
 
       <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
@@ -62,7 +75,7 @@ export default function AdminLayout() {
           <aside className={`
             sticky top-0 h-[calc(100vh-80px)]
             ${sidebarOpen ? 'w-64' : 'w-20 lg:w-20'} 
-            bg-white border-r border-gray-100 z-30 flex flex-col shadow-sm hidden lg:flex transition-all duration-300
+            bg-white border-r border-gray-100 z-30 flex-col shadow-sm hidden lg:flex transition-all duration-300
           `}>
             {/* Sidebar Header with Toggle */}
             <div className={`p-6 border-b border-gray-100 flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
@@ -145,7 +158,7 @@ export default function AdminLayout() {
                 </div>
                 {sidebarOpen && (
                   <button
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutConfirm(true)}
                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 shrink-0"
                     title="Logout"
                   >

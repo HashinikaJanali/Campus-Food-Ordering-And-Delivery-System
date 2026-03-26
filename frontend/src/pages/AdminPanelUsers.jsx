@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 
-const ROLES = ["all", "student", "staff", "faculty", "admin", "super_admin"];
+const ROLES = ["all", "student", "admin", "staff"];
 const STATUS = ["all", "active", "inactive"];
 
 const RoleBadge = ({ role }) => (
@@ -53,6 +53,7 @@ const AdminPanelUsers = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [summaryFilter, setSummaryFilter] = useState("total");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -96,10 +97,51 @@ const AdminPanelUsers = () => {
 
   const filtered = users.filter(u => {
     const matchSearch = u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === "all" || u.role === roleFilter;
+    const matchRole =
+      roleFilter === "all" ||
+      (roleFilter === "admin" && ["admin", "super_admin"].includes(u.role)) ||
+      u.role === roleFilter;
     const matchStatus = statusFilter === "all" || (statusFilter === "active" && u.active) || (statusFilter === "inactive" && !u.active);
-    return matchSearch && matchRole && matchStatus;
+
+    const isStudentRole = ["student", "staff"].includes(u.role);
+    const isAdminRole = ["admin", "super_admin"].includes(u.role);
+
+    const matchSummary =
+      summaryFilter === "total" ||
+      (summaryFilter === "active" && u.active) ||
+      (summaryFilter === "inactive" && !u.active) ||
+      (summaryFilter === "students" && isStudentRole) ||
+      (summaryFilter === "admins" && isAdminRole);
+
+    return matchSearch && matchRole && matchStatus && matchSummary;
   });
+
+  const summaryCards = [
+    { key: "total", label: "Total", value: users.length, color: "bg-orange-50 border-orange-200 text-primary", activeColor: "ring-2 ring-orange-300", icon: Users },
+    { key: "active", label: "Active", value: users.filter(u => u.active).length, color: "bg-green-50 border-green-200 text-success", activeColor: "ring-2 ring-green-300", icon: UserCheck },
+    { key: "inactive", label: "Inactive", value: users.filter(u => !u.active).length, color: "bg-gray-100 border-gray-300 text-gray-600", activeColor: "ring-2 ring-gray-400", icon: UserX },
+    { key: "students", label: "Students", value: users.filter(u => ["student", "staff"].includes(u.role)).length, color: "bg-blue-50 border-blue-200 text-blue-600", activeColor: "ring-2 ring-blue-300", icon: GraduationCap },
+    { key: "admins", label: "Admins", value: users.filter(u => ["admin", "super_admin"].includes(u.role)).length, color: "bg-amber-50 border-amber-200 text-amber-600", activeColor: "ring-2 ring-amber-300", icon: ShieldCheck },
+  ];
+
+  const handleSummaryCardClick = (key) => {
+    setSummaryFilter(key);
+
+    if (key === "active") {
+      setStatusFilter("active");
+      setRoleFilter("all");
+      return;
+    }
+
+    if (key === "inactive") {
+      setStatusFilter("inactive");
+      setRoleFilter("all");
+      return;
+    }
+
+    setStatusFilter("all");
+    setRoleFilter("all");
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8 py-8 font-body">
@@ -127,17 +169,20 @@ const AdminPanelUsers = () => {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Total",    value: users.length,                                   color: "bg-orange-50 border-orange-200 text-primary",    icon: Users },
-          { label: "Active",   value: users.filter(u => u.active).length,             color: "bg-green-50 border-green-200 text-success",      icon: UserCheck },
-          { label: "Students", value: users.filter(u => ["student", "staff", "faculty"].includes(u.role)).length, color: "bg-blue-50 border-blue-200 text-blue-600",       icon: GraduationCap },
-          { label: "Admins",   value: users.filter(u => ["admin", "super_admin"].includes(u.role)).length,   color: "bg-amber-50 border-amber-200 text-amber-600",    icon: ShieldCheck },
-        ].map((s, i) => (
-          <div key={i} className={`${s.color} border rounded-2xl p-4 flex items-center gap-3`}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {summaryCards.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => handleSummaryCardClick(s.key)}
+            className={`${s.color} ${summaryFilter === s.key ? s.activeColor : ""} border rounded-2xl p-4 flex items-center gap-3 text-left transition-all hover:shadow-md cursor-pointer`}
+          >
             <s.icon size={20} />
-            <div><p className="text-2xl font-black leading-none">{s.value}</p><p className="text-[10px] font-black uppercase tracking-widest opacity-70">{s.label}</p></div>
-          </div>
+            <div>
+              <p className="text-2xl font-black leading-none">{s.value}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-70">{s.label}</p>
+            </div>
+          </button>
         ))}
       </div>
 
@@ -149,14 +194,22 @@ const AdminPanelUsers = () => {
         </div>
         <div className="flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
           <ShieldCheck size={15} className="text-gray-400 shrink-0" />
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="bg-transparent text-gray-700 font-black text-sm focus:outline-none">
-            {ROLES.map(r => <option key={r} value={r}>{r === "all" ? "All Roles" : r}</option>)}
+          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="bg-transparent text-gray-700 font-black text-sm focus:outline-none cursor-pointer">
+            {ROLES.map(r => (
+              <option key={r} value={r}>
+                {r === "all" ? "All Roles" : r.charAt(0).toUpperCase() + r.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
           <Filter size={15} className="text-gray-400 shrink-0" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-gray-700 font-black text-sm focus:outline-none">
-            {STATUS.map(s => <option key={s} value={s}>{s === "all" ? "All Status" : s}</option>)}
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-gray-700 font-black text-sm focus:outline-none cursor-pointer">
+            {STATUS.map(s => (
+              <option key={s} value={s}>
+                {s === "all" ? "All Statuses" : s.charAt(0).toUpperCase() + s.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
       </div>

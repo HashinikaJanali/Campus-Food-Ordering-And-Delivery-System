@@ -5,14 +5,22 @@ import { useLocation } from 'react-router-dom';
 import logoImage from '../assets/logo.png';
 import { useCart } from '../context/CartContext';
 import { useUserAuth } from '../context/UserAuthContext';
+import ConfirmDialog from './ConfirmDialog';
 
 const UserHeader = () => {
     const [logoError, setLogoError] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const profileRef = useRef(null);
     const location = useLocation();
     const { cartCount } = useCart();
     const { user, logout, isAuthenticated } = useUserAuth();
+
+    const handleConfirmLogout = () => {
+        setShowLogoutConfirm(false);
+        setProfileOpen(false);
+        logout();
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -32,6 +40,16 @@ const UserHeader = () => {
             animate={{ y: 0 }}
             className="sticky top-0 w-full bg-white border-b-2 border-gray-200 px-4 py-4 z-50 shadow-md"
         >
+            <ConfirmDialog
+                open={showLogoutConfirm}
+                title="Sign out now?"
+                message="You will need to sign in again to access your account and order history."
+                confirmText="Sign Out"
+                cancelText="Stay Logged In"
+                onConfirm={handleConfirmLogout}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
+
             <div className="w-full px-4 sm:px-8 flex justify-between items-center">
 
                 {/* Left Section (Logo + Title) */}
@@ -155,8 +173,7 @@ const UserHeader = () => {
                                         {/* Logout Button */}
                                         <motion.button
                                             onClick={() => {
-                                                logout();
-                                                setProfileOpen(false);
+                                                setShowLogoutConfirm(true);
                                             }}
                                             whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
                                             className="w-full px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 uppercase tracking-widest"

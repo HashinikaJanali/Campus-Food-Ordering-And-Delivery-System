@@ -6,6 +6,7 @@ import {
   MessageSquare, LogOut, Menu, ChevronRight, Zap
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const NAV_ITEMS = [
   { to: "/admin-panel",           label: "Dashboard",         icon: LayoutDashboard, end: true },
@@ -18,8 +19,10 @@ const NAV_ITEMS = [
 const AdminPanelLayout = () => {
   const { admin, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
   };
 
@@ -75,10 +78,17 @@ const AdminPanelLayout = () => {
           </div>
         </div>
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/70 hover:bg-white/10 hover:text-white font-black text-sm transition-all"
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border border-white/15 bg-white/5 text-white/85 hover:bg-white/12 hover:border-white/25 font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
+          title="Sign out of admin panel"
         >
-          <LogOut size={17} /> Sign out
+          <span className="flex items-center gap-2.5">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/15">
+              <LogOut size={15} />
+            </span>
+            <span>Sign Out</span>
+          </span>
+          <span className="text-[10px] uppercase tracking-widest text-white/55">Secure</span>
         </button>
       </div>
     </div>
@@ -86,6 +96,16 @@ const AdminPanelLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100 font-body overflow-hidden">
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Sign out of Admin Panel?"
+        message="You will be returned to the home page and need to sign in again to continue admin actions."
+        confirmText="Sign Out"
+        cancelText="Stay Logged In"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 bg-gradient-to-b from-orange-500 to-rose-600 flex-col flex-shrink-0 shadow-2xl shadow-orange-900/30">
@@ -134,34 +154,6 @@ const AdminPanelLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-[#FFF9F5] p-8">
           <Outlet context={{ admin }} />
-          {/* Default Dashboard View */}
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome to Admin Panel</h1>
-            <p className="text-gray-600 mb-8">Select a section from the sidebar to get started</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <Users className="text-primary mb-4" size={32} />
-                <h3 className="font-bold text-lg mb-2">User Management</h3>
-                <p className="text-gray-600 text-sm">Manage system users and permissions</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <ShoppingBag className="text-primary mb-4" size={32} />
-                <h3 className="font-bold text-lg mb-2">Order Management</h3>
-                <p className="text-gray-600 text-sm">Track and manage orders</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <Package className="text-primary mb-4" size={32} />
-                <h3 className="font-bold text-lg mb-2">Inventory</h3>
-                <p className="text-gray-600 text-sm">Manage inventory and stock</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <MessageSquare className="text-primary mb-4" size={32} />
-                <h3 className="font-bold text-lg mb-2">Feedback</h3>
-                <p className="text-gray-600 text-sm">View user feedback and reviews</p>
-              </div>
-            </div>
-          </div>
         </main>
       </div>
     </div>
