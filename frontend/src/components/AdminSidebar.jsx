@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const orderMenuItems = [
   { path: '/orders', icon: ClipboardList, label: 'Orders List' },
   { path: '/history', icon: History, label: 'Order History' },
-  { path: '/tracking', icon: MapPin, label: 'Order Tracking' },
+  // Order Tracking removed from admin sidebar
 ];
 
 const inventoryMenuItems = [
