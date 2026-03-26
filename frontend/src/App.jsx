@@ -28,13 +28,13 @@ import StudentMenuPage from './pages/inventory/StudentMenuPage';
 import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
-import AdminPromotionsPage from './pages/inventory/AdminPromotionsPage';
+import AdminPromotionsPage from './pages/AdminPromotionsPage';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
-
+import UserProfilePage from "./pages/UserProfilePage";
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -80,11 +80,11 @@ const UserProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <AppProvider>
-      <AuthProvider>
-        <UserAuthProvider>
-          <CartProvider>
-            <Router>
+    <Router>
+      <UserAuthProvider>
+        <AppProvider>
+          <AuthProvider>
+            <CartProvider>
               <Routes>
                 {/* Student routes */}
                 <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
@@ -92,21 +92,21 @@ function App() {
                 <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
+                <Route path="/profile" element={<UserLayout><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-                <Route path="/orders" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
-                <Route path="/order/:orderId" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
+                <Route path="/orders" element={<AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
+                <Route path="/order/:orderId" element={<AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
                 <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
-                <Route path="/tracking" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
-                <Route path="/history" element={<AdminSubLayout showHeader={false} showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
+                <Route path="/tracking" element={<AdminSubLayout showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
+                <Route path="/history" element={<AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
                 
                 <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
-                <Route path="/admin/management" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                
-                
+
                 {/* Admin routes */}
+                <Route path="/admin/management" element={<ProtectedRoute><AdminSubLayout showFooter={false}><AdminDashboard /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
@@ -116,7 +116,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 >
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} /> 
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="food-items" element={<FoodItemsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
@@ -128,50 +128,47 @@ function App() {
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                 </Route>
 
-                
-
-
-              <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-          </Router>
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3500,
-              style: {
-                background: '#fff',
-                color: '#111827',
-                fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
-                fontSize: '14px',
-                borderRadius: '12px',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#f97316',
-                  secondary: '#fff',
-                },
-                style: {
-                  borderLeft: '4px solid #f97316',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#EF4444',
-                  secondary: '#fff',
-                },
-                style: {
-                  borderLeft: '4px solid #ef4444',
-                },
-              },
-            }}
-          />
-        </CartProvider>
-        </UserAuthProvider>
-      </AuthProvider>
-    </AppProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3500,
+                  style: {
+                    background: '#fff',
+                    color: '#111827',
+                    fontFamily: 'DM Sans, Plus Jakarta Sans, sans-serif',
+                    fontSize: '14px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#f97316',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #f97316',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#EF4444',
+                      secondary: '#fff',
+                    },
+                    style: {
+                      borderLeft: '4px solid #ef4444',
+                    },
+                  },
+                }}
+              />
+            </CartProvider>
+          </AuthProvider>
+        </AppProvider>
+      </UserAuthProvider>
+    </Router>
   );
 }
 
-export default App;
+export default App;

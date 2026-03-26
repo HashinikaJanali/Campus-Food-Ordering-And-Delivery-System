@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Phone, FileText, ChevronRight, CheckCircle2, Home, ArrowLeft, CreditCard, Lock, Check, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useUserAuth } from "../context/UserAuthContext";
+import { loyaltyAPI } from "../services/api";
+import { useApp } from "../context/AppContext";
+import { RefreshCw } from "lucide-react";
 
 const STEPS = [
   { label: "Pickup Info", icon: MapPin },
@@ -78,12 +82,25 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, cartTotal, clearCart } = useCart();
   const { admin } = useAuth();
+  const { user } = useUserAuth();
+  const { loyaltyData, refreshLoyaltyData, loading: loyaltyLoading } = useApp();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [placedOrder, setPlacedOrder] = useState(null);
   const [addressType, setAddressType] = useState(""); // "" | "on-campus" | "off-campus"
+  
+  const [usePoints, setUsePoints] = useState(false);
+  const [redeemAmount, setRedeemAmount] = useState(0);
+
+  // Sync redeemAmount when loyaltyData changes
+  useEffect(() => {
+    if (loyaltyData?.totalPoints) {
+      setRedeemAmount(loyaltyData.totalPoints);
+    }
+  }, [loyaltyData]);
+
   const [deliveryInfo, setDeliveryInfo] = useState({
     onCampusLocation: "",
     boardingName: "",
@@ -98,6 +115,16 @@ const CheckoutPage = () => {
     expiryDate: "",
     cvv: "",
   });
+
+  // If user is not logged in and has items in cart, redirect to login with checkout redirect
+  const handleCheckoutAuth = () => {
+    if (!user) {
+      localStorage.setItem('login_redirect_path', '/checkout');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
 
   const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
 
@@ -140,7 +167,7 @@ const CheckoutPage = () => {
         body: JSON.stringify({
           amount: finalTotal,
           currency: "inr",
-          email: admin?.email || "user@example.com",
+          email: user?.email || admin?.email || "user@example.com",
           cartItems: cart,
           deliveryInfo,
           addressType,
@@ -170,6 +197,11 @@ const CheckoutPage = () => {
           addressType,
           cartTotal,
           deliveryCharge,
+          customerName: user?.name || user?.userName || "Guest",
+          customerEmail: user?.email || "guest@example.com",
+          userId: user?._id,
+          pointsRedeemed: usePoints ? redeemAmount : 0,
+          discountAmount: usePoints ? discountAmount : 0,
         }),
       });
 
@@ -188,6 +220,7 @@ const CheckoutPage = () => {
         items: cart,
         subtotal: cartTotal,
         deliveryCharge: deliveryCharge,
+        discountAmount: discountAmount,
         total: finalTotal,
         deliveryInfo,
         addressType,
@@ -204,9 +237,10 @@ const CheckoutPage = () => {
     }
   };
 
-  // Calculate delivery charge
+  // Calculate delivery and discounts
   const deliveryCharge = addressType === "off-campus" ? DELIVERY_CHARGE : 0;
-  const finalTotal = cartTotal + deliveryCharge;
+  const discountAmount = usePoints ? Math.min(redeemAmount, cartTotal + deliveryCharge) : 0;
+  const finalTotal = cartTotal + deliveryCharge - discountAmount;
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -391,7 +425,11 @@ const CheckoutPage = () => {
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setStep(1)} 
+              onClick={() => {
+                if (handleCheckoutAuth()) {
+                  setStep(1);
+                }
+              }} 
               disabled={
                 !addressType ||
                 (addressType === "off-campus" && (!deliveryInfo.boardingName || !deliveryInfo.street || !deliveryInfo.area || !deliveryInfo.phoneNumber))
@@ -454,6 +492,74 @@ const CheckoutPage = () => {
             )}
           </div>
 
+          {/* Loyalty Points Section */}
+          {loyaltyData && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-orange-50/50 border-2 border-orange-100 rounded-3xl p-6 mb-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center text-xl">
+                    ⭐
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                       <p className="text-[10px] font-black text-primary uppercase tracking-widest">Loyalty Points</p>
+                       <button 
+                         onClick={refreshLoyaltyData}
+                         className={`p-1 hover:text-primary transition-colors ${loyaltyLoading ? 'animate-spin text-primary' : 'text-gray-400'}`}
+                         title="Sync with server"
+                       >
+                         <RefreshCw size={12} />
+                       </button>
+                    </div>
+                    <p className="text-sm font-black text-gray-900">{loyaltyData.totalPoints} Points Available</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setUsePoints(!usePoints)}
+                  disabled={loyaltyData.totalPoints <= 0}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    usePoints 
+                      ? "bg-primary text-white shadow-lg shadow-orange-100" 
+                      : loyaltyData.totalPoints <= 0
+                        ? "bg-gray-100 text-gray-400 border-2 border-gray-100 cursor-not-allowed"
+                        : "bg-white text-gray-400 border-2 border-gray-100 hover:border-primary/30 hover:text-primary"
+                  }`}
+                >
+                  {usePoints ? "Applied" : "Use Points"}
+                </button>
+              </div>
+              
+              {usePoints && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  className="space-y-4 pt-2 border-t border-orange-100 mt-2"
+                >
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Redemption Value:</span>
+                    <span className="font-black text-success">Rs. {redeemAmount.toFixed(2)} Off</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max={loyaltyData.totalPoints} 
+                    value={redeemAmount}
+                    onChange={(e) => setRedeemAmount(parseInt(e.target.value))}
+                    className="w-full accent-primary h-2 bg-orange-100 rounded-full appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-tight">
+                    <span>1 Point</span>
+                    <span>Use {redeemAmount} Points</span>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+
           <div className="flex justify-between font-black text-gray-900 text-base border-t-2 border-dashed border-gray-100 pt-4 mb-6 space-y-2">
             <div className="w-full space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
@@ -464,6 +570,12 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Delivery Charge</span>
                   <span className="font-bold text-primary">Rs. {deliveryCharge.toFixed(2)}</span>
+                </div>
+              )}
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span className="flex items-center gap-1.5"><Check size={14} className="text-success" /> Points Discount</span>
+                  <span className="font-bold text-success">- Rs. {discountAmount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-black text-gray-900 pt-2 border-t border-dashed border-gray-100">
@@ -805,6 +917,12 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-xs text-gray-600">
                   <span>Delivery Charge</span>
                   <span className="font-bold text-primary">Rs. {placedOrder?.deliveryCharge?.toFixed(2)}</span>
+                </div>
+              )}
+              {placedOrder?.discountAmount > 0 && (
+                <div className="flex justify-between text-xs text-success">
+                  <span>Points Discount</span>
+                  <span className="font-bold">- Rs. {placedOrder?.discountAmount?.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between font-black text-gray-700 text-sm pt-1">

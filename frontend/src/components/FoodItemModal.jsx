@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useDropzone } from 'react-dropzone';
 import { X, Upload, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 
 export default function FoodItemModal({ item, categories, onClose, onSaved }) {
   const isEdit = !!item;
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(item?.image || null);
+  const [imagePreview, setImagePreview] = useState(getImageUrl(item?.image) || null);
   const [imageFile, setImageFile] = useState(null);
   const [canteens, setCanteens] = useState([]);
   const [errors, setErrors] = useState({});
@@ -172,8 +173,8 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
   const fieldClass = (fieldName) =>
     `input-field ${errors[fieldName] ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/20' : ''}`;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
@@ -404,6 +405,7 @@ export default function FoodItemModal({ item, categories, onClose, onSaved }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

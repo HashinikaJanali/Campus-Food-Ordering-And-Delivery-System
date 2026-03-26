@@ -3,7 +3,12 @@ const Order = require('../Model/Order');
 // Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const { customerEmail } = req.query;
+    let query = {};
+    if (customerEmail) {
+      query.customerEmail = customerEmail;
+    }
+    const orders = await Order.find(query).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: err.message });

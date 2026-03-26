@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Edit2, Trash2, Store, CheckCircle, MapPin } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -159,8 +160,8 @@ export default function CanteensPage() {
             )}
 
             {/* Form modal */}
-            {showForm && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
+            {showForm && createPortal(
+                <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
                     <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="font-display font-bold text-gray-900 text-lg">{editCanteen ? 'Edit Canteen' : 'New Canteen'}</h2>
@@ -205,12 +206,13 @@ export default function CanteensPage() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Delete confirm */}
-            {deleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            {deleteConfirm && createPortal(
+                <div className="fixed inset-0 bg-black/75 z-[9999] flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
                         <div className="text-center mb-5">
                             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -231,7 +233,8 @@ export default function CanteensPage() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -177,46 +177,136 @@ const getUserProfile = async (req, res) => {
 // @access  Private
 const updateUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
-      user.phone = req.body.phone || user.phone;
-      user.profileImage = req.body.profileImage || user.profileImage;
-
-      if (req.body.password) {
-        if (req.body.password.length < 6) {
-          return res.status(400).json({
-            success: false,
-            message: 'Password must be at least 6 characters'
-          });
-        }
-        user.password = req.body.password;
-      }
-
-      const updatedUser = await user.save();
-
-      res.json({
-        success: true,
-        message: 'Profile updated successfully',
-        data: {
-          _id: updatedUser._id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          phone: updatedUser.phone,
-          profileImage: updatedUser.profileImage,
-          loyaltyPoints: updatedUser.loyaltyPoints
-        }
-      });
-    } else {
-      res.status(404).json({
+    // Use .select('+password') to explicitly include password field
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
+
+    // Validate name if provided
+    if (req.body.name) {
+      if (req.body.name.length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name must be at least 2 characters long'
+        });
+      }
+      user.name = req.body.name.trim();
+    }
+
+    // Validate and check email if provided
+    if (req.body.email) {
+      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      if (!emailRegex.test(req.body.email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a valid email address'
+        });
+      }
+
+      const newEmail = req.body.email.toLowerCase().trim();
+      
+      // Check if new email is different from current email
+      if (newEmail !== user.email) {
+        // Check if email already exists for a different user
+        const emailExists = await User.findOne({
+          email: newEmail,
+          _id: { $ne: user._id }
+        });
+        if (emailExists) {
+          return res.status(400).json({
+            success: false,
+            message: 'Another user already has this email'
+          });
+        }
+      }
+      
+      user.email = newEmail;
+    }
+
+    // Handle password change
+    if (req.body.newPassword) {
+      // Validate new password
+      if (req.body.newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters long'
+        });
+      }
+
+      // Verify current password before allowing password change
+      if (!req.body.currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password is required to change password'
+        });
+      }
+
+      const isPasswordCorrect = await user.comparePassword(req.body.currentPassword);
+      if (!isPasswordCorrect) {
+        return res.status(401).json({
+          success: false,
+          message: 'Current password is incorrect'
+        });
+      }
+
+      // Check if new password is same as current password
+      const isSamePassword = await user.comparePassword(req.body.newPassword);
+      if (isSamePassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be different from current password'
+        });
+      }
+
+      user.password = req.body.newPassword;
+    }
+
+    user.phone = req.body.phone || user.phone;
+    user.profileImage = req.body.profileImage || user.profileImage;
+
+    const updatedUser = await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone,
+        profileImage: updatedUser.profileImage,
+        loyaltyPoints: updatedUser.loyaltyPoints
+      }
+    });
   } catch (error) {
     console.error('Update profile error:', error);
+    
+    // Handle MongoDB duplicate key error (email already exists)
+    const isDuplicateEmailError =
+      error?.code === 11000 ||
+      error?.name === 'MongoServerError' && /E11000 duplicate key/i.test(error?.message || '');
+
+    if (isDuplicateEmailError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Another user already has this email'
+      });
+    }
+
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || 'Validation error'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Server error'

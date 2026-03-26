@@ -13,7 +13,6 @@ export const UserAuthProvider = ({ children }) => {
     const userData = localStorage.getItem('user_data');
     if (token && userData) {
       setUser(JSON.parse(userData));
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
   }, []);
@@ -37,7 +36,6 @@ export const UserAuthProvider = ({ children }) => {
       const { data } = res.data;
       localStorage.setItem('user_token', data.token);
       localStorage.setItem('user_data', JSON.stringify(data));
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data);
       return data;
     } catch (error) {
@@ -51,7 +49,6 @@ export const UserAuthProvider = ({ children }) => {
       const { data } = res.data;
       localStorage.setItem('user_token', data.token);
       localStorage.setItem('user_data', JSON.stringify(data));
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data);
       return data;
     } catch (error) {
@@ -62,7 +59,6 @@ export const UserAuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('user_token');
     localStorage.removeItem('user_data');
-    delete api.defaults.headers.common['Authorization'];
     setUser(null);
   };
 

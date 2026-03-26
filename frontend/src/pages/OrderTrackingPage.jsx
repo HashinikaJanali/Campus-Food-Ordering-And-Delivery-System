@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatRs } from '../utils/currency';
 import { Search, MapPin, RefreshCw } from 'lucide-react';
 import { MOCK_ORDERS, STATUS_CONFIG } from '../constants/orderConstants';
-import OrderManagementSidebar from '../components/OrderManagementSidebar';
+import AdminSidebar from '../components/AdminSidebar';
 import TrackingTimeline from '../components/orders/TrackingTimeline';
 import StatusBadge from '../components/orders/StatusBadge';
 import ETABadge from '../components/orders/ETABadge';
@@ -32,7 +32,7 @@ const OrderTrackingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrderManagementSidebar />
+      <AdminSidebar />
       <div className="overflow-y-auto ml-80">
         <div className="space-y-6 p-8">
 

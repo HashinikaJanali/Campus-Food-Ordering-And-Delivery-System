@@ -12,15 +12,17 @@ const protect = async (req, res, next) => {
             
             req.admin = await Admin.findById(decoded.id).select('-password');
             if (!req.admin) {
+                console.log(`❌ Admin Auth Failure: ID ${decoded.id} not found in database. [Path: ${req.path}]`);
                 return res.status(401).json({ success: false, message: 'Not authorized, admin not found' });
             }
             
             next();
         } catch (error) {
-            console.error(error);
+            console.error(`❌ Admin Token Verification Failed: ${error.message} [Path: ${req.path}]`);
             return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
         }
     } else {
+        console.log(`⚠️ Admin Auth Failure: No token provided. [Path: ${req.path}]`);
         return res.status(401).json({ success: false, message: 'Not authorized, no token' });
     }
 };
