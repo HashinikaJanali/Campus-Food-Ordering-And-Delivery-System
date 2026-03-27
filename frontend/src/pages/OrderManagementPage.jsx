@@ -7,7 +7,7 @@ import AdminSidebar from '../components/AdminSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import { matchesOrder } from '../utils/orderSearch';
-import { ClipboardList, Clock, ShoppingBag, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ClipboardList, Clock, ShoppingBag, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const STATUS_FILTERS = [
@@ -255,9 +255,7 @@ const OrderManagementPage = () => {
                               >
                                 Details
                               </button>
-                              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                <MoreHorizontal size={16} className="text-gray-500" />
-                              </button>
+                              {/* three-dots removed per request */}
                             </div>
                           </td>
                         </tr>

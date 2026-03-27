@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatRs } from '../utils/currency';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { Calendar, RefreshCw, ChevronLeft, ChevronRight, Search, MoreHorizontal, Trash2 } from 'lucide-react';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import StatusBadge from '../components/orders/StatusBadge';
 import AdminSidebar from '../components/AdminSidebar';
@@ -11,6 +11,8 @@ import AdminSidebar from '../components/AdminSidebar';
 const OrderHistoryPage = () => {
   const [filterDate, setFilterDate] = useState('all');
   const [search, setSearch] = useState('');
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [trashedIds, setTrashedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -20,14 +22,18 @@ const OrderHistoryPage = () => {
 
   const dates = [...new Set(historyOrders.map(o => o.date))].sort((a, b) => b.localeCompare(a));
 
-  const filtered = (filterDate === 'all'
+  const baseFiltered = (filterDate === 'all'
     ? historyOrders
-    : historyOrders.filter(o => o.date === filterDate)).filter(o => {
-    const matchSearch = search === '' ||
-      (o.id || '').toLowerCase().includes(search.toLowerCase()) ||
-      (o.customer || '').toLowerCase().includes(search.toLowerCase());
-    return matchSearch;
-  });
+    : historyOrders.filter(o => o.date === filterDate));
+
+  const filtered = baseFiltered
+    .filter(o => !trashedIds.includes(o.id))
+    .filter(o => {
+      const matchSearch = search === '' ||
+        (o.id || '').toLowerCase().includes(search.toLowerCase()) ||
+        (o.customer || '').toLowerCase().includes(search.toLowerCase());
+      return matchSearch;
+    });
 
   const completedCount = filtered.filter(o => o.status === 'picked_up').length;
   const totalSpent = filtered
@@ -199,10 +205,29 @@ const OrderHistoryPage = () => {
                         
                         {/* Action */}
                         <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                          <div className="flex items-center justify-center gap-2 relative">
+                            <button
+                              onClick={() => setMenuOpenId(menuOpenId === order.id ? null : order.id)}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              aria-label={`Actions for ${order.id}`}
+                            >
                               <MoreHorizontal size={16} className="text-gray-500" />
                             </button>
+
+                            {menuOpenId === order.id && (
+                              <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                <button
+                                  onClick={() => {
+                                    setTrashedIds(prev => Array.from(new Set([...prev, order.id])));
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 size={14} />
+                                  Move to trash
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

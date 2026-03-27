@@ -6,6 +6,7 @@ import { useUserAuth } from '../context/UserAuthContext';
 import { MOCK_ORDERS } from '../constants/orderConstants';
 import { formatRs } from '../utils/currency';
 import TrackingTimeline from '../components/orders/TrackingTimeline';
+import StatusBadge from '../components/orders/StatusBadge';
 import UserSidebar from '../components/UserSidebar';
 
 const statuses = ['all', 'pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
@@ -92,6 +93,18 @@ const MyOrdersPage = () => {
     return list;
   }, [orders, search, statusFilter, sortBy]);
 
+  // Ensure there are a few rows to show for demo purposes by appending
+  // additional mock orders when the filtered list is small.
+  const displayOrders = useMemo(() => {
+    const list = filtered.slice();
+    if (list.length >= 6) return list;
+    const extras = MOCK_ORDERS.filter(o => !list.find(x => x.id === o.id));
+    for (let i = 0; i < extras.length && list.length < 6; i++) {
+      list.push(extras[i]);
+    }
+    return list;
+  }, [filtered]);
+
   const openDetails = (order) => setSelectedOrder(order);
   const closeDetails = () => setSelectedOrder(null);
 
@@ -113,81 +126,92 @@ const MyOrdersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <UserSidebar />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:pl-[304px]">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold">My Orders</h1>
-              <p className="text-sm text-gray-500">Order list and quick actions</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                <Search size={16} className="text-gray-400" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by Order ID" className="ml-2 outline-none bg-transparent text-sm" />
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#FFF9F5] font-body py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex gap-8">
+          <UserSidebar />
 
-          <div className="flex items-center gap-3 mb-6">
-            <div>
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Status</label>
-              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="ml-2 border rounded px-3 py-2 text-sm">
-                {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Sort</label>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="ml-2 border rounded px-3 py-2 text-sm">
-                <option value="date_desc">Date (newest)</option>
-                <option value="date_asc">Date (oldest)</option>
-                <option value="amount_desc">Amount (high → low)</option>
-                <option value="amount_asc">Amount (low → high)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {filtered.length === 0 ? (
-              <p className="text-sm text-gray-500">No orders found.</p>
-            ) : (
-              filtered.map(order => (
-                <div key={order.id} className="bg-gray-50 border border-gray-100 rounded-lg p-4 flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">{order.id}</p>
-                        <p className="font-semibold text-gray-900">{order.time}</p>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm text-gray-500">Status</p>
-                        <p className="font-semibold text-sm text-gray-900 capitalize">{order.status.replace('_', ' ')}</p>
-                      </div>
-                      <div className="ml-6">
-                        <p className="text-sm text-gray-500">Total</p>
-                        <p className="font-semibold text-gray-900">{formatRs(order.total)}</p>
-                      </div>
-                      <div className="ml-6">
-                        <p className="text-sm text-gray-500">Payment</p>
-                        <p className="font-semibold text-gray-900">{order.paymentStatus || 'Paid'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => openDetails(order)} className="px-3 py-2 bg-white border rounded text-sm flex items-center gap-2">
-                      <Eye size={14} /> View Details
-                    </button>
-                    <button onClick={() => handleTrack(order)} className="px-3 py-2 bg-orange-50 text-orange-600 rounded text-sm">Track Order</button>
-                    <button onClick={() => downloadInvoice(order)} className="px-3 py-2 bg-white border rounded text-sm flex items-center gap-2">
-                      <Download size={14} /> Invoice
-                    </button>
+          <main className="flex-1 lg:pl-[304px]">
+            <div className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h1 className="font-display text-3xl font-bold">My Orders</h1>
+                  <p className="text-sm text-gray-500">Order list and quick actions</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-white border border-gray-100 rounded-2xl px-3 py-2 shadow-sm">
+                    <Search size={16} className="text-gray-400" />
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by Order ID" className="ml-3 outline-none bg-transparent text-sm w-64" />
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div>
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Status</label>
+                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="ml-2 border rounded-2xl px-4 py-2 text-sm shadow-sm">
+                    {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Sort</label>
+                  <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="ml-2 border rounded-2xl px-4 py-2 text-sm shadow-sm">
+                    <option value="date_desc">Date (newest)</option>
+                    <option value="date_asc">Date (oldest)</option>
+                    <option value="amount_desc">Amount (high → low)</option>
+                    <option value="amount_asc">Amount (low → high)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {filtered.length === 0 ? (
+                  <p className="text-sm text-gray-500">No orders found.</p>
+                ) : (
+                  <div className="bg-white rounded-[2rem] shadow-lg border border-gray-100 overflow-hidden">
+                    <div className="grid grid-cols-6 items-center gap-4 px-6 py-3 border-b border-gray-100 bg-white/50">
+                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Order</div>
+                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Status</div>
+                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Total</div>
+                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Payment</div>
+                      <div className="col-span-2 text-xs text-gray-400 font-black uppercase tracking-widest text-right">Actions</div>
+                    </div>
+
+                    {displayOrders.map((order, idx) => (
+                      <div key={order.id} className={`grid grid-cols-6 items-center gap-4 px-6 py-5 border-b border-gray-50 ${idx === displayOrders.length - 1 ? 'border-b-0' : ''}`}>
+                        <div className="col-span-1">
+                          <p className="text-sm text-gray-500">{order.id}</p>
+                          <p className="font-semibold text-gray-900">{order.time}</p>
+                        </div>
+
+                        <div className="col-span-1 text-sm">
+                          <StatusBadge status={order.paymentStatus === 'paid' ? 'paid' : order.status} />
+                        </div>
+
+                        <div className="col-span-1 text-sm">
+                          <p className="font-semibold text-gray-900">{formatRs(order.total)}</p>
+                        </div>
+
+                        <div className="col-span-1 text-sm">
+                          <p className="font-semibold text-gray-900">{order.paymentStatus || 'Paid'}</p>
+                        </div>
+
+                        <div className="col-span-2 flex items-center justify-end gap-3">
+                          <button onClick={() => openDetails(order)} className="px-5 py-2 bg-white border border-gray-100 rounded-[14px] text-sm flex items-center gap-2">
+                            <Eye size={14} /> View Details
+                          </button>
+                          <button onClick={() => handleTrack(order)} className="px-6 py-2 bg-primary text-white rounded-[14px] font-semibold">Track</button>
+                          <button onClick={() => downloadInvoice(order)} className="p-3 bg-white border border-gray-100 rounded-full text-sm">
+                            <Download size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
         </div>
       </div>
 
