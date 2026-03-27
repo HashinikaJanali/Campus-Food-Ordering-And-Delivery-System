@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatRs } from '../utils/currency';
 import { Search, MapPin, RefreshCw } from 'lucide-react';
+import UserSidebar from '../components/UserSidebar';
 import { MOCK_ORDERS, STATUS_CONFIG } from '../constants/orderConstants';
-import AdminSidebar from '../components/AdminSidebar';
 import TrackingTimeline from '../components/orders/TrackingTimeline';
 import StatusBadge from '../components/orders/StatusBadge';
 import ETABadge from '../components/orders/ETABadge';
@@ -32,16 +32,20 @@ const OrderTrackingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <div className="overflow-y-auto ml-80">
-        <div className="space-y-6 p-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex">
+          <UserSidebar />
+
+          <main className="flex-1 lg:pl-[304px]">
+            <div className="max-w-6xl mr-auto px-4 sm:px-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 space-y-6">
 
 
 
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold font-display text-gray-900">Order Tracking</h1>
+              <h1 className="text-2xl font-bold font-display text-gray-900">Track Orders</h1>
               <p className="text-gray-500 text-sm mt-1">Track your active orders in real time</p>
             </div>
             <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
@@ -183,6 +187,9 @@ const OrderTrackingPage = () => {
             )}
           </AnimatePresence>
 
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

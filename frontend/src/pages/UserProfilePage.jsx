@@ -5,6 +5,7 @@ import {
   Pencil, Check, X, KeyRound, Sparkles, Eye, EyeOff
 } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
+import UserSidebar from '../components/UserSidebar';
 import api from "../utils/api";
 
 const Field = ({ label, value, icon: Icon }) => (
@@ -134,8 +135,13 @@ const UserProfilePage = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FFF9F5] font-body py-10 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#FFF9F5] font-body py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex gap-8">
+          <UserSidebar />
+
+          <main className="flex-1 lg:pl-[304px]">
+            <div className="max-w-4xl mr-auto space-y-6">
 
         {/* Toast */}
         <AnimatePresence>
@@ -290,6 +296,9 @@ const UserProfilePage = () => {
           </form>
         </motion.div>
 
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
