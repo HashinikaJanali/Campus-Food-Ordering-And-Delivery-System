@@ -40,13 +40,15 @@ const LoginPage = () => {
 
       if (role === "student") {
         await loginStudent(form.username, form.password);
+        const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
         localStorage.removeItem('login_redirect_path');
         localStorage.removeItem('login_redirect');
+        navigate(redirectPath === '/checkout' ? '/checkout' : '/home');
       } else {
         await loginAdmin(form.username, form.password);
+        navigate(role === 'admin' ? '/admin-panel' : '/home');
       }
 
-      navigate('/home');
       setLoading(false);
     } catch (err) {
       // Show error message - DO NOT NAVIGATE
