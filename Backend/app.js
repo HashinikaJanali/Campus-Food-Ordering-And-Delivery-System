@@ -5,7 +5,28 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
+const http = require("http");
+const { Server } = require("socket.io");
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust this in production
+    methods: ["GET", "POST", "PATCH", "DELETE"]
+  }
+});
+
+// Make io accessible to routes
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log("⚡ New client connected:", socket.id);
+  socket.on("disconnect", () => {
+    console.log("🔥 Client disconnected:", socket.id);
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 // DNS fix for MongoDB
@@ -63,7 +84,7 @@ console.log("✅ Payments routes registered successfully");
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("✅ MongoDB Connected Successfully");
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📁 Uploads accessible at: http://localhost:${PORT}/uploads`);
     });

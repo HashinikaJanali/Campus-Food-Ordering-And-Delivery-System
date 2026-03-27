@@ -26,8 +26,8 @@ exports.addToCart = async (req, res) => {
     }
 
     // Check if item is available
-    if (foodItem.stock < quantity) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    if (foodItem.stockQuantity < quantity) {
+      return res.status(400).json({ message: 'Insufficient stockQuantity' });
     }
 
     // Find or create cart
@@ -60,9 +60,15 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    // Update stock
-    foodItem.stock -= quantity;
+    // Update stockQuantity
+    foodItem.stockQuantity -= quantity;
     await foodItem.save();
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
 
     await cart.save();
     await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
@@ -94,25 +100,32 @@ exports.updateCartItem = async (req, res) => {
     const oldQuantity = cart.items[itemIndex].quantity;
     const quantityDifference = quantity - oldQuantity;
 
-    // Check stock availability
+    // Check stockQuantity availability
     const foodItem = await FoodItem.findById(foodItemId);
-    if (foodItem.stock < quantityDifference) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    if (foodItem.stockQuantity < quantityDifference) {
+      return res.status(400).json({ message: 'Insufficient stockQuantity' });
     }
 
     if (quantity <= 0) {
       // Remove item from cart
       cart.items.splice(itemIndex, 1);
-      // Return stock
-      foodItem.stock += oldQuantity;
+      // Return stockQuantity
+      foodItem.stockQuantity += oldQuantity;
     } else {
       // Update quantity
       cart.items[itemIndex].quantity = quantity;
-      // Update stock
-      foodItem.stock -= quantityDifference;
+      // Update stockQuantity
+      foodItem.stockQuantity -= quantityDifference;
     }
 
     await foodItem.save();
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
+
     await cart.save();
     await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
 
@@ -142,10 +155,16 @@ exports.removeFromCart = async (req, res) => {
 
     const removedQuantity = cart.items[itemIndex].quantity;
 
-    // Return stock
+    // Return stockQuantity
     const foodItem = await FoodItem.findById(foodItemId);
-    foodItem.stock += removedQuantity;
+    foodItem.stockQuantity += removedQuantity;
     await foodItem.save();
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
 
     // Remove item from cart
     cart.items.splice(itemIndex, 1);
@@ -166,11 +185,17 @@ exports.clearCart = async (req, res) => {
       return res.json({ message: 'Cart is already empty' });
     }
 
-    // Return all stock
+    // Return all stockQuantity
     for (const item of cart.items) {
       const foodItem = await FoodItem.findById(item.foodItem);
-      foodItem.stock += item.quantity;
+      foodItem.stockQuantity += item.quantity;
       await foodItem.save();
+
+      // Emit stock update for each item
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+      }
     }
 
     // Clear cart

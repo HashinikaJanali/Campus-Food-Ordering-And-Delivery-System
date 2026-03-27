@@ -26,6 +26,12 @@ exports.updateStock = async (req, res) => {
 
         await item.save();
 
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
+        }
+
         // Helper to create alerts
         const createAlert = async (type, message) => {
             const existing = await StockAlert.findOne({ foodItem: item._id, alertType: type, isResolved: false });
@@ -79,7 +85,14 @@ exports.bulkUpdateStock = async (req, res) => {
                 { stockQuantity: update.quantity },
                 { returnDocument: 'after' }
             );
-            if (item) results.push(item);
+            if (item) {
+                results.push(item);
+                // Emit stock update
+                const io = req.app.get('io');
+                if (io) {
+                    io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
+                }
+            }
         }
 
         res.json({ success: true, message: `Updated ${results.length} items`, data: results });
@@ -106,6 +119,12 @@ exports.reserveStock = async (req, res) => {
         if (item.stockQuantity === 0) item.isAvailable = false;
 
         await item.save();
+
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
+        }
 
         // Handle alerts
         if (item.stockQuantity === 0 && prevStock > 0) {
@@ -146,6 +165,12 @@ exports.releaseStock = async (req, res) => {
         if (prevStock === 0 && item.stockQuantity > 0) item.isAvailable = true;
 
         await item.save();
+
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
+        }
 
         // Resovle out of stock alert if it was out of stock
         if (prevStock === 0 && item.stockQuantity > 0) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChefHat, Clock, Leaf, Search, ShoppingCart, Star, X, PlusCircle, MapPin } from 'lucide-react';
 import api, { getImageUrl } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
+import socket from '../../utils/socket';
 import toast from 'react-hot-toast';
 
 const FoodCard = ({ item, onClick, onStockUpdate }) => {
@@ -230,6 +231,23 @@ export default function StudentMenuPage() {
 
   useEffect(() => {
     fetchMenu();
+
+    // Listen for real-time stock updates
+    socket.on('stockUpdate', ({ foodItemId, stockQuantity }) => {
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item._id === foodItemId ? { ...item, stockQuantity } : item
+        )
+      );
+      // Also update selected item if modal is open
+      setSelectedItem(prev => 
+        prev && prev._id === foodItemId ? { ...prev, stockQuantity } : prev
+      );
+    });
+
+    return () => {
+      socket.off('stockUpdate');
+    };
   }, []);
 
   const fetchMenu = async () => {
