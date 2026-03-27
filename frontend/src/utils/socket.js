@@ -1,10 +1,14 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const getSocketUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+  return apiUrl.replace('/api', '');
+};
 
-const socket = io(SOCKET_URL, {
+const socket = io(getSocketUrl(), {
   autoConnect: true,
-  reconnection: true
+  reconnection: true,
+  transports: ['websocket', 'polling'] // Ensure compatibility
 });
 
 export default socket;

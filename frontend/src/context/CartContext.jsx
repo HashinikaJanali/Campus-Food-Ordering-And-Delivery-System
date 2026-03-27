@@ -23,7 +23,8 @@ export const CartProvider = ({ children }) => {
 
     // Load cart when user logs in
     useEffect(() => {
-        if (user) {
+        const isAdminPath = window.location.pathname.startsWith('/admin');
+        if (user && !isAdminPath) {
             loadCart();
         }
     }, [user]);

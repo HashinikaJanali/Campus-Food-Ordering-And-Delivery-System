@@ -32,7 +32,7 @@ const otherMenuItems = [
   { path: '#', icon: HelpCircle, label: 'Help & Support' },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ unreadAlerts }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -271,7 +271,12 @@ export default function AdminSidebar() {
                             `}
                           >
                             <Icon size={18} className="shrink-0" />
-                            <span>{label}</span>
+                            <span className="flex-1">{label}</span>
+                            {label === 'Alerts' && unreadAlerts > 0 && (
+                              <span className="bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shrink-0">
+                                {unreadAlerts > 99 ? '99+' : unreadAlerts}
+                              </span>
+                            )}
                           </NavLink>
                         ))}
                       </div>

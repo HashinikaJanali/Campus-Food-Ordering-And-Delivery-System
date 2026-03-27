@@ -1,5 +1,6 @@
 const Cart = require('../Model/Cart');
 const FoodItem = require('../Model/inventory/FoodItem');
+const alertService = require('../services/alertService');
 
 // Get user's cart
 exports.getCart = async (req, res) => {
@@ -60,9 +61,12 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    // Update stockQuantity
+    const prevStock = foodItem.stockQuantity;
     foodItem.stockQuantity -= quantity;
     await foodItem.save();
+
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
 
     // Emit stock update
     const io = req.app.get('io');
@@ -120,6 +124,9 @@ exports.updateCartItem = async (req, res) => {
 
     await foodItem.save();
 
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, oldQuantity, req.app.get('io')); // oldQuantity is correct prevStock here
+
     // Emit stock update
     const io = req.app.get('io');
     if (io) {
@@ -155,10 +162,12 @@ exports.removeFromCart = async (req, res) => {
 
     const removedQuantity = cart.items[itemIndex].quantity;
 
-    // Return stockQuantity
-    const foodItem = await FoodItem.findById(foodItemId);
+    const prevStock = foodItem.stockQuantity;
     foodItem.stockQuantity += removedQuantity;
     await foodItem.save();
+
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
 
     // Emit stock update
     const io = req.app.get('io');
@@ -193,8 +202,12 @@ exports.clearCart = async (req, res) => {
       for (const item of cart.items) {
         const foodItem = await FoodItem.findById(item.foodItem);
         if (foodItem) {
+          const prevStock = foodItem.stockQuantity;
           foodItem.stockQuantity += item.quantity;
           await foodItem.save();
+
+          // Check for alerts
+          await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
 
           // Emit stock update for each item
           const io = req.app.get('io');
