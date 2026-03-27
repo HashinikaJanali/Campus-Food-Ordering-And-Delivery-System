@@ -37,7 +37,7 @@ const getPasswordValidationError = (password) => {
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const { register: registerStudent } = useUserAuth();
+  const { register: registerStudent, logout: logoutStudent } = useUserAuth();
   const [form, setForm] = useState({
     name: "", email: "", password: "", confirmPassword: ""
   });
@@ -66,10 +66,8 @@ const SignupPage = () => {
     setError("");
     try {
       await registerStudent(form.name, form.email, form.password);
-      // Signup should redirect to login, not keep the user session active.
-      localStorage.removeItem('user_token');
-      localStorage.removeItem('user_data');
-
+      // Keep user logged out after signup until explicit login.
+      logoutStudent(false);
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Signup failed. Please try again.");

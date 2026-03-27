@@ -7,6 +7,37 @@ import {
 import { useUserAuth } from "../context/UserAuthContext";
 import api from "../utils/api";
 
+const PASSWORD_RULES = {
+  minLength: 6,
+  upper: /[A-Z]/,
+  lower: /[a-z]/,
+  number: /\d/,
+  special: /[^A-Za-z0-9]/,
+  noSpaces: /^\S+$/,
+};
+
+const getPasswordValidationError = (password) => {
+  if (password.length < PASSWORD_RULES.minLength) {
+    return "New password must be at least 6 characters long.";
+  }
+  if (!PASSWORD_RULES.upper.test(password)) {
+    return "New password must include at least one uppercase letter.";
+  }
+  if (!PASSWORD_RULES.lower.test(password)) {
+    return "New password must include at least one lowercase letter.";
+  }
+  if (!PASSWORD_RULES.number.test(password)) {
+    return "New password must include at least one number.";
+  }
+  if (!PASSWORD_RULES.special.test(password)) {
+    return "New password must include at least one special character.";
+  }
+  if (!PASSWORD_RULES.noSpaces.test(password)) {
+    return "New password cannot contain spaces.";
+  }
+  return "";
+};
+
 const Field = ({ label, value, icon: Icon }) => (
   <div className="flex items-center gap-4 py-4 border-b border-gray-50 last:border-0">
     <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
@@ -108,8 +139,13 @@ const UserProfilePage = () => {
       setPasswordError("All password fields are required.");
       return;
     }
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordError("New password must be at least 6 characters.");
+    const validationError = getPasswordValidationError(passwordForm.newPassword);
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      setPasswordError("New password must be different from current password.");
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -269,7 +305,7 @@ const UserProfilePage = () => {
               icon={Lock} placeholder="Your current password" />
             <InputField label="New password" name="newPassword" type="password"
               value={passwordForm.newPassword} onChange={handlePasswordChange}
-              icon={KeyRound} placeholder="Min. 6 characters" extra="Must be at least 6 characters" />
+              icon={KeyRound} placeholder="Strong new password" extra="Use 6+ chars with uppercase, lowercase, number, and special character" />
             <InputField label="Confirm new password" name="confirmPassword" type="password"
               value={passwordForm.confirmPassword} onChange={handlePasswordChange}
               icon={KeyRound} placeholder="Re-enter new password" />

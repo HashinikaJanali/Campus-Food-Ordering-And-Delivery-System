@@ -11,6 +11,7 @@ const LoginPage = () => {
   const { login: loginAdmin, logout: logoutAdmin } = useAuth();
 
   const [form, setForm] = useState({ username: "", password: "" });
+  const [role, setRole] = useState("student");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,24 +38,16 @@ const LoginPage = () => {
       logoutAdmin(false);
       logoutStudent(false);
 
-      try {
-        await loginAdmin(form.username, form.password);
-        navigate('/admin-panel');
-        return;
-      } catch {
-        // If admin login fails, continue with student login attempt.
-      }
-
-      await loginStudent(form.username, form.password);
-      const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
-      localStorage.removeItem('login_redirect_path');
-      localStorage.removeItem('login_redirect');
-
-      if (redirectPath) {
-        navigate(redirectPath);
+      if (role === "student") {
+        await loginStudent(form.username, form.password);
+        localStorage.removeItem('login_redirect_path');
+        localStorage.removeItem('login_redirect');
       } else {
-        navigate('/');
+        await loginAdmin(form.username, form.password);
       }
+
+      navigate('/home');
+      setLoading(false);
     } catch (err) {
       // Show error message - DO NOT NAVIGATE
       setError(err.message || "Invalid email or password.");
@@ -95,24 +88,51 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Your email</label>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Login as</label>
+              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setRole("student")}
+                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${role === "student" ? "bg-white text-primary shadow" : "text-gray-500"}`}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("admin")}
+                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${role === "admin" ? "bg-white text-primary shadow" : "text-gray-500"}`}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("staff")}
+                  className={`py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${role === "staff" ? "bg-white text-primary shadow" : "text-gray-500"}`}
+                >
+                  Staff
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">{role === "student" ? "Your email" : "Admin email"}</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text" name="username" value={form.username} onChange={handleChange}
-                  placeholder="Your email" required
+                  placeholder={role === "student" ? "Your email" : "Enter admin email"} required
                   className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Password</label>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">{role === "student" ? "Password" : "Admin password"}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange}
-                  placeholder="Your password" required
+                  placeholder={role === "student" ? "Your password" : "Admin password"} required
                   className="w-full pl-11 pr-20 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary focus:bg-white rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all"
                 />
                 <button
@@ -135,10 +155,12 @@ const LoginPage = () => {
             </motion.button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 font-medium mt-6">
-            Don&apos;t have an account?{" "}
-            <Link to="/signup" className="text-primary font-black hover:underline">Create one</Link>
-          </p>
+          {role === "student" && (
+            <p className="text-center text-sm text-gray-500 font-medium mt-6">
+              Don&apos;t have an account?{" "}
+              <Link to="/signup" className="text-primary font-black hover:underline">Create one</Link>
+            </p>
+          )}
         </motion.div>
       </div>
     </div>
