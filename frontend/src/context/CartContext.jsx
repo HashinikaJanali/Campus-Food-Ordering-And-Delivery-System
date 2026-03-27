@@ -157,11 +157,12 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    const clearCart = async () => {
+    const clearCart = async (options = {}) => {
         if (user) {
             // For authenticated users, clear on backend
             try {
-                await api.delete('/cart/clear');
+                const queryParams = options.preserveStock ? '?preserveStock=true' : '';
+                await api.delete(`/cart/clear${queryParams}`);
                 setCart({ items: [], totalAmount: 0 });
                 toast.success('Cart cleared');
             } catch (error) {

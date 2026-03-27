@@ -180,21 +180,28 @@ exports.removeFromCart = async (req, res) => {
 // Clear cart
 exports.clearCart = async (req, res) => {
   try {
+    const { preserveStock } = req.query;
+    const isPreserveStock = preserveStock === 'true';
+
     const cart = await Cart.findOne({ user: req.user.id });
     if (!cart) {
       return res.json({ message: 'Cart is already empty' });
     }
 
-    // Return all stockQuantity
-    for (const item of cart.items) {
-      const foodItem = await FoodItem.findById(item.foodItem);
-      foodItem.stockQuantity += item.quantity;
-      await foodItem.save();
+    if (!isPreserveStock) {
+      // Return all stockQuantity
+      for (const item of cart.items) {
+        const foodItem = await FoodItem.findById(item.foodItem);
+        if (foodItem) {
+          foodItem.stockQuantity += item.quantity;
+          await foodItem.save();
 
-      // Emit stock update for each item
-      const io = req.app.get('io');
-      if (io) {
-        io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+          // Emit stock update for each item
+          const io = req.app.get('io');
+          if (io) {
+            io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+          }
+        }
       }
     }
 
