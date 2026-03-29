@@ -35,6 +35,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import MyOrdersPage from "./pages/MyOrdersPage";
 
 // Protected Route
 const ProtectedRoute = ({ children }) => {
@@ -92,11 +93,12 @@ function App() {
                 <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
-                <Route path="/profile" element={<UserLayout><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/order/:orderId" element={<AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
-                <Route path="/track" element={<UserLayout><OrderTrackingPage /></UserLayout>} />
+                <Route path="/track" element={<UserLayout showHeader={false} showFooter={false}><OrderTrackingPage /></UserLayout>} />
+                <Route path="/my-orders" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><MyOrdersPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/tracking" element={<AdminSubLayout showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
                 <Route path="/history" element={<AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
@@ -171,4 +173,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;
