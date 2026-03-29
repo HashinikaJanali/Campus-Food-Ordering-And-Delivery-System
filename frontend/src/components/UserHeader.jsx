@@ -68,7 +68,6 @@ const UserHeader = () => {
                 <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
                     <NavLink href="/" label="Home" active={location.pathname === '/' || location.pathname === '/home'} />
                     <NavLink href="/menu" label="Menu" active={location.pathname === '/menu'} />
-                    <NavLink href="/track" label="Tracks" active={location.pathname === '/track'} />
                     <NavLink href="/feedback" label="Feedback" active={location.pathname === '/feedback'} />
                 </div>
 
