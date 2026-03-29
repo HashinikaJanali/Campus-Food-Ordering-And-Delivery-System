@@ -34,16 +34,16 @@ const Layout = ({ children }) => {
         className="sticky top-0 w-full bg-white border-b-2 border-gray-200 px-4 py-4 z-50 shadow-md"
       >
         <div className="w-full px-4 sm:px-8 flex justify-between items-center">
-          
+
           {/* Left Section (Logo + Title) */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center"
               >
                 {!logoError ? (
-                  <img 
+                  <img
                     src={logoImage}
                     alt="Grab & Go Logo"
                     className="w-full h-full object-contain"
@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
                   <span className="text-2xl">🛍️</span>
                 )}
               </motion.div>
-              
+
               <motion.h1
                 className="font-display text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-500 to-yellow-500 bg-clip-text text-transparent"
                 animate={{ scale: [1, 1.05, 1] }}
@@ -74,7 +74,7 @@ const Layout = ({ children }) => {
           <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
             <NavLinkComp href="/" label="Home" active={location.pathname === '/' || location.pathname === '/home'} />
             <NavLinkComp href="/menu" label="Menu" active={location.pathname === '/menu'} />
-            <NavLinkComp href="/track" label="Tracks" active={location.pathname === '/track'} />
+            <NavLinkComp href="/about" label="About" active={location.pathname === '/about'} />
             <NavLinkComp href="/feedback" label="Feedback" active={location.pathname === '/feedback'} />
           </div>
 

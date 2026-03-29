@@ -7,6 +7,7 @@ import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
 import UserLayout from './components/UserLayout';
 import FeedbackPage from './pages/FeedbackPage';
+import AboutPage from './pages/AboutPage';
 import OrderManagementPage from './pages/OrderManagementPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
@@ -94,6 +95,7 @@ function App() {
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/about" element={<UserLayout><AboutPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
                 <Route path="/order/:orderId" element={<AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
