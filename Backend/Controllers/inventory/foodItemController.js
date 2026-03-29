@@ -1,36 +1,12 @@
 const FoodItem = require('../../Model/inventory/FoodItem');
 const StockAlert = require('../../Model/inventory/StockAlert');
+const alertService = require('../../services/alertService');
 const fs = require('fs');
 const path = require('path');
 
-// Helper: create stock alert
-const createStockAlert = async (foodItem, alertType) => {
-    let message = '';
-    if (alertType === 'out_of_stock') {
-        message = `"${foodItem.name}" is now OUT OF STOCK (0 remaining).`;
-    } else if (alertType === 'low_stock') {
-        message = `"${foodItem.name}" is running LOW on stock. Only ${foodItem.stockQuantity} left (threshold: ${foodItem.lowStockThreshold}).`;
-    } else if (alertType === 'restocked') {
-        message = `"${foodItem.name}" has been restocked. Current stock: ${foodItem.stockQuantity}.`;
-    }
+// Helper: create stock alert (DEPRECATED - using centralized service)
+// const createStockAlert = async (foodItem, alertType) => ...
 
-    // Check for existing unresolved alert of same type
-    const existing = await StockAlert.findOne({
-        foodItem: foodItem._id,
-        alertType,
-        isResolved: false
-    });
-
-    if (!existing) {
-        await StockAlert.create({
-            foodItem: foodItem._id,
-            alertType,
-            message,
-            currentStock: foodItem.stockQuantity,
-            threshold: foodItem.lowStockThreshold
-        });
-    }
-};
 
 // Create food item
 exports.createFoodItem = async (req, res, next) => {
@@ -103,11 +79,7 @@ exports.createFoodItem = async (req, res, next) => {
         await FoodItem.populate(foodItem, ['category', 'canteen']);
 
         // Check stock after creation
-        if (foodItem.stockQuantity === 0) {
-            await createStockAlert(foodItem, 'out_of_stock');
-        } else if (foodItem.stockQuantity <= foodItem.lowStockThreshold) {
-            await createStockAlert(foodItem, 'low_stock');
-        }
+        await alertService.checkStockAlerts(foodItem, undefined, req.app.get('io'));
 
         res.status(201).json({ success: true, message: 'Food item created successfully', data: foodItem });
     } catch (err) {
@@ -278,17 +250,8 @@ exports.updateFoodItem = async (req, res) => {
 
         const updated = await FoodItem.findByIdAndUpdate(req.params.id, data, { returnDocument: 'after', runValidators: true }).populate(['category', 'canteen']);
 
-        // Stock change alerts
-        const newStock = updated.stockQuantity;
-        if (prevStock === 0 && newStock > 0) {
-            await StockAlert.updateMany({ foodItem: updated._id, isResolved: false }, { isResolved: true });
-            await createStockAlert(updated, 'restocked');
-        } else if (newStock === 0 && prevStock > 0) {
-            await StockAlert.updateMany({ foodItem: updated._id, alertType: 'low_stock', isResolved: false }, { isResolved: true });
-            await createStockAlert(updated, 'out_of_stock');
-        } else if (newStock > 0 && newStock <= updated.lowStockThreshold) {
-            await createStockAlert(updated, 'low_stock');
-        }
+        // Use centralized alert service
+        await alertService.checkStockAlerts(updated, prevStock, req.app.get('io'));
 
         res.json({ success: true, message: 'Food item updated successfully', data: updated });
     } catch (err) {

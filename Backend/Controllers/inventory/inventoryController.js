@@ -1,5 +1,6 @@
 const FoodItem = require('../../Model/inventory/FoodItem');
 const StockAlert = require('../../Model/inventory/StockAlert');
+const alertService = require('../../services/alertService');
 
 // Update stock quantity
 exports.updateStock = async (req, res) => {
@@ -26,26 +27,14 @@ exports.updateStock = async (req, res) => {
 
         await item.save();
 
-        // Helper to create alerts
-        const createAlert = async (type, message) => {
-            const existing = await StockAlert.findOne({ foodItem: item._id, alertType: type, isResolved: false });
-            if (!existing) {
-                await StockAlert.create({
-                    foodItem: item._id, alertType: type, message,
-                    currentStock: newStock, threshold: item.lowStockThreshold
-                });
-            }
-        };
-
-        if (newStock === 0 && prevStock > 0) {
-            await StockAlert.updateMany({ foodItem: item._id, alertType: 'low_stock', isResolved: false }, { isResolved: true });
-            await createAlert('out_of_stock', `"${item.name}" is OUT OF STOCK.`);
-        } else if (newStock > 0 && newStock <= item.lowStockThreshold) {
-            await createAlert('low_stock', `"${item.name}" is running low. Only ${newStock} remaining (threshold: ${item.lowStockThreshold}).`);
-        } else if (newStock > item.lowStockThreshold && prevStock <= item.lowStockThreshold) {
-            await StockAlert.updateMany({ foodItem: item._id, isResolved: false }, { isResolved: true });
-            await createAlert('restocked', `"${item.name}" restocked. Current stock: ${newStock}.`);
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
         }
+
+        // Use centralized alert service
+        await alertService.checkStockAlerts(item, prevStock, req.app.get('io'));
 
         await item.populate('category');
         res.json({ success: true, message: 'Stock updated successfully', data: item });
@@ -79,7 +68,14 @@ exports.bulkUpdateStock = async (req, res) => {
                 { stockQuantity: update.quantity },
                 { returnDocument: 'after' }
             );
-            if (item) results.push(item);
+            if (item) {
+                results.push(item);
+                // Emit stock update
+                const io = req.app.get('io');
+                if (io) {
+                    io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
+                }
+            }
         }
 
         res.json({ success: true, message: `Updated ${results.length} items`, data: results });
@@ -107,24 +103,14 @@ exports.reserveStock = async (req, res) => {
 
         await item.save();
 
-        // Handle alerts
-        if (item.stockQuantity === 0 && prevStock > 0) {
-            const existing = await StockAlert.findOne({ foodItem: item._id, alertType: 'out_of_stock', isResolved: false });
-            if (!existing) {
-                await StockAlert.create({
-                    foodItem: item._id, alertType: 'out_of_stock', message: `"${item.name}" is OUT OF STOCK.`,
-                    currentStock: 0, threshold: item.lowStockThreshold
-                });
-            }
-        } else if (item.stockQuantity > 0 && item.stockQuantity <= item.lowStockThreshold) {
-            const existing = await StockAlert.findOne({ foodItem: item._id, alertType: 'low_stock', isResolved: false });
-            if (!existing) {
-                await StockAlert.create({
-                    foodItem: item._id, alertType: 'low_stock', message: `"${item.name}" is running low. Only ${item.stockQuantity} remaining.`,
-                    currentStock: item.stockQuantity, threshold: item.lowStockThreshold
-                });
-            }
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
         }
+
+        // Use centralized alert service
+        await alertService.checkStockAlerts(item, prevStock, req.app.get('io'));
 
         res.json({ success: true, message: 'Stock reserved successfully', data: item });
     } catch (err) {
@@ -147,10 +133,14 @@ exports.releaseStock = async (req, res) => {
 
         await item.save();
 
-        // Resovle out of stock alert if it was out of stock
-        if (prevStock === 0 && item.stockQuantity > 0) {
-            await StockAlert.updateMany({ foodItem: item._id, alertType: 'out_of_stock', isResolved: false }, { isResolved: true });
+        // Emit stock update
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('stockUpdate', { foodItemId: item._id, stockQuantity: item.stockQuantity });
         }
+
+        // Use centralized alert service
+        await alertService.checkStockAlerts(item, prevStock, req.app.get('io'));
 
         res.json({ success: true, message: 'Stock released successfully', data: item });
     } catch (err) {

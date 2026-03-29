@@ -31,7 +31,8 @@ api.interceptors.request.use((config) => {
   // 1. Auth routes safety - never send tokens to login/register
   const isAuthAction = config.url && (
     config.url.includes('/login') ||
-    config.url.includes('/register')
+    config.url.includes('/register') ||
+    config.url.includes('/auth/')
   );
 
   if (isAuthAction) {
@@ -42,23 +43,42 @@ api.interceptors.request.use((config) => {
   // 2. Strict Token Selection
   let token = null;
 
+  // Identify student-only endpoints
+  const isStudentOnlyEndpoint = config.url && (
+    config.url.includes('/cart') || 
+    config.url.includes('/users/') || 
+    config.url.includes('/loyalty') ||
+    config.url.includes('/reviews')
+  );
+
   if (path.startsWith('/admin')) {
-    // We are in the admin panel - use admin token ONLY
-    token = adminToken;
+    // We are in the admin panel
+    if (isStudentOnlyEndpoint) {
+      // Don't send admin token to student endpoints even if we're on an admin page
+      token = userToken;
+    } else {
+      token = adminToken;
+      config._isAdminRequest = true;
+    }
+    
     if (token && token !== 'null' && token !== 'undefined') {
       config.headers.Authorization = `Bearer ${token}`;
-      config._isAdminRequest = true;
     } else {
-      // If no admin token but on admin page, don't fallback to user token
       delete config.headers.Authorization;
     }
   } else {
     // We are on the student side - use user token primarily
-    token = userToken || adminToken;
+    token = userToken;
     if (token && token !== 'null' && token !== 'undefined') {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
-      delete config.headers.Authorization;
+      // Fallback to admin token ONLY for non-sensitive reads if user token is missing
+      // but NOT for cart/profile actions
+      if (!isStudentOnlyEndpoint && adminToken && adminToken !== 'null' && adminToken !== 'undefined') {
+        config.headers.Authorization = `Bearer ${adminToken}`;
+      } else {
+        delete config.headers.Authorization;
+      }
     }
   }
 
@@ -72,23 +92,28 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Only redirect to admin/login if it's an ADMIN endpoint getting 401
-    // or if it was specifically an admin-session request
-    if (error.response?.status === 401) {
-      if (error.config?._isAdminRequest || (window.location.pathname.startsWith('/admin') && !error.config.url.includes('/users/'))) {
+    const isAuthError = error.response?.status === 401;
+    const isAdminPath = window.location.pathname.startsWith('/admin');
+    const isLoginPage = window.location.pathname === '/admin/login';
+
+    if (isAuthError && isAdminPath && !isLoginPage) {
+      // Only clear admin session if it was an admin-specific request that failed
+      // This prevents student-side sidebars/carts from logging out the admin
+      if (error.config?._isAdminRequest) {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_user');
 
-        // Use a slight delay to allow the current app state to settle before reload
+        // Delay redirect slightly to prevent multiple concurrent reloads
         setTimeout(() => {
           if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
             window.location.href = '/admin/login';
           }
-        }, 50);
-      } else {
-        // User side 401
-        localStorage.removeItem('user_token');
-        localStorage.removeItem('user_data');
+        }, 100);
       }
+    } else if (isAuthError && !isAdminPath) {
+      // User side 401
+      localStorage.removeItem('user_token');
+      localStorage.removeItem('user_data');
     }
     return Promise.reject(error);
   }

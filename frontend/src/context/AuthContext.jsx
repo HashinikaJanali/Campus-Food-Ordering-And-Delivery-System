@@ -10,8 +10,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     const user = localStorage.getItem('admin_user');
-    if (token && user) {
-      setAdmin(JSON.parse(user));
+    
+    // Check for valid existing session
+    if (token && token !== 'null' && token !== 'undefined' && 
+        user && user !== 'null' && user !== 'undefined') {
+      try {
+        setAdmin(JSON.parse(user));
+      } catch (err) {
+        console.error('Failed to parse admin user from localStorage');
+      }
     }
     setLoading(false);
   }, []);

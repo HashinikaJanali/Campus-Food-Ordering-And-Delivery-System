@@ -21,10 +21,17 @@ exports.getAlerts = async (req, res) => {
     }
 };
 
+// Emit alert update
+const emitAlertUpdate = (req) => {
+    const io = req.app.get('io');
+    if (io) io.emit('alertUpdate');
+};
+
 // Mark alert as read
 exports.markAsRead = async (req, res) => {
     try {
         const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isRead: true }, { returnDocument: 'after' });
+        emitAlertUpdate(req);
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -35,6 +42,7 @@ exports.markAsRead = async (req, res) => {
 exports.markAllRead = async (req, res) => {
     try {
         await StockAlert.updateMany({ isRead: false }, { isRead: true });
+        emitAlertUpdate(req);
         res.json({ success: true, message: 'All alerts marked as read' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -45,6 +53,7 @@ exports.markAllRead = async (req, res) => {
 exports.resolveAlert = async (req, res) => {
     try {
         const alert = await StockAlert.findByIdAndUpdate(req.params.id, { isResolved: true, isRead: true }, { returnDocument: 'after' });
+        emitAlertUpdate(req);
         res.json({ success: true, data: alert });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

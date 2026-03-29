@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Plus, Minus, Edit3, Save, X, AlertTriangle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import api from '../../utils/api';
+import socket from '../../utils/socket';
 import toast from 'react-hot-toast';
 
 const StockBar = ({ current, threshold, max = null }) => {
@@ -86,6 +87,19 @@ export default function InventoryPage() {
 
   useEffect(() => {
     fetchAll();
+
+    // Listen for real-time stock updates
+    socket.on('stockUpdate', ({ foodItemId, stockQuantity }) => {
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item._id === foodItemId ? { ...item, stockQuantity } : item
+        )
+      );
+    });
+
+    return () => {
+      socket.off('stockUpdate');
+    };
   }, []);
 
   const fetchAll = async () => {

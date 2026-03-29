@@ -228,7 +228,7 @@ const CheckoutPage = () => {
         paymentStatus: "Completed",
       });
       
-      clearCart();
+      clearCart({ preserveStock: true });
       setStep(3);
     } catch (err) {
       setError(err.message || "Payment failed. Please try again.");
@@ -258,7 +258,7 @@ const CheckoutPage = () => {
         addressType,
       };
       setPlacedOrder(fakeOrder);
-      clearCart();
+      clearCart({ preserveStock: true });
       setStep(2);
     } catch (err) {
       setError(err.message || "Failed to place order. Please try again.");

@@ -1,5 +1,6 @@
 const Cart = require('../Model/Cart');
 const FoodItem = require('../Model/inventory/FoodItem');
+const alertService = require('../services/alertService');
 
 // Get user's cart
 exports.getCart = async (req, res) => {
@@ -26,8 +27,8 @@ exports.addToCart = async (req, res) => {
     }
 
     // Check if item is available
-    if (foodItem.stock < quantity) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    if (foodItem.stockQuantity < quantity) {
+      return res.status(400).json({ message: 'Insufficient stockQuantity' });
     }
 
     // Find or create cart
@@ -60,9 +61,18 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    // Update stock
-    foodItem.stock -= quantity;
+    const prevStock = foodItem.stockQuantity;
+    foodItem.stockQuantity -= quantity;
     await foodItem.save();
+
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
 
     await cart.save();
     await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
@@ -94,25 +104,35 @@ exports.updateCartItem = async (req, res) => {
     const oldQuantity = cart.items[itemIndex].quantity;
     const quantityDifference = quantity - oldQuantity;
 
-    // Check stock availability
+    // Check stockQuantity availability
     const foodItem = await FoodItem.findById(foodItemId);
-    if (foodItem.stock < quantityDifference) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    if (foodItem.stockQuantity < quantityDifference) {
+      return res.status(400).json({ message: 'Insufficient stockQuantity' });
     }
 
     if (quantity <= 0) {
       // Remove item from cart
       cart.items.splice(itemIndex, 1);
-      // Return stock
-      foodItem.stock += oldQuantity;
+      // Return stockQuantity
+      foodItem.stockQuantity += oldQuantity;
     } else {
       // Update quantity
       cart.items[itemIndex].quantity = quantity;
-      // Update stock
-      foodItem.stock -= quantityDifference;
+      // Update stockQuantity
+      foodItem.stockQuantity -= quantityDifference;
     }
 
     await foodItem.save();
+
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, oldQuantity, req.app.get('io')); // oldQuantity is correct prevStock here
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
+
     await cart.save();
     await cart.populate([{ path: 'items.foodItem' }, { path: 'items.canteen' }]);
 
@@ -142,10 +162,18 @@ exports.removeFromCart = async (req, res) => {
 
     const removedQuantity = cart.items[itemIndex].quantity;
 
-    // Return stock
-    const foodItem = await FoodItem.findById(foodItemId);
-    foodItem.stock += removedQuantity;
+    const prevStock = foodItem.stockQuantity;
+    foodItem.stockQuantity += removedQuantity;
     await foodItem.save();
+
+    // Check for alerts
+    await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
+
+    // Emit stock update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+    }
 
     // Remove item from cart
     cart.items.splice(itemIndex, 1);
@@ -161,16 +189,33 @@ exports.removeFromCart = async (req, res) => {
 // Clear cart
 exports.clearCart = async (req, res) => {
   try {
+    const { preserveStock } = req.query;
+    const isPreserveStock = preserveStock === 'true';
+
     const cart = await Cart.findOne({ user: req.user.id });
     if (!cart) {
       return res.json({ message: 'Cart is already empty' });
     }
 
-    // Return all stock
-    for (const item of cart.items) {
-      const foodItem = await FoodItem.findById(item.foodItem);
-      foodItem.stock += item.quantity;
-      await foodItem.save();
+    if (!isPreserveStock) {
+      // Return all stockQuantity
+      for (const item of cart.items) {
+        const foodItem = await FoodItem.findById(item.foodItem);
+        if (foodItem) {
+          const prevStock = foodItem.stockQuantity;
+          foodItem.stockQuantity += item.quantity;
+          await foodItem.save();
+
+          // Check for alerts
+          await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
+
+          // Emit stock update for each item
+          const io = req.app.get('io');
+          if (io) {
+            io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+          }
+        }
+      }
     }
 
     // Clear cart
