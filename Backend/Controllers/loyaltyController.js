@@ -60,6 +60,20 @@ const createLoyaltyAccount = async (req, res) => {
       message: "Loyalty account created successfully with 50 welcome points!",
       data: loyaltyAccount,
     });
+
+    // Create notification for welcome bonus
+    try {
+      await Notification.create({
+        userId,
+        type: "points_earned",
+        title: "🎉 Welcome Bonus!",
+        message: "You've earned 50 bonus points for joining! Start ordering to earn more.",
+        icon: "✨",
+        data: { amount: 50 },
+      });
+    } catch (notifError) {
+      console.error("Welcome bonus notification error:", notifError);
+    }
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -97,6 +111,16 @@ const addPoints = async (req, res) => {
         message: `Congratulations! You reached ${loyaltyAccount.level} status!`,
         icon: "🏆",
         data: { newLevel: loyaltyAccount.level },
+      });
+    } else {
+      // Regular points earned notification
+      await Notification.create({
+        userId,
+        type: "points_earned",
+        title: "⭐ Points Earned!",
+        message: `You earned ${amount} points. Keep it up!`,
+        icon: "⭐",
+        data: { amount, total: loyaltyAccount.totalPoints },
       });
     }
 

@@ -48,6 +48,13 @@ const notificationTypes = {
     iconColor: 'text-indigo-600',
     bgIcon: 'bg-indigo-100',
   },
+  order_status_update: {
+    color: 'bg-orange-50',
+    borderColor: 'border-orange-300',
+    icon: Bell,
+    iconColor: 'text-orange-600',
+    bgIcon: 'bg-orange-100',
+  },
   default: {
     color: 'bg-gray-50',
     borderColor: 'border-gray-300',
@@ -64,17 +71,20 @@ const NotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    fetchNotifications();
-    fetchUnreadCount();
-
-    const interval = setInterval(() => {
+    if (currentUser?.userId) {
+      fetchNotifications();
       fetchUnreadCount();
-    }, 30000);
 
-    return () => clearInterval(interval);
-  }, []);
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000); // Poll every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [currentUser?.userId]);
 
   const fetchNotifications = async () => {
+    if (!currentUser?.userId) return;
     try {
       const response = await notificationAPI.getAll(currentUser.userId, { limit: 10 });
       setNotifications(response.data.data);
@@ -85,6 +95,7 @@ const NotificationBell = () => {
   };
 
   const fetchUnreadCount = async () => {
+    if (!currentUser?.userId) return;
     try {
       const response = await notificationAPI.getUnreadCount(currentUser.userId);
       setUnreadCount(response.data.count);

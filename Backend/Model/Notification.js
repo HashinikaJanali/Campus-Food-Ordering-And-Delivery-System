@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema(
         'points_expiring',
         'review_submitted',
         'daily_reminder',
+        'order_status_update',
       ],
       required: true,
     },
