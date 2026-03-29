@@ -9,6 +9,7 @@ import { loyaltyAPI } from "../services/api";
 import { useApp } from "../context/AppContext";
 import { RefreshCw } from "lucide-react";
 
+
 const STEPS = [
   { label: "Pickup Info", icon: MapPin },
   { label: "Review Order", icon: FileText },
@@ -116,7 +117,7 @@ const CheckoutPage = () => {
     cvv: "",
   });
 
-  // If user is not logged in and has items in cart, redirect to login with checkout redirect
+// If user is not logged in and has items in cart, redirect to login with checkout redirect
   const handleCheckoutAuth = () => {
     if (!user) {
       localStorage.setItem('login_redirect_path', '/checkout');
@@ -126,7 +127,7 @@ const CheckoutPage = () => {
     return true;
   };
 
-  const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
+const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: e.target.value });
 
   const handlePaymentChange = (e) => {
     const { name, value } = e.target;

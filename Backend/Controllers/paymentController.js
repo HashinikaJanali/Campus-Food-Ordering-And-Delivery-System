@@ -1,6 +1,7 @@
 // @ts-nocheck
 const Order = require("../Model/Order");
 const LoyaltyPoints = require("../Model/LoyaltyPoints");
+const Notification = require("../Model/Notification");
 
 const normalizeAddressType = (value) => {
   if (value === "on-campus" || value === "off-campus") {
@@ -140,6 +141,7 @@ exports.confirmPayment = async (req, res) => {
     const order = new Order({
       customerName,
       customerEmail,
+      userId,
       items: cart,
       totalAmount: cartTotal + (deliveryCharge || 0) - (discountAmount || 0),
       deliveryCharge: deliveryCharge || 0,
@@ -153,6 +155,22 @@ exports.confirmPayment = async (req, res) => {
     });
 
     await order.save();
+
+    // Create a notification for the user
+    if (userId) {
+      try {
+        await Notification.create({
+          userId,
+          type: "order_status_update",
+          title: "🛍️ Order Placed Successfully!",
+          message: `Your order #${order._id.toString().slice(-6).toUpperCase()} has been placed and is pending approval.`,
+          icon: "🛍️",
+          data: { orderId: order._id, status: "Pending" },
+        });
+      } catch (notifError) {
+        console.error("Order placed notification error:", notifError);
+      }
+    }
 
     res.status(201).json({
       success: true,

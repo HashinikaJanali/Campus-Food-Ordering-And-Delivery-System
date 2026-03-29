@@ -1,4 +1,5 @@
 const Order = require('../Model/Order');
+const Notification = require("../Model/Notification");
 
 // Get all orders
 exports.getAllOrders = async (req, res) => {
@@ -40,12 +41,53 @@ exports.createOrder = async (req, res) => {
 // Update order status
 exports.updateOrderStatus = async (req, res) => {
   try {
+    const { status } = req.body;
     const order = await Order.findByIdAndUpdate(
       req.params.id,
-      { status: req.body.status },
+      { status },
       { new: true }
     );
+    
     if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Send notification if order has a userId
+    if (order.userId) {
+      try {
+        let title = "📦 Order Update";
+        let message = `Your order #${order._id.toString().slice(-6).toUpperCase()} is now ${status}.`;
+        let icon = "📦";
+
+        if (status === 'preparing') {
+          title = "👨‍🍳 Cooking Started!";
+          message = "Your order is being prepared in the kitchen.";
+          icon = "👨‍🍳";
+        } else if (status === 'ready') {
+          title = "🥡 Order Ready!";
+          message = "Your delicious meal is ready for pickup!";
+          icon = "🥡";
+        } else if (status === 'delivered') {
+          title = "✅ Order Delivered!";
+          message = "Enjoy your meal! Please leave a review.";
+          icon = "😋";
+        } else if (status === 'cancelled') {
+          title = "❌ Order Cancelled";
+          message = "Your order has been cancelled. Please contact support.";
+          icon = "❌";
+        }
+
+        await Notification.create({
+          userId: order.userId,
+          type: "order_status_update",
+          title,
+          message,
+          icon,
+          data: { orderId: order._id, status },
+        });
+      } catch (notifError) {
+        console.error("Status update notification error:", notifError);
+      }
+    }
+
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
