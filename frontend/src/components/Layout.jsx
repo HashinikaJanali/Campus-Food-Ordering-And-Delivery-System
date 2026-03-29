@@ -74,6 +74,7 @@ const Layout = ({ children }) => {
           <div className="hidden lg:flex flex-1 items-center justify-center px-12 gap-10">
             <NavLinkComp href="/" label="Home" active={location.pathname === '/' || location.pathname === '/home'} />
             <NavLinkComp href="/menu" label="Menu" active={location.pathname === '/menu'} />
+            <NavLinkComp href="/about" label="About" active={location.pathname === '/about'} />
             <NavLinkComp href="/feedback" label="Feedback" active={location.pathname === '/feedback'} />
           </div>
 
