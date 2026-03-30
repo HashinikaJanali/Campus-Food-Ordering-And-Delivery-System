@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Lock, ShieldCheck, GraduationCap,
   Pencil, Check, X, KeyRound, Sparkles, Eye, EyeOff,
-  ShoppingBag, AlertCircle, Send, RefreshCw
+  ShoppingBag, AlertCircle, Send, RefreshCw, ArrowLeft
 } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
-import UserSidebar from '../components/UserSidebar';
+import UserLayout from '../components/UserLayout';
 import api from "../utils/api";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Field = ({ label, value, icon: Icon }) => (
   <div className="flex items-center gap-4 py-4 border-b border-gray-50 last:border-0">
@@ -184,13 +185,10 @@ const UserProfilePage = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FFF9F5] font-body py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex gap-8">
-          <UserSidebar />
-
-          <main className="flex-1 lg:pl-[304px]">
-            <div className="max-w-4xl mr-auto space-y-6">
+    <UserLayout>
+      <div className="min-h-screen bg-[#FFF9F5] font-body py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="space-y-6">
 
         {/* Toast */}
         <AnimatePresence>
@@ -199,7 +197,7 @@ const UserProfilePage = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`fixed top-6 right-6 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-black text-sm text-white
+              className={`fixed top-20 right-6 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-black text-sm text-white
                 ${toast.type === "error" ? "bg-danger" : "bg-success"}`}
             >
               {toast.message}
@@ -529,11 +527,10 @@ const UserProfilePage = () => {
           )}
         </AnimatePresence>
 
-            </div>
-          </main>
+          </div>
         </div>
       </div>
-    </div>
+    </UserLayout>
   );
 };
 
