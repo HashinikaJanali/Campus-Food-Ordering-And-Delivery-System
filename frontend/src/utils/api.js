@@ -43,20 +43,34 @@ api.interceptors.request.use((config) => {
   // 2. Strict Token Selection
   let token = null;
 
-  // Identify student-only endpoints
+  // Identify student-only endpoints (user profile, cart, loyalty, reviews)
   const isStudentOnlyEndpoint = config.url && (
     config.url.includes('/cart') || 
-    config.url.includes('/users/') || 
+    config.url === '/users/profile' ||  // Only profile endpoint is user-specific
     config.url.includes('/loyalty') ||
     config.url.includes('/reviews')
+  );
+  
+  // Admin management endpoints (user management, etc)
+  const isAdminManagementEndpoint = config.url && (
+    config.url === '/users' ||  // GET all users
+    config.url.includes('/users/') &&  // Any user ID endpoint (update, delete)
+      !config.url.includes('/users/profile') &&  // except profile
+      !config.url.includes('/users/register') &&  // except register
+      !config.url.includes('/users/login')  // except login
   );
 
   if (path.startsWith('/admin')) {
     // We are in the admin panel
     if (isStudentOnlyEndpoint) {
-      // Don't send admin token to student endpoints even if we're on an admin page
+      // Student-specific endpoints (profile, cart, etc)
       token = userToken;
+    } else if (isAdminManagementEndpoint) {
+      // Admin management endpoints
+      token = adminToken;
+      config._isAdminRequest = true;
     } else {
+      // Other admin endpoints
       token = adminToken;
       config._isAdminRequest = true;
     }
@@ -73,7 +87,7 @@ api.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
       // Fallback to admin token ONLY for non-sensitive reads if user token is missing
-      // but NOT for cart/profile actions
+      // but NOT for student-specific endpoints
       if (!isStudentOnlyEndpoint && adminToken && adminToken !== 'null' && adminToken !== 'undefined') {
         config.headers.Authorization = `Bearer ${adminToken}`;
       } else {

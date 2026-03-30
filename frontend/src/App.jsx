@@ -30,6 +30,7 @@ import AnalyticsPage from './pages/inventory/AnalyticsPage';
 import CanteensPage from './pages/inventory/CanteensPage';
 
 import AdminPromotionsPage from './pages/AdminPromotionsPage';
+import AdminPanelUsers from './pages/AdminPanelUsers';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
@@ -130,6 +131,7 @@ function App() {
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="canteens" element={<CanteensPage />} />
                   <Route path="promotions" element={<AdminPromotionsPage />} />
+                  <Route path="users" element={<AdminPanelUsers />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
