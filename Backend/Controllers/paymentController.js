@@ -2,6 +2,8 @@
 const Order = require("../Model/Order");
 const LoyaltyPoints = require("../Model/LoyaltyPoints");
 const Notification = require("../Model/Notification");
+const RefundRequest = require("../Model/RefundRequest");
+const User = require("../Model/User");
 
 const normalizeAddressType = (value) => {
   if (value === "on-campus" || value === "off-campus") {
@@ -361,6 +363,250 @@ exports.markPaymentAsRefunded = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to mark payment as refunded",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Request Refund (User)
+ * POST /api/payments/request-refund
+ * Body: { orderId, reason }
+ */
+exports.requestRefund = async (req, res) => {
+  try {
+    const { orderId, reason } = req.body;
+    const userId = req.body.userId || req.user?.id;
+
+    // Validation
+    if (!orderId || !reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Order ID and reason are required"
+      });
+    }
+
+    if (reason.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Reason must be at least 10 characters"
+      });
+    }
+
+    // Find order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    // Check if order belongs to user
+    if (order.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: This order does not belong to you"
+      });
+    }
+
+    // Check if refund request already exists
+    const existingRequest = await RefundRequest.findOne({
+      orderId,
+      status: { $in: ['pending', 'approved'] }
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "A refund request for this order is already in progress"
+      });
+    }
+
+    // Create refund request
+    const refundRequest = new RefundRequest({
+      orderId,
+      userId,
+      amount: order.totalAmount,
+      reason,
+      status: 'pending'
+    });
+
+    await refundRequest.save();
+
+    // Create notification for admins
+    await Notification.create({
+      userId: "admin",
+      type: "refund_request",
+      title: "💰 Refund Request Received",
+      message: `New refund request for order #${orderId.toString().slice(-6).toUpperCase()} (Rs.${order.totalAmount})`,
+      icon: "💰",
+      data: { refundRequestId: refundRequest._id, orderId }
+    });
+
+    console.log(`✅ Refund request created for order ${orderId}`);
+
+    res.status(201).json({
+      success: true,
+      message: "Refund request submitted successfully",
+      data: refundRequest
+    });
+  } catch (error) {
+    console.error("Request Refund Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to request refund",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get Refund Requests (Admin)
+ * GET /api/payments/refund-requests
+ */
+exports.getRefundRequests = async (req, res) => {
+  try {
+    const { status = "all", page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Build filter
+    const filter = {};
+    if (status !== "all") {
+      filter.status = status;
+    }
+
+    // Fetch refund requests with order details
+    const refundRequests = await RefundRequest.find(filter)
+      .populate('orderId', 'customerName customerEmail totalAmount orderStatus')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Enrich with user data
+    const enriched = await Promise.all(
+      refundRequests.map(async (req) => {
+        const user = await User.findById(req.userId).select('name email');
+        return {
+          ...req,
+          user: user || { name: req.orderId?.customerName, email: req.orderId?.customerEmail }
+        };
+      })
+    );
+
+    const total = await RefundRequest.countDocuments(filter);
+
+    console.log(`✅ Fetched ${enriched.length} refund requests`);
+
+    res.status(200).json({
+      success: true,
+      data: enriched,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error("Get Refund Requests Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch refund requests",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Approve/Reject Refund Request (Admin)
+ * PATCH /api/payments/refund-requests/:refundRequestId
+ * Body: { action, adminNotes }
+ */
+exports.approveRefundRequest = async (req, res) => {
+  try {
+    const { refundRequestId } = req.params;
+    const { action, adminNotes } = req.body; // action: 'approve' or 'reject'
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: "Action must be 'approve' or 'reject'"
+      });
+    }
+
+    // Find refund request
+    const refundRequest = await RefundRequest.findById(refundRequestId);
+    if (!refundRequest) {
+      return res.status(404).json({
+        success: false,
+        message: "Refund request not found"
+      });
+    }
+
+    // Update status
+    refundRequest.status = action === 'approve' ? 'approved' : 'rejected';
+    refundRequest.adminNotes = adminNotes || '';
+    refundRequest.approvedBy = req.user?.id || 'admin';
+    await refundRequest.save();
+
+    // Create notification for user
+    const notificationTitle = action === 'approve' ? '✅ Refund Approved' : '❌ Refund Rejected';
+    const notificationMessage = action === 'approve'
+      ? `Your refund request has been approved. Rs.${refundRequest.amount} will be refunded.`
+      : `Your refund request has been rejected. ${adminNotes ? 'Reason: ' + adminNotes : ''}`;
+
+    await Notification.create({
+      userId: refundRequest.userId,
+      type: "refund_status_update",
+      title: notificationTitle,
+      message: notificationMessage,
+      icon: action === 'approve' ? '✅' : '❌',
+      data: { refundRequestId, status: refundRequest.status }
+    });
+
+    console.log(`✅ Refund request ${action}ed: ${refundRequestId}`);
+
+    res.status(200).json({
+      success: true,
+      message: `Refund request ${action}ed successfully`,
+      data: refundRequest
+    });
+  } catch (error) {
+    console.error("Approve Refund Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process refund request",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get User's Refund Requests
+ * GET /api/payments/my-refund-requests
+ */
+exports.getUserRefundRequests = async (req, res) => {
+  try {
+    const userId = req.body.userId || req.user?.id;
+
+    const refundRequests = await RefundRequest.find({ userId })
+      .populate('orderId', 'customerName customerEmail totalAmount orderStatus')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log(`✅ Fetched ${refundRequests.length} refund requests for user ${userId}`);
+
+    res.status(200).json({
+      success: true,
+      data: refundRequests
+    });
+  } catch (error) {
+    console.error("Get User Refund Requests Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch your refund requests",
       error: error.message
     });
   }

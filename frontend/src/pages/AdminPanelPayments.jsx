@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CreditCard, Search, Filter, RefreshCw, Download,
   TrendingUp, CheckCircle2, XCircle, Clock, RotateCcw,
-  AlertTriangle, BarChart2, Users, Store, Calendar
+  AlertTriangle, BarChart2, Users, Store, Calendar, ThumbsUp, ThumbsDown
 } from "lucide-react";
 import api from "../utils/api";
 
@@ -119,6 +119,14 @@ const AdminPanelPayments = () => {
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundLoading, setRefundLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  
+  const [refundRequests, setRefundRequests] = useState([]);
+  const [refundRequestsLoading, setRefundRequestsLoading] = useState(false);
+  const [refundRequestFilter, setRefundRequestFilter] = useState("pending");
+  const [selectedRefundRequest, setSelectedRefundRequest] = useState(null);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [refundRequestActionLoading, setRefundRequestActionLoading] = useState(false);
+  
   const reportRef = useRef(null);
 
   const fetchPayments = async () => {
@@ -143,7 +151,22 @@ const AdminPanelPayments = () => {
     finally { setLoading(false); }
   };
 
+  const fetchRefundRequests = async () => {
+    setRefundRequestsLoading(true);
+    try {
+      const res = await api.get(`/payments/refund-requests?status=${refundRequestFilter}`);
+      setRefundRequests(res.data.data || []);
+      console.log(`✅ Fetched ${(res.data.data || []).length} refund requests`);
+    } catch (error) {
+      console.error('Fetch refund requests error:', error);
+      setRefundRequests([]);
+    } finally {
+      setRefundRequestsLoading(false);
+    }
+  };
+
   useEffect(() => { fetchPayments(); }, []);
+  useEffect(() => { fetchRefundRequests(); }, [refundRequestFilter]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -163,6 +186,25 @@ const AdminPanelPayments = () => {
       showToast(error.response?.data?.message || "Failed to process refund.", "error");
     }
     finally { setRefundLoading(false); }
+  };
+
+  const handleRefundRequestAction = async (action) => {
+    setRefundRequestActionLoading(true);
+    try {
+      await api.patch(`/payments/refund-requests/${selectedRefundRequest._id}`, {
+        action,
+        adminNotes
+      });
+      showToast(`Refund request ${action}ed successfully`);
+      setSelectedRefundRequest(null);
+      setAdminNotes("");
+      fetchRefundRequests();
+    } catch (error) {
+      console.error(`${action} error:`, error);
+      showToast("Failed to process refund request.", "error");
+    } finally {
+      setRefundRequestActionLoading(false);
+    }
   };
 
   const exportCSV = () => {
@@ -531,6 +573,153 @@ const AdminPanelPayments = () => {
           </table>
         </div>
       </div>
+
+      {/* Refund Requests Section */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="bg-white rounded-[3rem] shadow-xl shadow-violet-100/40 border border-violet-50 overflow-hidden">
+        <div className="p-8 border-b border-violet-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <AlertTriangle size={18} className="text-amber-600" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold text-gray-900">Refund Requests</h2>
+                <p className="text-xs text-gray-400 font-medium mt-0.5">{refundRequests.filter(r => r.status === 'pending').length} pending</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <select value={refundRequestFilter} onChange={(e) => setRefundRequestFilter(e.target.value)}
+                className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm font-black text-amber-700 cursor-pointer">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All</option>
+              </select>
+              <button onClick={fetchRefundRequests} className="p-2 hover:bg-amber-50 rounded-xl transition-all">
+                <RefreshCw size={18} className={refundRequestsLoading ? "animate-spin" : ""} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {refundRequestsLoading ? [1,2,3].map(i => (
+          <div key={i} className="flex items-center gap-4 px-8 py-5 border-b border-gray-50 last:border-0">
+            <div className="w-10 h-10 rounded-2xl bg-gray-100 animate-pulse flex-shrink-0" />
+            <div className="flex-1 space-y-2"><div className="h-3 bg-gray-100 animate-pulse rounded w-1/3" /><div className="h-2.5 bg-gray-100 animate-pulse rounded w-1/2" /></div>
+            <div className="w-20 h-7 bg-gray-100 animate-pulse rounded-xl" />
+          </div>
+        )) : refundRequests.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-5xl mb-4">📋</p>
+            <p className="font-display text-lg font-bold text-gray-700">No refund requests</p>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {refundRequests.map((req, i) => (
+              <motion.div key={req._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: 20 }} transition={{ delay: i * 0.03 }}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 px-8 py-5 border-b border-gray-50 last:border-0 hover:bg-amber-50/20 transition-colors group">
+                <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle size={16} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-gray-900 text-sm">{req.user?.name || req.orderId?.customerName || "—"}</p>
+                  <p className="text-xs text-gray-400 font-medium truncate">{req.reason?.substring(0, 50)}...</p>
+                </div>
+                <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+                  req.status === "pending" ? "bg-amber-50 text-amber-600 border-amber-200" :
+                  req.status === "approved" ? "bg-green-50 text-green-600 border-green-200" :
+                  "bg-red-50 text-red-600 border-red-200"
+                }`}>
+                  {req.status}
+                </span>
+                <p className="font-black text-gray-900 whitespace-nowrap">Rs. {req.amount?.toFixed(2)}</p>
+                {req.status === "pending" && (
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedRefundRequest(req)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 font-black text-xs transition-all sm:opacity-0 sm:group-hover:opacity-100">
+                    <AlertTriangle size={12} /> Review
+                  </motion.button>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+      </motion.div>
+
+      {/* Refund Request Detail Modal */}
+      <AnimatePresence>
+        {selectedRefundRequest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.45)" }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full text-left">
+              <div className="mb-6">
+                <h3 className="font-display text-xl font-bold text-gray-900 mb-1">Refund Request Details</h3>
+                <p className="text-xs text-gray-400 font-medium">Status: <span className="font-black text-gray-600 capitalize">{selectedRefundRequest.status}</span></p>
+              </div>
+
+              <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-2xl">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">User</p>
+                  <p className="text-sm font-black text-gray-900">{selectedRefundRequest.user?.name || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Amount</p>
+                  <p className="text-sm font-black text-gray-900">Rs. {selectedRefundRequest.amount?.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Reason</p>
+                  <p className="text-xs font-medium text-gray-700">{selectedRefundRequest.reason}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Requested</p>
+                  <p className="text-xs font-medium text-gray-700">{new Date(selectedRefundRequest.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {selectedRefundRequest.status === "pending" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Admin Notes (Optional)</label>
+                    <textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)}
+                      placeholder="Add notes for the user..." maxLength={200}
+                      className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all resize-none h-20" />
+                    <p className="text-[10px] text-gray-400 mt-1">{adminNotes.length}/200</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={() => setSelectedRefundRequest(null)}
+                      className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all">
+                      Close
+                    </button>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => handleRefundRequestAction("reject")} disabled={refundRequestActionLoading}
+                      className="flex-1 py-3 bg-red-50 hover:bg-red-100 disabled:opacity-60 text-red-600 border border-red-200 font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all">
+                      {refundRequestActionLoading ? "Processing..." : <><ThumbsDown size={14} /> Reject</>}
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => handleRefundRequestAction("approve")} disabled={refundRequestActionLoading}
+                      className="flex-1 py-3 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all">
+                      {refundRequestActionLoading ? "Processing..." : <><ThumbsUp size={14} /> Approve</>}
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+
+              {selectedRefundRequest.status !== "pending" && (
+                <div className="flex gap-3">
+                  <button onClick={() => setSelectedRefundRequest(null)}
+                    className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all">
+                    Close
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

@@ -43,12 +43,15 @@ api.interceptors.request.use((config) => {
   // 2. Strict Token Selection
   let token = null;
 
-  // Identify student-only endpoints (user profile, cart, loyalty, reviews)
+  // Identify student-only endpoints (user profile, cart, loyalty, reviews, payments, orders)
   const isStudentOnlyEndpoint = config.url && (
     config.url.includes('/cart') || 
     config.url === '/users/profile' ||  // Only profile endpoint is user-specific
     config.url.includes('/loyalty') ||
-    config.url.includes('/reviews')
+    config.url.includes('/reviews') ||
+    config.url.includes('/payments/request-refund') ||
+    config.url.includes('/payments/my-refund-requests') ||
+    config.url.includes('/orders')
   );
   
   // Admin management endpoints (user management, etc)
