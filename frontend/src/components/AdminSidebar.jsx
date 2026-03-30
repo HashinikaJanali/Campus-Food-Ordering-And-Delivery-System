@@ -34,8 +34,7 @@ const userManagementMenuItems = [
 
 const paymentManagementMenuItems = [
   { path: '/admin/payments', icon: CreditCard, label: 'Payments' },
-  { path: '/admin/payments/history', icon: History, label: 'Payment History' },
-  { path: '/admin/payments/reports', icon: BarChart3, label: 'Payment Reports' },
+  { path: '/admin/refund-requests', icon: Bell, label: 'Refund Requests' },
 ];
 
 const otherMenuItems = [

@@ -47,7 +47,20 @@ const orderSchema = new mongoose.Schema({
   pointsRedeemed: { type: Number, default: 0 },
   discountAmount: { type: Number, default: 0 },
   pickupTime: { type: String },
-  notes: { type: String }
+  notes: { type: String },
+  refundRequestId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RefundRequest',
+    default: null
+  },
+  refundAmount: {
+    type: Number,
+    default: 0
+  },
+  refundReason: {
+    type: String,
+    default: null
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

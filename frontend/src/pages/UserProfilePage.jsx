@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Lock, ShieldCheck, GraduationCap,
   Pencil, Check, X, KeyRound, Sparkles, Eye, EyeOff,
-  ShoppingBag, AlertCircle, Send, RefreshCw, ArrowLeft
+  ShoppingBag, AlertCircle, Send, RefreshCw, ArrowLeft, Trash2
 } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
 import UserLayout from '../components/UserLayout';
@@ -68,6 +68,7 @@ const UserProfilePage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [refundReason, setRefundReason] = useState("");
   const [refundLoading, setRefundLoading] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
 
   const [toast, setToast] = useState(null);
   const showToast = (message, type = "success") => {
@@ -76,21 +77,47 @@ const UserProfilePage = () => {
   };
 
   // Fetch user's orders
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await api.get("/orders");
+      setOrders(res.data.data || res.data || []);
+      console.log(`✅ Fetched ${(res.data.data || res.data || []).length} orders`);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+      showToast("Failed to load orders.", "error");
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      setOrdersLoading(true);
-      try {
-        const res = await api.get("/orders");
-        setOrders(res.data.data || res.data || []);
-      } catch (err) {
-        console.error("Fetch orders error:", err);
-        showToast("Failed to load orders.", "error");
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
     if (user) fetchOrders();
   }, [user]);
+
+  const handleClearAllOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      console.log(`🗑️  Clearing all orders...`);
+      
+      // Delete all orders
+      const deletePromises = orders.map(order => 
+        api.delete(`/orders/${order._id}`).catch(err => console.error(`Failed to delete order ${order._id}:`, err))
+      );
+      
+      await Promise.all(deletePromises);
+      
+      console.log(`✅ All orders cleared successfully`);
+      setOrders([]);
+      setClearConfirm(false);
+      showToast("All orders cleared successfully!", "success");
+    } catch (error) {
+      console.error("Clear orders error:", error);
+      showToast("Failed to clear orders.", "error");
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
   const handleProfileChange = (e) => {
     setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
@@ -165,18 +192,43 @@ const UserProfilePage = () => {
       return;
     }
 
+    if (!selectedOrder?._id) {
+      showToast("No order selected. Please try again.", "error");
+      return;
+    }
+
     setRefundLoading(true);
     try {
-      await api.post("/payments/request-refund", {
+      console.log(`🔄 Submitting refund request for order:`, selectedOrder._id);
+      const response = await api.post("/payments/request-refund", {
         orderId: selectedOrder._id,
-        reason: refundReason,
+        reason: refundReason.trim(),
         userId: user._id
       });
-      showToast("Refund request submitted successfully. Admin will review soon.");
-      setRefundReason("");
-      setSelectedOrder(null);
+
+      console.log(`✅ Refund request response:`, response.data);
+
+      if (response.data?.success) {
+        showToast(response.data?.message || "✅ Refund request submitted successfully!", "success");
+        setRefundReason("");
+        setSelectedOrder(null);
+      } else {
+        showToast(response.data?.message || "Failed to submit refund request", "error");
+      }
     } catch (err) {
-      showToast(err.response?.data?.message || "Failed to request refund.", "error");
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error?.message ||
+                          err.message || 
+                          "Failed to request refund";
+      
+      console.error(`❌ Refund request error:`, {
+        message: errorMessage,
+        status: err.response?.status,
+        data: err.response?.data,
+        fullError: err
+      });
+
+      showToast(errorMessage, "error");
     } finally {
       setRefundLoading(false);
     }
@@ -355,15 +407,25 @@ const UserProfilePage = () => {
               <h2 className="font-display text-xl font-bold text-gray-900 flex items-center gap-2"><ShoppingBag size={20} /> Order History</h2>
               <p className="text-xs text-gray-400 font-medium mt-0.5">Your recent orders and refund requests</p>
             </div>
-            <button
-              onClick={() => {
-                setOrdersLoading(true);
-                setTimeout(() => setOrdersLoading(false), 500);
-              }}
-              className="p-2 hover:bg-orange-50 rounded-xl transition-all"
-            >
-              <RefreshCw size={18} className={ordersLoading ? "animate-spin" : ""} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchOrders()}
+                disabled={ordersLoading}
+                className="p-2 hover:bg-orange-50 rounded-xl transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={18} className={ordersLoading ? "animate-spin" : ""} />
+              </button>
+              {orders.length > 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setClearConfirm(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black text-xs transition-all"
+                >
+                  <Trash2 size={12} /> Clear All
+                </motion.button>
+              )}
+            </div>
           </div>
 
           {ordersLoading ? (
@@ -522,6 +584,46 @@ const UserProfilePage = () => {
                     </motion.button>
                   </div>
                 </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Clear All Orders Confirmation Modal */}
+        <AnimatePresence>
+          {clearConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-[3rem] shadow-2xl p-8 max-w-md w-full text-center"
+              >
+                <div className="w-16 h-16 bg-red-100 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={28} className="text-red-600" />
+                </div>
+                <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Clear All Orders?</h3>
+                <p className="text-gray-500 text-sm font-medium mb-6">
+                  You have <span className="font-black text-gray-800">{orders.length} order{orders.length !== 1 ? 's' : ''}</span>. Once deleted, they cannot be recovered.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setClearConfirm(false)}
+                    className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleClearAllOrders}
+                    disabled={ordersLoading}
+                    className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all"
+                  >
+                    {ordersLoading ? "Clearing..." : <><Trash2 size={14} /> Clear All</>}
+                  </motion.button>
+                </div>
               </motion.div>
             </div>
           )}

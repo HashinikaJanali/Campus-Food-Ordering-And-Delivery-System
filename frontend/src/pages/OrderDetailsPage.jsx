@@ -47,6 +47,10 @@ const OrderDetailsPage = () => {
       status: rawOrder.status,
       notes: rawOrder.notes || rawOrder.note || '',
       isDelivery: !!(rawOrder.deliveryInfo || rawOrder.addressType === 'delivery' || rawOrder.address_type === 'delivery' || rawOrder.isDelivery || rawOrder.type === 'delivery' || rawOrder.addressType === 'off-campus'),
+      paymentStatus: rawOrder.paymentStatus || 'Pending',
+      refundAmount: rawOrder.refundAmount || 0,
+      refundReason: rawOrder.refundReason || null,
+      refundRequestId: rawOrder.refundRequestId || null,
     };
   };
 
@@ -252,9 +256,41 @@ const OrderDetailsPage = () => {
                   </td>
                 </tr>
                 <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Payment Status</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest ${
+                      order.paymentStatus === 'Refunded' 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : order.paymentStatus === 'Completed'
+                        ? 'bg-green-100 text-green-700'
+                        : order.paymentStatus === 'Failed'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {order.paymentStatus}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
                   <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Order Total</td>
                   <td className="px-6 py-4 text-2xl font-bold text-emerald-600">{formatRs(order.total || 0)}</td>
                 </tr>
+
+                {/* Refund Information */}
+                {order.paymentStatus === 'Refunded' && (
+                  <>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <td className="px-6 py-4 font-semibold text-blue-900 w-1/3">✅ Refund Amount</td>
+                      <td className="px-6 py-4 text-2xl font-bold text-blue-600">{formatRs(order.refundAmount || 0)}</td>
+                    </tr>
+                    {order.refundReason && (
+                      <tr className="bg-blue-50 border-b border-blue-200">
+                        <td className="px-6 py-4 font-semibold text-blue-900 w-1/3">Refund Reason</td>
+                        <td className="px-6 py-4 text-gray-900">{order.refundReason}</td>
+                      </tr>
+                    )}
+                  </>
+                )}
 
                 {/* Notes Row */}
                 {order.notes && (
