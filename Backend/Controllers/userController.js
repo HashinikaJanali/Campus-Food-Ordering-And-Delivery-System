@@ -116,6 +116,14 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Check if user is active
+    if (!user.active) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact the administrator for assistance.'
+      });
+    }
+
     const token = generateToken(user._id);
 
     res.json({
@@ -314,9 +322,136 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Get all users (Admin only)
+// @route   GET /api/users
+// @access  Private/Admin
+const getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const role = req.query.role || '';
+
+    // Build filter
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (role) {
+      filter.role = role;
+    }
+
+    const users = await User.find(filter)
+      .select('-password')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await User.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: users,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error retrieving users'
+    });
+  }
+};
+
+// @desc    Update user status (Admin only)
+// @route   PATCH /api/users/:id/status
+// @access  Private/Admin
+const updateUserStatus = async (req, res) => {
+  try {
+    const { active } = req.body;
+
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be a boolean value'
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { active },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log(`✅ User ${user.email} status updated to: ${active ? 'active' : 'inactive'}`);
+    
+    res.json({
+      success: true,
+      message: `User ${active ? 'activated' : 'deactivated'} successfully`,
+      data: user
+    });
+  } catch (error) {
+    console.error('❌ Update user status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating user status',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// @desc    Delete user (Admin only)
+// @route   DELETE /api/users/:id
+// @access  Private/Admin
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log(`✅ User ${user.email} deleted successfully`);
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('❌ Delete user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting user',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  getAllUsers,
+  updateUserStatus,
+  deleteUser
 };

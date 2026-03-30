@@ -2,11 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, Lock, ShieldCheck, GraduationCap,
-  Pencil, Check, X, KeyRound, Sparkles, Eye, EyeOff
+  Pencil, Check, X, KeyRound, Sparkles, Eye, EyeOff,
+  ShoppingBag, AlertCircle, Send, RefreshCw, ArrowLeft, Trash2
 } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
-import UserSidebar from '../components/UserSidebar';
+import UserLayout from '../components/UserLayout';
 import api from "../utils/api";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Field = ({ label, value, icon: Icon }) => (
   <div className="flex items-center gap-4 py-4 border-b border-gray-50 last:border-0">
@@ -60,10 +63,60 @@ const UserProfilePage = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
+
   const [toast, setToast] = useState(null);
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  // Fetch user's orders
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await api.get("/orders");
+      setOrders(res.data.data || res.data || []);
+      console.log(`✅ Fetched ${(res.data.data || res.data || []).length} orders`);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+      showToast("Failed to load orders.", "error");
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchOrders();
+  }, [user]);
+
+  const handleClearAllOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      console.log(`🗑️  Clearing all orders...`);
+      
+      // Delete all orders
+      const deletePromises = orders.map(order => 
+        api.delete(`/orders/${order._id}`).catch(err => console.error(`Failed to delete order ${order._id}:`, err))
+      );
+      
+      await Promise.all(deletePromises);
+      
+      console.log(`✅ All orders cleared successfully`);
+      setOrders([]);
+      setClearConfirm(false);
+      showToast("All orders cleared successfully!", "success");
+    } catch (error) {
+      console.error("Clear orders error:", error);
+      showToast("Failed to clear orders.", "error");
+    } finally {
+      setOrdersLoading(false);
+    }
   };
 
   const handleProfileChange = (e) => {
@@ -132,16 +185,62 @@ const UserProfilePage = () => {
     }
   };
 
+  const handleRequestRefund = async (e) => {
+    e.preventDefault();
+    if (!refundReason.trim() || refundReason.length < 10) {
+      showToast("Please provide a reason (minimum 10 characters).", "error");
+      return;
+    }
+
+    if (!selectedOrder?._id) {
+      showToast("No order selected. Please try again.", "error");
+      return;
+    }
+
+    setRefundLoading(true);
+    try {
+      console.log(`🔄 Submitting refund request for order:`, selectedOrder._id);
+      const response = await api.post("/payments/request-refund", {
+        orderId: selectedOrder._id,
+        reason: refundReason.trim(),
+        userId: user._id
+      });
+
+      console.log(`✅ Refund request response:`, response.data);
+
+      if (response.data?.success) {
+        showToast(response.data?.message || "✅ Refund request submitted successfully!", "success");
+        setRefundReason("");
+        setSelectedOrder(null);
+      } else {
+        showToast(response.data?.message || "Failed to submit refund request", "error");
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error?.message ||
+                          err.message || 
+                          "Failed to request refund";
+      
+      console.error(`❌ Refund request error:`, {
+        message: errorMessage,
+        status: err.response?.status,
+        data: err.response?.data,
+        fullError: err
+      });
+
+      showToast(errorMessage, "error");
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FFF9F5] font-body py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex gap-8">
-          <UserSidebar />
-
-          <main className="flex-1 lg:pl-[304px]">
-            <div className="max-w-4xl mr-auto space-y-6">
+    <UserLayout>
+      <div className="min-h-screen bg-[#FFF9F5] font-body py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="space-y-6">
 
         {/* Toast */}
         <AnimatePresence>
@@ -150,7 +249,7 @@ const UserProfilePage = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`fixed top-6 right-6 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-black text-sm text-white
+              className={`fixed top-20 right-6 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-black text-sm text-white
                 ${toast.type === "error" ? "bg-danger" : "bg-success"}`}
             >
               {toast.message}
@@ -296,11 +395,244 @@ const UserProfilePage = () => {
           </form>
         </motion.div>
 
+        {/* Order History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="font-display text-xl font-bold text-gray-900 flex items-center gap-2"><ShoppingBag size={20} /> Order History</h2>
+              <p className="text-xs text-gray-400 font-medium mt-0.5">Your recent orders and refund requests</p>
             </div>
-          </main>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchOrders()}
+                disabled={ordersLoading}
+                className="p-2 hover:bg-orange-50 rounded-xl transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={18} className={ordersLoading ? "animate-spin" : ""} />
+              </button>
+              {orders.length > 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setClearConfirm(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black text-xs transition-all"
+                >
+                  <Trash2 size={12} /> Clear All
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {ordersLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-gray-200 animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-gray-200 animate-pulse rounded w-1/3" />
+                    <div className="h-2 bg-gray-200 animate-pulse rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-12">
+              <ShoppingBag size={40} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500 font-medium">No orders yet</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {orders.map((order, idx) => (
+                <motion.div
+                  key={order._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="border border-gray-100 hover:border-orange-200 rounded-2xl transition-all hover:shadow-lg hover:shadow-orange-100/40 overflow-hidden"
+                >
+                  {/* Order header */}
+                  <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                    <div>
+                      <p className="font-black text-sm text-gray-900">Order #{order._id?.slice(-8).toUpperCase() || "—"}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+                        order.paymentStatus === "Completed"
+                          ? "bg-green-50 text-green-600 border-green-200"
+                          : "bg-amber-50 text-amber-600 border-amber-200"
+                      }`}>
+                        {order.paymentStatus}
+                      </span>
+                      {order.paymentStatus === "Completed" && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedOrder(order)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-black text-xs transition-all"
+                        >
+                          <AlertCircle size={12} /> Refund
+                        </motion.button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Order items */}
+                  <div className="p-4">
+                    {order.items && order.items.length > 0 ? (
+                      <div className="space-y-3">
+                        {order.items.map((item, itemIdx) => (
+                          <div key={itemIdx} className="flex gap-4 p-3 bg-gray-50 rounded-xl">
+                            {/* Food item image */}
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                              {item.foodItem?.image || item.image ? (
+                                <img
+                                  src={item.foodItem?.image || item.image}
+                                  alt={item.foodItem?.name || item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-300">
+                                  <ShoppingBag size={24} className="text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Item details */}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-sm text-gray-900">{item.foodItem?.name || item.name || "Food Item"}</p>
+                              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                                {item.quantity} × Rs. {item.price?.toFixed(2) || "0.00"}
+                              </p>
+                              <p className="text-xs text-gray-900 font-black mt-1">
+                                Subtotal: Rs. {((item.quantity || 1) * (item.price || 0)).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center py-4">No items in this order</p>
+                    )}
+                  </div>
+
+                  {/* Order footer with total */}
+                  <div className="p-4 bg-orange-50 border-t border-gray-100 flex items-center justify-between">
+                    <p className="text-xs font-black text-gray-600 uppercase tracking-widest">Order Total</p>
+                    <p className="font-black text-lg text-primary">Rs. {order.totalAmount?.toFixed(2) || "0.00"}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Refund Request Modal */}
+        <AnimatePresence>
+          {selectedOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-[3rem] shadow-2xl p-8 max-w-md w-full"
+              >
+                <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Request Refund</h3>
+                <p className="text-xs text-gray-400 font-medium mb-6">
+                  Order #{selectedOrder._id?.slice(-8).toUpperCase()} • Rs. {selectedOrder.totalAmount?.toFixed(2)}
+                </p>
+
+                <form onSubmit={handleRequestRefund} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Reason for refund</label>
+                    <textarea
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      placeholder="Explain why you want a refund (minimum 10 characters)..."
+                      maxLength={500}
+                      className="w-full p-3.5 bg-gray-50 border-2 border-gray-200 focus:border-blue-400 rounded-2xl text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all resize-none h-28"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">{refundReason.length}/500</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedOrder(null);
+                        setRefundReason("");
+                      }}
+                      className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={refundLoading}
+                      className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all"
+                    >
+                      {refundLoading ? "Submitting..." : <><Send size={14} /> Request</>}
+                    </motion.button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Clear All Orders Confirmation Modal */}
+        <AnimatePresence>
+          {clearConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-[3rem] shadow-2xl p-8 max-w-md w-full text-center"
+              >
+                <div className="w-16 h-16 bg-red-100 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={28} className="text-red-600" />
+                </div>
+                <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Clear All Orders?</h3>
+                <p className="text-gray-500 text-sm font-medium mb-6">
+                  You have <span className="font-black text-gray-800">{orders.length} order{orders.length !== 1 ? 's' : ''}</span>. Once deleted, they cannot be recovered.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setClearConfirm(false)}
+                    className="flex-1 py-3 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-black text-sm rounded-2xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleClearAllOrders}
+                    disabled={ordersLoading}
+                    className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all"
+                  >
+                    {ordersLoading ? "Clearing..." : <><Trash2 size={14} /> Clear All</>}
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+          </div>
         </div>
       </div>
-    </div>
+    </UserLayout>
   );
 };
 

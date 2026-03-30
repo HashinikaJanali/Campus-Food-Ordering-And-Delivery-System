@@ -1,17 +1,21 @@
 const Order = require('../Model/Order');
 const Notification = require("../Model/Notification");
 
-// Get all orders
+// Get all orders for logged-in user
 exports.getAllOrders = async (req, res) => {
   try {
-    const { customerEmail } = req.query;
-    let query = {};
-    if (customerEmail) {
-      query.customerEmail = customerEmail;
-    }
-    const orders = await Order.find(query).sort({ createdAt: -1 });
-    res.json(orders);
+    // Only show orders for the authenticated user
+    const userId = req.user.id;
+    
+    console.log(`📦 Fetching orders for user: ${userId}`);
+    
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+    
+    console.log(`✅ Found ${orders.length} orders for user ${userId}`);
+    
+    res.json({ data: orders });
   } catch (err) {
+    console.error("Error fetching orders:", err);
     res.status(500).json({ message: err.message });
   }
 };

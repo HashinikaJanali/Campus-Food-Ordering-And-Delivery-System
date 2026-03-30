@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { ClipboardList, History, Search, ChefHat, ChevronDown, Settings, HelpCircle, MapPin, LayoutDashboard, UtensilsCrossed, Package, Tag, Bell, Store, Eye, BarChart3, Edit3, Gift, Ticket, X, ExternalLink, LogOut } from 'lucide-react';
+import { ClipboardList, History, Search, ChefHat, ChevronDown, Settings, HelpCircle, MapPin, LayoutDashboard, UtensilsCrossed, Package, Tag, Bell, Store, Eye, BarChart3, Edit3, Gift, Ticket, X, ExternalLink, LogOut, Users, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoImage from '../assets/logo.png';
@@ -25,6 +25,16 @@ const inventoryMenuItems = [
 
 const promotionsMenuItems = [
   { path: '/admin/promotions', icon: Ticket, label: 'Promotions' },
+];
+
+const userManagementMenuItems = [
+  { path: '/admin/users', icon: Users, label: 'All Users' },
+  { path: '/admin/users/roles', icon: Users, label: 'User Roles' },
+];
+
+const paymentManagementMenuItems = [
+  { path: '/admin/payments', icon: CreditCard, label: 'Payments' },
+  { path: '/admin/refund-requests', icon: Bell, label: 'Refund Requests' },
 ];
 
 const otherMenuItems = [
@@ -61,11 +71,15 @@ export default function AdminSidebar({ unreadAlerts }) {
   const filteredOrderItems = filterItems(orderMenuItems);
   const filteredInventoryItems = filterItems(inventoryMenuItems);
   const filteredPromotionsItems = filterItems(promotionsMenuItems);
+  const filteredUserManagementItems = filterItems(userManagementMenuItems);
+  const filteredPaymentManagementItems = filterItems(paymentManagementMenuItems);
   const filteredOtherItems = filterItems(otherMenuItems);
 
   const hasResults = filteredOrderItems.length > 0 ||
     filteredInventoryItems.length > 0 ||
     filteredPromotionsItems.length > 0 ||
+    filteredUserManagementItems.length > 0 ||
+    filteredPaymentManagementItems.length > 0 ||
     filteredOtherItems.length > 0 ||
     'main dashboard'.includes(searchQuery.toLowerCase());
 
@@ -84,6 +98,8 @@ export default function AdminSidebar({ unreadAlerts }) {
       if (filteredOrderItems.length > 0) sectionsToExpand.push('order-management');
       if (filteredInventoryItems.length > 0) sectionsToExpand.push('inventory-management');
       if (filteredPromotionsItems.length > 0) sectionsToExpand.push('promotions-management');
+      if (filteredUserManagementItems.length > 0) sectionsToExpand.push('user-management');
+      if (filteredPaymentManagementItems.length > 0) sectionsToExpand.push('payment-management');
 
       if (sectionsToExpand.length > 0) {
         setExpandedSections(prev => {
@@ -93,7 +109,7 @@ export default function AdminSidebar({ unreadAlerts }) {
         });
       }
     }
-  }, [searchQuery, filteredOrderItems.length, filteredInventoryItems.length, filteredPromotionsItems.length]);
+  }, [searchQuery, filteredOrderItems.length, filteredInventoryItems.length, filteredPromotionsItems.length, filteredUserManagementItems.length, filteredPaymentManagementItems.length]);
 
   const handleLogout = () => {
     logout();
@@ -304,6 +320,86 @@ export default function AdminSidebar({ unreadAlerts }) {
                     {expandedSections.includes('promotions-management') && (
                       <div className="space-y-1 pl-3">
                         {filteredPromotionsItems.map(({ path, icon: Icon, label }) => (
+                          <NavLink
+                            key={path}
+                            to={path}
+                            className={({ isActive }) => `
+                              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                              ${isActive
+                                ? 'bg-orange-50 text-orange-600 shadow-sm border-l-2 border-orange-600 rounded-l-none'
+                                : 'text-gray-700 hover:bg-gray-50'
+                              }
+                            `}
+                          >
+                            <Icon size={18} className="shrink-0" />
+                            <span>{label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* User Management Expandable Section */}
+                {(filteredUserManagementItems.length > 0 || !searchQuery) && (
+                  <>
+                    <button
+                      onClick={() => toggleSection('user-management')}
+                      className="flex items-center gap-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 w-full px-3 py-2.5"
+                    >
+                      <Users size={18} className="shrink-0" />
+                      <span className="flex-1 text-left">User Management</span>
+                      <ChevronDown
+                        size={16}
+                        className={`shrink-0 transition-transform duration-200 ${expandedSections.includes('user-management') ? 'rotate-180' : ''
+                          }`}
+                      />
+                    </button>
+
+                    {/* Nested User Management Items */}
+                    {expandedSections.includes('user-management') && (
+                      <div className="space-y-1 pl-3">
+                        {filteredUserManagementItems.map(({ path, icon: Icon, label }) => (
+                          <NavLink
+                            key={path}
+                            to={path}
+                            className={({ isActive }) => `
+                              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                              ${isActive
+                                ? 'bg-orange-50 text-orange-600 shadow-sm border-l-2 border-orange-600 rounded-l-none'
+                                : 'text-gray-700 hover:bg-gray-50'
+                              }
+                            `}
+                          >
+                            <Icon size={18} className="shrink-0" />
+                            <span>{label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Payment Management Expandable Section */}
+                {(filteredPaymentManagementItems.length > 0 || !searchQuery) && (
+                  <>
+                    <button
+                      onClick={() => toggleSection('payment-management')}
+                      className="flex items-center gap-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 w-full px-3 py-2.5"
+                    >
+                      <CreditCard size={18} className="shrink-0" />
+                      <span className="flex-1 text-left">Payment Management</span>
+                      <ChevronDown
+                        size={16}
+                        className={`shrink-0 transition-transform duration-200 ${expandedSections.includes('payment-management') ? 'rotate-180' : ''
+                          }`}
+                      />
+                    </button>
+
+                    {/* Nested Payment Management Items */}
+                    {expandedSections.includes('payment-management') && (
+                      <div className="space-y-1 pl-3">
+                        {filteredPaymentManagementItems.map(({ path, icon: Icon, label }) => (
                           <NavLink
                             key={path}
                             to={path}
