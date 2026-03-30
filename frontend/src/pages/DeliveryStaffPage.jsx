@@ -87,17 +87,37 @@ const DeliveryStaffPage = () => {
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-xs font-semibold text-gray-500 uppercase">Assigned</div>
-            <div className="text-2xl font-bold text-gray-900 mt-2">{counts.assigned}</div>
+          <div className="bg-blue-50 p-4 rounded-2xl shadow-sm border border-blue-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <User size={28} className="text-blue-600" />
+              <div>
+                <div className="text-xs font-semibold text-blue-600 uppercase">Assigned</div>
+                <div className="text-sm text-blue-700">Orders ready for pickup</div>
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-blue-900">{counts.assigned}</div>
           </div>
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-xs font-semibold text-gray-500 uppercase">Delivering</div>
-            <div className="text-2xl font-bold text-gray-900 mt-2">{counts.delivering}</div>
+
+          <div className="bg-emerald-50 p-4 rounded-2xl shadow-sm border border-emerald-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <PlayCircle size={28} className="text-emerald-600" />
+              <div>
+                <div className="text-xs font-semibold text-emerald-600 uppercase">Delivering</div>
+                <div className="text-sm text-emerald-700">On the way to customers</div>
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-emerald-900">{counts.delivering}</div>
           </div>
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-            <div className="text-xs font-semibold text-gray-500 uppercase">Delivered Today</div>
-            <div className="text-2xl font-bold text-gray-900 mt-2">{counts.deliveredToday}</div>
+
+          <div className="bg-indigo-50 p-4 rounded-2xl shadow-sm border border-indigo-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle size={28} className="text-indigo-600" />
+              <div>
+                <div className="text-xs font-semibold text-indigo-600 uppercase">Delivered Today</div>
+                <div className="text-sm text-indigo-700">Completed deliveries</div>
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-indigo-900">{counts.deliveredToday}</div>
           </div>
         </div>
 

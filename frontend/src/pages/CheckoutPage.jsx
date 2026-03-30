@@ -19,7 +19,7 @@ const STEPS = [
 
 const DELIVERY_CHARGE = 200; // Rs. 200 for off-campus delivery
 
-// Helper functions for card validation
+//card validation
 const getCardType = (cardNumber) => {
   const num = cardNumber.replace(/\s/g, "");
   const patterns = {
