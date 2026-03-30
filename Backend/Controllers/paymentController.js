@@ -252,3 +252,116 @@ exports.getPaymentDetails = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get All Payments (Admin - for payment management)
+ * GET /api/payments
+ */
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status = "", search = "" } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Build filter
+    const filter = {};
+    if (status) {
+      filter.paymentStatus = status;
+    }
+    if (search) {
+      filter.$or = [
+        { customerName: { $regex: search, $options: "i" } },
+        { customerEmail: { $regex: search, $options: "i" } },
+        { paymentIntentId: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Fetch orders (which contain payment info)
+    const payments = await Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Map orders to payment format
+    const mappedPayments = payments.map(order => ({
+      _id: order._id,
+      paymentIntentId: order.paymentIntentId,
+      amount: order.totalAmount,
+      status: order.paymentStatus.toLowerCase(),
+      userName: order.customerName,
+      userEmail: order.customerEmail,
+      userId: order.userId,
+      canteenName: "Campus Canteen",
+      createdAt: order.createdAt,
+      orderStatus: order.orderStatus,
+      items: order.items
+    }));
+
+    const total = await Order.countDocuments(filter);
+
+    console.log(`✅ Fetched ${mappedPayments.length} payments`);
+
+    res.status(200).json({
+      success: true,
+      data: mappedPayments,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error("Get All Payments Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch payments",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Mark Payment as Refunded (Admin)
+ * PATCH /api/payments/:paymentId/refund
+ */
+exports.markPaymentAsRefunded = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    // Find the order (payment)
+    const order = await Order.findById(paymentId);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found"
+      });
+    }
+
+    // Update payment status to refunded
+    order.paymentStatus = "Refunded";
+    await order.save();
+
+    console.log(`✅ Payment ${paymentId} marked as refunded`);
+
+    res.status(200).json({
+      success: true,
+      message: "Payment marked as refunded",
+      data: {
+        _id: order._id,
+        paymentIntentId: order.paymentIntentId,
+        amount: order.totalAmount,
+        status: order.paymentStatus.toLowerCase(),
+        userName: order.customerName
+      }
+    });
+  } catch (error) {
+    console.error("Mark Refund Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mark payment as refunded",
+      error: error.message
+    });
+  }
+};

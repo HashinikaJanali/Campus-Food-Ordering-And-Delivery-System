@@ -31,6 +31,7 @@ import CanteensPage from './pages/inventory/CanteensPage';
 
 import AdminPromotionsPage from './pages/AdminPromotionsPage';
 import AdminPanelUsers from './pages/AdminPanelUsers';
+import AdminPanelPayments from './pages/AdminPanelPayments';
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
@@ -132,6 +133,7 @@ function App() {
                   <Route path="canteens" element={<CanteensPage />} />
                   <Route path="promotions" element={<AdminPromotionsPage />} />
                   <Route path="users" element={<AdminPanelUsers />} />
+                  <Route path="payments" element={<AdminPanelPayments />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -116,6 +116,14 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Check if user is active
+    if (!user.active) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact the administrator for assistance.'
+      });
+    }
+
     const token = generateToken(user._id);
 
     res.json({

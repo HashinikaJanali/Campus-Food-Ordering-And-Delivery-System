@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const paymentController = require("../Controllers/paymentController");
+const { protect } = require("../middleware/auth");
+
+// Admin routes
+router.get("/", protect, paymentController.getAllPayments);
+router.patch("/:paymentId/refund", protect, paymentController.markPaymentAsRefunded);
 
 // Create payment intent
 router.post("/create-payment-intent", paymentController.createPaymentIntent);
