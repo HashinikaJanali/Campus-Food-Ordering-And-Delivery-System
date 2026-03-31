@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, User, ClipboardList, MapPin, LogOut, Search } from 'lucide-react';
+import { Home, User, ClipboardList, MapPin, LogOut, Search, CreditCard } from 'lucide-react';
 import { useUserAuth } from '../context/UserAuthContext';
 import logoImage from '../assets/logo.png';
 
@@ -14,9 +14,10 @@ export default function UserSidebar() {
 
   const items = [
     { to: '/', icon: Home, label: 'Home' },
-    { to: '/profile', icon: User, label: 'Profile' },
+    { to: '/profile', icon: User, label: 'View Profile' },
     { to: '/my-orders', icon: ClipboardList, label: 'My Orders' },
     { to: '/track', icon: MapPin, label: 'Track Orders' },
+    { to: '/payments', icon: CreditCard, label: 'Payment History' },
   ];
 
   return (

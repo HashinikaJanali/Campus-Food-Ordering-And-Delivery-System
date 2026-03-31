@@ -37,7 +37,15 @@ const OrderManagementPage = () => {
     try {
       setLoading(true);
       const response = await orderAPI.getAll();
-      setOrders(response.data);
+      // Normalize API response to ensure `orders` is always an array
+      const payload = response?.data ?? response;
+      let items = [];
+      if (Array.isArray(payload)) items = payload;
+      else if (Array.isArray(payload?.data)) items = payload.data;
+      else if (Array.isArray(payload?.orders)) items = payload.orders;
+      else if (Array.isArray(payload?.docs)) items = payload.docs;
+      else items = [];
+      setOrders(items);
       setError(null);
     } catch (err) {
       // Fallback to mock data if API fails
@@ -60,14 +68,17 @@ const OrderManagementPage = () => {
     }
   };
 
+  // Ensure we always operate on an array when counting/filtering
+  const ordersArray = Array.isArray(orders) ? orders : [];
+
   const counts = STATUS_FILTERS.reduce((acc, { key }) => {
     acc[key] = key === 'all'
-      ? orders.length
-      : orders.filter(o => o.status === key).length;
+      ? ordersArray.length
+      : ordersArray.filter(o => o.status === key).length;
     return acc;
   }, {});
 
-  const filtered = orders.filter(o => {
+  const filtered = ordersArray.filter(o => {
     const matchTab = activeTab === 'all' || o.status === activeTab;
     return matchTab && matchesOrder(o, search);
   });
