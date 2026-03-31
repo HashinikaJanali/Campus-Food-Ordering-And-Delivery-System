@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
 import UserLayout from '../components/UserLayout';
+import UserSidebar from '../components/UserSidebar';
 import api from "../utils/api";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -237,8 +238,9 @@ const UserProfilePage = () => {
   if (!user) return null;
 
   return (
-    <UserLayout>
-      <div className="min-h-screen bg-[#FFF9F5] font-body py-12">
+    <UserLayout showFooter={false} showHeader={false}>
+      <UserSidebar />
+      <div className="min-h-screen bg-[#FFF9F5] font-body py-12 ml-80">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="space-y-6">
 
