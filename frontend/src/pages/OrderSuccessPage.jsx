@@ -10,7 +10,7 @@ const OrderSuccessPage = () => {
   const order = location.state?.order;
 
   const details = [
-    { label: "Order ID", value: order?._id || "Order #" + Math.floor(100000 + Math.random() * 900000) },
+    { label: "Order ID", value: order?.orderId || order?._id },
     { label: "Date", value: order?.createdAt ? new Date(order.createdAt).toLocaleString() : null },
     { label: "Pickup", value: order?.deliveryInfo?.pickupLocation },
     { label: "Time", value: order?.deliveryInfo?.pickupTime },

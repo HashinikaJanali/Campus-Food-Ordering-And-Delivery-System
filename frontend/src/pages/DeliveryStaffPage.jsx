@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
+import { io } from 'socket.io-client';
 import { orderAPI } from '../services/api';
 import StatusBadge from '../components/orders/StatusBadge';
 import { Phone, User, CheckCircle, PlayCircle, RefreshCw, PhoneCall } from 'lucide-react';
 import DeliverySidebar from '../components/DeliverySidebar';
+
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '');
 
 const DeliveryStaffPage = () => {
   const [orders, setOrders] = useState([]);
@@ -10,23 +13,46 @@ const DeliveryStaffPage = () => {
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState({});
   const [search, setSearch] = useState('');
+  const [stats, setStats] = useState({ assigned: 0, delivering: 0, deliveredToday: 0 });
 
   useEffect(() => {
     fetchAssignedOrders();
+
+    const intervalId = setInterval(() => {
+      fetchAssignedOrders({ silent: true });
+    }, 8000);
+
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    socket.on('orders:delivery-updated', () => {
+      fetchAssignedOrders({ silent: true });
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      socket.disconnect();
+    };
   }, []);
 
-  const fetchAssignedOrders = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchAssignedOrders = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
-      // For now we fetch all orders and filter — replace with real assigned-orders API when available
-      const response = await orderAPI.getAll();
-      const assigned = response.data.filter(o => ['ready', 'delivering'].includes(o.status));
-      setOrders(assigned);
+      const riderName = localStorage.getItem('delivery_staff_name') || '';
+      const response = await orderAPI.getAssignedDeliveryOrders({ agent: riderName || undefined });
+      const payload = response?.data?.data || response?.data || [];
+      const meta = response?.data?.meta || {};
+      setOrders(Array.isArray(payload) ? payload : []);
+      setStats({
+        assigned: Number(meta.assigned ?? (Array.isArray(payload) ? payload.length : 0)),
+        delivering: Number(meta.delivering ?? (Array.isArray(payload) ? payload.filter(o => o.status === 'delivering').length : 0)),
+        deliveredToday: Number(meta.deliveredToday ?? 0),
+      });
     } catch (err) {
-      setError('Failed to fetch orders');
+      if (!silent) setError('Failed to fetch orders');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -35,6 +61,7 @@ const DeliveryStaffPage = () => {
     try {
       await orderAPI.updateStatus(orderId, 'delivering');
       setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'delivering' } : o));
+      fetchAssignedOrders({ silent: true });
     } catch (err) {
       alert('Failed to start delivery');
     } finally {
@@ -47,6 +74,7 @@ const DeliveryStaffPage = () => {
     try {
       await orderAPI.updateStatus(orderId, 'delivered');
       setOrders(prev => prev.filter(o => o._id !== orderId));
+      fetchAssignedOrders({ silent: true });
     } catch (err) {
       alert('Failed to mark as delivered');
     } finally {
@@ -55,16 +83,16 @@ const DeliveryStaffPage = () => {
   };
 
   const counts = useMemo(() => {
-    const assigned = orders.length;
-    const delivering = orders.filter(o => o.status === 'delivering').length;
-    const deliveredToday = 0; // Placeholder — calculate from timestamps when available
+    const assigned = stats.assigned;
+    const delivering = stats.delivering;
+    const deliveredToday = stats.deliveredToday;
     return { assigned, delivering, deliveredToday };
-  }, [orders]);
+  }, [stats]);
 
   const filtered = orders.filter(o => {
     if (!search) return true;
     const s = search.toLowerCase();
-    return (o._id || o.id || '').toString().toLowerCase().includes(s) ||
+    return (o.orderId || o._id || o.id || '').toString().toLowerCase().includes(s) ||
       (o.customerName || o.customer || '').toLowerCase().includes(s) ||
       (o.deliveryInfo?.onCampusLocation || '').toLowerCase().includes(s);
   });
@@ -149,7 +177,7 @@ const DeliveryStaffPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <StatusBadge status={order.status} />
-                          <div className="font-semibold text-gray-800 truncate">Order {order._id}</div>
+                          <div className="font-semibold text-gray-800 truncate">Order {order.orderId || order._id}</div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-700">
@@ -213,7 +241,7 @@ const DeliveryStaffPage = () => {
                 )}
                 {filtered.map(order => (
                   <div key={order._id} className="p-3 border rounded-lg">
-                    <div className="font-medium text-sm text-gray-800">Order {order._id}</div>
+                    <div className="font-medium text-sm text-gray-800">Order {order.orderId || order._id}</div>
                     <div className="text-sm text-gray-700 mt-1">
                       {order.deliveryInfo?.onCampusLocation && <div>{order.deliveryInfo.onCampusLocation}</div>}
                       {order.deliveryInfo?.boardingName && <div>{order.deliveryInfo.boardingName}</div>}

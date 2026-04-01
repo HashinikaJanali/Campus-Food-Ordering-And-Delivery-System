@@ -167,8 +167,9 @@ const AdminPanelPayments = () => {
   };
 
   const exportCSV = () => {
-    const headers = ["ID", "User", "Amount", "Status", "Canteen", "Date"];
+    const headers = ["Order ID", "ID", "User", "Amount", "Status", "Canteen", "Date"];
     const rows = filtered.map(p => [
+      p.orderId || p._id,
       p._id?.slice(-8).toUpperCase(),
       p.user?.name || p.userName || "—",
       p.amount?.toFixed(2),
@@ -375,7 +376,7 @@ const AdminPanelPayments = () => {
                   <CreditCard size={16} className="text-violet-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-gray-900 text-sm">#{payment._id?.slice(-8).toUpperCase() || "—"}</p>
+                  <p className="font-black text-gray-900 text-sm">#{payment.orderId || payment._id || "—"}</p>
                   <p className="text-xs text-gray-400 font-medium truncate">
                     {payment.user?.name || payment.userName || "Guest"} · {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : "—"}
                   </p>
@@ -437,8 +438,8 @@ const AdminPanelPayments = () => {
           </table>
           <h2 style={{ fontSize: "16px", fontWeight: "900", marginBottom: "12px" }}>All Payments ({filtered.length})</h2>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead><tr style={{ background: "#f3f4f6" }}>{["ID","User","Canteen","Status","Amount","Date"].map(h => <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: "900" }}>{h}</th>)}</tr></thead>
-            <tbody>{filtered.map((p, i) => (<tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}><td style={{ padding: "8px 12px", fontFamily: "monospace" }}>#{p._id?.slice(-8).toUpperCase()}</td><td style={{ padding: "8px 12px" }}>{p.user?.name || p.userName || "—"}</td><td style={{ padding: "8px 12px" }}>{p.canteen?.name || p.canteenName || "—"}</td><td style={{ padding: "8px 12px", fontWeight: "700", textTransform: "capitalize" }}>{p.status}</td><td style={{ padding: "8px 12px", fontWeight: "900" }}>Rs.{p.amount?.toFixed(2)}</td><td style={{ padding: "8px 12px" }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}</td></tr>))}</tbody>
+            <thead><tr style={{ background: "#f3f4f6" }}>{["Order ID","Payment ID","User","Canteen","Status","Amount","Date"].map(h => <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: "900" }}>{h}</th>)}</tr></thead>
+            <tbody>{filtered.map((p, i) => (<tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}><td style={{ padding: "8px 12px", fontFamily: "monospace" }}>#{p.orderId || p._id}</td><td style={{ padding: "8px 12px", fontFamily: "monospace" }}>#{p._id?.slice(-8).toUpperCase()}</td><td style={{ padding: "8px 12px" }}>{p.user?.name || p.userName || "—"}</td><td style={{ padding: "8px 12px" }}>{p.canteen?.name || p.canteenName || "—"}</td><td style={{ padding: "8px 12px", fontWeight: "700", textTransform: "capitalize" }}>{p.status}</td><td style={{ padding: "8px 12px", fontWeight: "900" }}>Rs.{p.amount?.toFixed(2)}</td><td style={{ padding: "8px 12px" }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}</td></tr>))}</tbody>
           </table>
         </div>
       </div>

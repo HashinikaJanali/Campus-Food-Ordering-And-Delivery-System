@@ -1,115 +1,131 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, MapPin, Eye } from 'lucide-react';
+import { Search, Download, Eye } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { useUserAuth } from '../context/UserAuthContext';
-import { MOCK_ORDERS } from '../constants/orderConstants';
 import { formatRs } from '../utils/currency';
 import TrackingTimeline from '../components/orders/TrackingTimeline';
 import StatusBadge from '../components/orders/StatusBadge';
 import UserSidebar from '../components/UserSidebar';
+import { orderAPI } from '../services/api';
 
-const statuses = ['all', 'pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '');
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'preparing', label: 'Preparing' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'delivering', label: 'Delivering' },
+  { value: 'picked_up', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const toDisplayStatus = (status) => {
+  if (!status) return 'pending';
+  const s = String(status).toLowerCase();
+  if (s === 'completed' || s === 'delivered') return 'picked_up';
+  return s;
+};
+
+const normalizeOrder = (order) => ({
+  id: order.orderId || order._id,
+  _id: order._id,
+  time: order.createdAt ? new Date(order.createdAt).toLocaleString() : '—',
+  createdAt: order.createdAt || null,
+  total: order.totalAmount || order.total || 0,
+  status: toDisplayStatus(order.status || order.orderStatus),
+  paymentStatus: order.paymentStatus || 'Pending',
+  addressType: order.addressType || 'on-campus',
+  location: order.deliveryInfo?.onCampusLocation || 'Campus Canteen',
+  deliveryInfo: order.deliveryInfo || {},
+  items: (order.items || []).map((it) => ({
+    name: it.name,
+    qty: it.quantity || it.qty || 1,
+    price: it.price || 0,
+  })),
+});
+
+const getOrderTimeValue = (order) => {
+  const timestamp = order?.createdAt ? new Date(order.createdAt).getTime() : NaN;
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
 
 const MyOrdersPage = () => {
   const { user } = useUserAuth();
   const navigate = useNavigate();
 
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date_desc');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Use user's identifier if available, fallback to showing all.
-  // If the current user has no matching mock orders, return a couple of demo orders so the UI isn't empty.
-  const orders = useMemo(() => {
-    if (!MOCK_ORDERS) return [];
-    if (user && (user.studentId || user.email)) {
-      const byId = user.studentId ? MOCK_ORDERS.filter(o => o.studentId === user.studentId) : [];
-      const byEmail = user.email ? MOCK_ORDERS.filter(o => o.email === user.email) : [];
-      const result = [...byId, ...byEmail];
-      if (result.length > 0) return result;
-
-      // fallback demo orders for the current user
-      const uid = user.studentId || `IT${Math.floor(Math.random() * 90000000) + 10000000}`;
-      const demoEmail = user.email || 'you@student.edu';
-      const demoName = user.name || 'You';
-      const today = new Date();
-      const dateStr = today.toISOString().slice(0, 10);
-
-      return [
-        {
-          id: `DEMO-${Math.floor(Math.random() * 9000) + 1000}`,
-          customer: demoName,
-          studentId: uid,
-          phone: user.phone || '+94 77 000 0000',
-          location: 'Main Canteen Counter',
-          items: [
-            { name: 'Demo Rice & Curry', category: 'Combos', qty: 1, price: 350 },
-          ],
-          total: 350,
-          status: 'pending',
-          time: 'Now',
-          scheduledPickup: 'ASAP',
-          notes: 'Demo order',
-          date: dateStr,
-          email: demoEmail,
-        },
-        {
-          id: `DEMO-${Math.floor(Math.random() * 9000) + 1000}`,
-          customer: demoName,
-          studentId: uid,
-          phone: user.phone || '+94 77 000 0000',
-          location: 'Library Café',
-          items: [
-            { name: 'Demo Sandwich', category: 'Sandwiches', qty: 2, price: 180 },
-          ],
-          total: 360,
-          status: 'picked_up',
-          time: 'Yesterday',
-          scheduledPickup: 'Yesterday',
-          notes: '',
-          date: dateStr,
-          email: demoEmail,
-        },
-      ];
+  const fetchMyOrders = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError('');
     }
-    return MOCK_ORDERS;
+
+    try {
+      const response = await orderAPI.getMyOrders();
+      const payload = response?.data?.data || response?.data || [];
+      setOrders(Array.isArray(payload) ? payload.map(normalizeOrder) : []);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to load your orders';
+      if (!silent) setError(message);
+      if (!silent) setOrders([]);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchMyOrders();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    const intervalId = setInterval(() => {
+      fetchMyOrders({ silent: true });
+    }, 8000);
+
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    socket.on('orders:student-updated', (event) => {
+      if (String(event?.userId) === String(user._id)) {
+        fetchMyOrders({ silent: true });
+      }
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      socket.disconnect();
+    };
+  }, [user?._id]);
 
   const filtered = useMemo(() => {
     let list = orders.slice();
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      list = list.filter(o => o.id.toLowerCase().includes(q));
+      list = list.filter(o => (o.id || '').toLowerCase().includes(q));
     }
     if (statusFilter !== 'all') {
       list = list.filter(o => o.status === statusFilter);
     }
-    if (sortBy === 'date_asc') list.sort((a, b) => new Date(a.time) - new Date(b.time));
-    if (sortBy === 'date_desc') list.sort((a, b) => new Date(b.time) - new Date(a.time));
+    if (sortBy === 'date_asc') list.sort((a, b) => getOrderTimeValue(a) - getOrderTimeValue(b));
+    if (sortBy === 'date_desc') list.sort((a, b) => getOrderTimeValue(b) - getOrderTimeValue(a));
     if (sortBy === 'amount_asc') list.sort((a, b) => a.total - b.total);
     if (sortBy === 'amount_desc') list.sort((a, b) => b.total - a.total);
     return list;
   }, [orders, search, statusFilter, sortBy]);
 
-  // Ensure there are a few rows to show for demo purposes by appending
-  // additional mock orders when the filtered list is small.
-  const displayOrders = useMemo(() => {
-    const list = filtered.slice();
-    if (list.length >= 6) return list;
-    const extras = MOCK_ORDERS.filter(o => !list.find(x => x.id === o.id));
-    for (let i = 0; i < extras.length && list.length < 6; i++) {
-      list.push(extras[i]);
-    }
-    return list;
-  }, [filtered]);
-
   const openDetails = (order) => setSelectedOrder(order);
   const closeDetails = () => setSelectedOrder(null);
 
   const handleTrack = (order) => {
-    // navigate to tracking page and pass order id via state
     navigate('/track', { state: { orderId: order.id } });
   };
 
@@ -127,16 +143,16 @@ const MyOrdersPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF9F5] font-body py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[96rem] mx-auto px-4 sm:px-6">
         <div className="flex gap-8">
           <UserSidebar />
 
           <main className="flex-1 lg:pl-[304px]">
-            <div className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="font-display text-3xl font-bold">My Orders</h1>
-                  <p className="text-sm text-gray-500">Order list and quick actions</p>
+                  <p className="text-sm text-gray-500">Placed orders from your account</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center bg-white border border-gray-100 rounded-2xl px-3 py-2 shadow-sm">
@@ -150,7 +166,7 @@ const MyOrdersPage = () => {
                 <div>
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Status</label>
                   <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="ml-2 border rounded-2xl px-4 py-2 text-sm shadow-sm">
-                    {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+                    {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </div>
                 <div>
@@ -165,48 +181,57 @@ const MyOrdersPage = () => {
               </div>
 
               <div className="space-y-3">
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <p className="text-sm text-gray-500">Loading your orders...</p>
+                ) : error ? (
+                  <p className="text-sm text-red-500">{error}</p>
+                ) : filtered.length === 0 ? (
                   <p className="text-sm text-gray-500">No orders found.</p>
                 ) : (
-                  <div className="bg-white rounded-[2rem] shadow-lg border border-gray-100 overflow-hidden">
-                    <div className="grid grid-cols-6 items-center gap-4 px-6 py-3 border-b border-gray-100 bg-white/50">
-                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Order</div>
-                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Status</div>
-                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Total</div>
-                      <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Payment</div>
-                      <div className="col-span-2 text-xs text-gray-400 font-black uppercase tracking-widest text-right">Actions</div>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-0 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="text-left text-gray-700 font-semibold px-6 py-4">Order</th>
+                            <th className="text-left text-gray-700 font-semibold px-6 py-4">Status</th>
+                            <th className="text-left text-gray-700 font-semibold px-6 py-4">Total</th>
+                            <th className="text-left text-gray-700 font-semibold px-6 py-4">Payment</th>
+                            <th className="text-right text-gray-700 font-semibold px-6 py-4">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filtered.map((order, idx) => (
+                            <tr key={order.id || idx} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4">
+                                <p className="text-sm text-gray-500">{order.id}</p>
+                                <p className="font-semibold text-gray-900">{order.time}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <StatusBadge status={order.status} />
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-semibold text-gray-900">{formatRs(order.total)}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="font-semibold text-gray-900">{order.paymentStatus}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button onClick={() => openDetails(order)} className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg text-sm flex items-center gap-2 transition-colors">
+                                    <Eye size={14} /> Details
+                                  </button>
+                                  <button onClick={() => handleTrack(order)} className="px-4 py-2 bg-primary text-white hover:bg-primary-500 rounded-lg text-sm font-semibold transition-colors">Track</button>
+                                  <button onClick={() => downloadInvoice(order)} className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg text-sm transition-colors" title="Download invoice">
+                                    <Download size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-
-                    {displayOrders.map((order, idx) => (
-                      <div key={order.id} className={`grid grid-cols-6 items-center gap-4 px-6 py-5 border-b border-gray-50 ${idx === displayOrders.length - 1 ? 'border-b-0' : ''}`}>
-                        <div className="col-span-1">
-                          <p className="text-sm text-gray-500">{order.id}</p>
-                          <p className="font-semibold text-gray-900">{order.time}</p>
-                        </div>
-
-                        <div className="col-span-1 text-sm">
-                          <StatusBadge status={order.paymentStatus === 'paid' ? 'paid' : order.status} />
-                        </div>
-
-                        <div className="col-span-1 text-sm">
-                          <p className="font-semibold text-gray-900">{formatRs(order.total)}</p>
-                        </div>
-
-                        <div className="col-span-1 text-sm">
-                          <p className="font-semibold text-gray-900">{order.paymentStatus || 'Paid'}</p>
-                        </div>
-
-                        <div className="col-span-2 flex items-center justify-end gap-3">
-                          <button onClick={() => openDetails(order)} className="px-5 py-2 bg-white border border-gray-100 rounded-[14px] text-sm flex items-center gap-2">
-                            <Eye size={14} /> View Details
-                          </button>
-                          <button onClick={() => handleTrack(order)} className="px-6 py-2 bg-primary text-white rounded-[14px] font-semibold">Track</button>
-                          <button onClick={() => downloadInvoice(order)} className="p-3 bg-white border border-gray-100 rounded-full text-sm">
-                            <Download size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
@@ -252,10 +277,10 @@ const MyOrdersPage = () => {
                 <div>
                   <h4 className="font-semibold text-gray-900">Delivery / Pickup</h4>
                   <div className="mt-2 text-sm text-gray-700">
-                    {selectedOrder.deliveryType === 'delivery' ? (
+                    {selectedOrder.addressType === 'off-campus' ? (
                       <div>
-                        <p>{selectedOrder.address?.line}</p>
-                        <p>{selectedOrder.address?.phone}</p>
+                        <p>{selectedOrder.deliveryInfo?.boardingName || ''} {selectedOrder.deliveryInfo?.street || ''} {selectedOrder.deliveryInfo?.area || ''}</p>
+                        <p>{selectedOrder.deliveryInfo?.phoneNumber || 'N/A'}</p>
                       </div>
                     ) : (
                       <div>

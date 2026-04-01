@@ -13,7 +13,8 @@ const STATUS_OPTIONS = [
   { key: 'pending', label: 'Pending', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
   { key: 'preparing', label: 'Preparing', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
   { key: 'ready', label: 'Ready', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-  { key: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-200' },
+  { key: 'delivering', label: 'Delivering', deliveryLabel: 'Handover to Delivery Agent', icon: ShoppingBag, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-200' },
+  { key: 'delivered', label: 'Completed', icon: CheckCircle, color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-200' },
   { key: 'cancelled', label: 'Cancelled', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
 ];
 
@@ -22,12 +23,14 @@ const OrderDetailsPage = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Normalize order data from different sources
   const normalizeOrder = (rawOrder) => {
     if (!rawOrder) return null;
     return {
-      id: rawOrder.id || rawOrder._id,
+      id: rawOrder.orderId || rawOrder.id || rawOrder._id,
+      orderId: rawOrder.orderId || rawOrder.id || rawOrder._id,
       _id: rawOrder._id || rawOrder.id,
       customer: rawOrder.customer || rawOrder.customerName,
       email: rawOrder.email || rawOrder.customerEmail,
@@ -42,11 +45,12 @@ const OrderDetailsPage = () => {
       })),
       deliveryInfo: rawOrder.deliveryInfo || null,
       addressType: rawOrder.addressType || rawOrder.address_type || null,
-      location: rawOrder.location || 'Not specified',
-      time: rawOrder.time || rawOrder.pickupTime || 'Not specified',
-      status: rawOrder.status,
+      location: rawOrder.location || rawOrder.deliveryInfo?.onCampusLocation || 'Campus Canteen',
+      time: rawOrder.time || rawOrder.pickupTime || 'ASAP',
+      status: rawOrder.status === 'completed' ? 'delivered' : rawOrder.status,
       notes: rawOrder.notes || rawOrder.note || '',
-      isDelivery: !!(rawOrder.deliveryInfo || rawOrder.addressType === 'delivery' || rawOrder.address_type === 'delivery' || rawOrder.isDelivery || rawOrder.type === 'delivery' || rawOrder.addressType === 'off-campus'),
+      isDelivery: rawOrder.addressType === 'off-campus',
+      assignedDeliveryAgent: rawOrder.assignedDeliveryAgent || rawOrder.assignedTo || '',
       paymentStatus: rawOrder.paymentStatus || 'Pending',
       refundAmount: rawOrder.refundAmount || 0,
       refundReason: rawOrder.refundReason || null,
@@ -54,34 +58,56 @@ const OrderDetailsPage = () => {
     };
   };
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        // Try to fetch from API first
-        const response = await orderAPI.getById(orderId);
-        if (response.data) {
-          setOrder(normalizeOrder(response.data));
-        } else {
-          // Fallback to mock data
-          const foundOrder = MOCK_ORDERS.find(o => o.id === orderId);
-          if (foundOrder) {
-            setOrder(normalizeOrder(foundOrder));
-          }
-        }
-      } catch (err) {
-        // If API fails, try mock data
+  const getDeliveryAddressText = (deliveryInfo) => {
+    if (!deliveryInfo) return 'Not provided';
+    const parts = [
+      deliveryInfo.boardingName,
+      deliveryInfo.street,
+      deliveryInfo.area,
+      deliveryInfo.landmark ? `Landmark: ${deliveryInfo.landmark}` : null,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : 'Not provided';
+  };
+
+  const fetchOrderFromApi = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    else setRefreshing(true);
+
+    try {
+      const response = await orderAPI.getById(orderId);
+      if (response.data) {
+        setOrder(normalizeOrder(response.data));
+        return;
+      }
+
+      const foundOrder = MOCK_ORDERS.find(o => o.id === orderId);
+      if (foundOrder) {
+        setOrder(normalizeOrder(foundOrder));
+      }
+    } catch (err) {
+      if (showLoader) {
         const foundOrder = MOCK_ORDERS.find(o => o.id === orderId);
         if (foundOrder) {
           setOrder(normalizeOrder(foundOrder));
         } else {
           console.error('Order not found:', err);
         }
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchOrder();
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrderFromApi(true);
+
+    // Real-time refresh for fulfillment/status updates.
+    const intervalId = setInterval(() => {
+      fetchOrderFromApi(false);
+    }, 8000);
+
+    return () => clearInterval(intervalId);
   }, [orderId]);
 
   // Define status progression to prevent moving backwards
@@ -89,8 +115,9 @@ const OrderDetailsPage = () => {
     pending: 0,
     preparing: 1,
     ready: 2,
-    completed: 3,
-    cancelled: 4,
+    delivering: 3,
+    delivered: 4,
+    cancelled: 5,
   };
 
   const handleStatusUpdate = async (newStatus) => {
@@ -107,23 +134,27 @@ const OrderDetailsPage = () => {
       setOrder(prev => ({ ...prev, status: newStatus }));
       toast.success(`✓ Order status updated to ${newStatus}`);
     } catch (err) {
-      // Fallback: just update local state if API fails
-      setOrder(prev => ({ ...prev, status: newStatus }));
-      toast.success(`✓ Order status updated to ${newStatus}`);
+      toast.error(err.response?.data?.message || 'Failed to update order status');
       console.error('Failed to update status on backend:', err);
     }
   };
 
-  // Delivery assignment state (local until backend endpoint available)
+  // Delivery assignment state
   const [assignedStaff, setAssignedStaff] = useState('');
   const [staffList] = useState(['Rider A', 'Rider B', 'Rider C']);
 
   const handleAssignStaff = async () => {
+    if (order?.status !== 'ready') {
+      return toast.error('You can assign a rider only when order status is Ready');
+    }
     if (!assignedStaff) return toast.error('Select a delivery staff');
     try {
-      // TODO: call backend API to assign delivery staff when endpoint exists
-      setOrder(prev => ({ ...prev, assignedTo: assignedStaff }));
+      await orderAPI.updateFulfillment(order._id, {
+        assignedDeliveryAgent: assignedStaff,
+      });
+      setOrder(prev => ({ ...prev, assignedDeliveryAgent: assignedStaff }));
       toast.success(`Assigned to ${assignedStaff}`);
+      fetchOrderFromApi(false);
     } catch (err) {
       toast.error('Failed to assign staff');
     }
@@ -135,15 +166,26 @@ const OrderDetailsPage = () => {
 
   // Sync selectedTime when order loads
   useEffect(() => {
-    if (order) setSelectedTime(order.time || '');
-  }, [order]);
+    if (order && !editingTime) {
+      setSelectedTime(order.time || '');
+      setAssignedStaff(order.assignedDeliveryAgent || '');
+    }
+  }, [order, editingTime]);
 
-  const handleSaveTime = () => {
+  const handleSaveTime = async () => {
     if (!selectedTime) return toast.error('Please select a time');
-    setOrder(prev => ({ ...prev, time: selectedTime }));
-    setEditingTime(false);
-    toast.success('Pickup time updated');
-    // TODO: persist to backend when API available
+    try {
+      await orderAPI.updateFulfillment(order._id, {
+        pickupTime: selectedTime,
+        onCampusLocation: order.deliveryInfo?.onCampusLocation || 'Campus Canteen',
+      });
+      setOrder(prev => ({ ...prev, time: selectedTime }));
+      setEditingTime(false);
+      toast.success('Pickup time updated');
+      fetchOrderFromApi(false);
+    } catch (err) {
+      toast.error('Failed to update pickup time');
+    }
   };
 
   if (loading) {
@@ -182,7 +224,8 @@ const OrderDetailsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold font-display text-gray-900">Order Details</h1>
-              <p className="text-gray-500 text-sm mt-1">Order ID: {order.id}</p>
+              <p className="text-gray-500 text-sm mt-1">Order ID: {order.orderId || order.id}</p>
+              <p className="text-gray-400 text-xs mt-1">{refreshing ? 'Refreshing...' : 'Live updates every 8s'}</p>
             </div>
             <button
               onClick={() => navigate(-1)}
@@ -197,7 +240,13 @@ const OrderDetailsPage = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Update Order Status</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {STATUS_OPTIONS.map(({ key, label, icon: Icon, color, bg, border }) => (
+              {STATUS_OPTIONS
+                .filter(({ key }) => {
+                  if (!order.isDelivery && key === 'delivering') return false;
+                  if (order.isDelivery && key === 'delivered') return false;
+                  return true;
+                })
+                .map(({ key, label, deliveryLabel, icon: Icon, color, bg, border }) => (
                 <button
                   key={key}
                   onClick={() => handleStatusUpdate(key)}
@@ -209,7 +258,9 @@ const OrderDetailsPage = () => {
                   }`}
                 >
                   <Icon size={20} className={((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key) ? 'text-gray-400' : color} />
-                  <span className={((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key) ? 'text-gray-500' : 'text-gray-700'}>{label}</span>
+                  <span className={((STATUS_ORDER[key] ?? 0) < (STATUS_ORDER[order.status] ?? 0) || order.status === key) ? 'text-gray-500' : 'text-gray-700'}>
+                    {key === 'delivering' && order.isDelivery ? deliveryLabel : label}
+                  </span>
                   {order.status === key && <span className="text-xs text-gray-400">(Current)</span>}
                 </button>
               ))}
@@ -239,14 +290,37 @@ const OrderDetailsPage = () => {
                   <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Order Date</td>
                   <td className="px-6 py-4 text-gray-900">{order.date || new Date().toLocaleDateString()}</td>
                 </tr>
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Pickup Location</td>
-                  <td className="px-6 py-4 text-gray-900">{order.location || 'Not specified'}</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Pickup Time</td>
-                  <td className="px-6 py-4 text-gray-900">{order.time || 'Not specified'}</td>
-                </tr>
+                {order.addressType === 'on-campus' ? (
+                  <>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Fulfillment Type</td>
+                      <td className="px-6 py-4 text-gray-900">Pickup</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Pickup Location</td>
+                      <td className="px-6 py-4 text-gray-900">{order.deliveryInfo?.onCampusLocation || order.location || 'Campus Canteen'}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Pickup Time</td>
+                      <td className="px-6 py-4 text-gray-900">{order.time || 'ASAP'}</td>
+                    </tr>
+                  </>
+                ) : (
+                  <>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Fulfillment Type</td>
+                      <td className="px-6 py-4 text-gray-900">Delivery</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Delivery Address</td>
+                      <td className="px-6 py-4 text-gray-900">{getDeliveryAddressText(order.deliveryInfo)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 font-semibold text-gray-700 bg-gray-50 w-1/3">Contact Number</td>
+                      <td className="px-6 py-4 text-gray-900">{order.deliveryInfo?.phoneNumber || 'N/A'}</td>
+                    </tr>
+                  </>
+                )}
 
                 {/* Status & Total Row */}
                 <tr className="border-b border-gray-200">
@@ -353,30 +427,46 @@ const OrderDetailsPage = () => {
 
           {/* Delivery / Pickup Details */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Delivery Information</h3>
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+              {order.addressType === 'on-campus' ? 'Pickup Information' : 'Delivery Information'}
+            </h3>
             {order.isDelivery ? (
               <div className="space-y-4">
                 <div className="text-sm text-gray-700">
-                  <div className="font-medium">Delivery Location</div>
+                  <div className="font-medium">Delivery Address</div>
                   <div className="text-gray-900 mt-1">
-                    {order.deliveryInfo?.onCampusLocation && <div>{order.deliveryInfo.onCampusLocation}</div>}
-                    {order.deliveryInfo?.boardingName && <div>{order.deliveryInfo.boardingName}</div>}
-                    {order.deliveryInfo?.street && <div>{order.deliveryInfo.street}</div>}
-                    {order.deliveryInfo?.area && <div>{order.deliveryInfo.area}</div>}
-                    {order.deliveryInfo?.landmark && <div className="text-gray-500 text-xs">Landmark: {order.deliveryInfo.landmark}</div>}
+                    {getDeliveryAddressText(order.deliveryInfo)}
                   </div>
                 </div>
 
                 <div>
                   <div className="font-medium text-sm text-gray-700 mb-2">Assign Delivery Staff</div>
                   <div className="flex gap-2">
-                    <select value={assignedStaff} onChange={e => setAssignedStaff(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg">
+                    <select
+                      value={assignedStaff}
+                      onChange={e => setAssignedStaff(e.target.value)}
+                      disabled={order.status !== 'ready'}
+                      className="flex-1 px-3 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
+                    >
                       <option value="">Select staff...</option>
                       {staffList.map(s => (<option key={s} value={s}>{s}</option>))}
                     </select>
-                    <button onClick={handleAssignStaff} className="px-4 py-2 bg-orange-600 text-white rounded-lg">Assign</button>
+                    <button
+                      onClick={handleAssignStaff}
+                      disabled={order.status !== 'ready'}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Assign
+                    </button>
                   </div>
-                  {order.assignedTo && <div className="text-sm text-gray-600 mt-2">Currently assigned to: <strong>{order.assignedTo}</strong></div>}
+                  {order.status !== 'ready' && (
+                    <p className="text-xs text-amber-700 mt-2">Rider can be assigned only after order status is Ready.</p>
+                  )}
+                  {order.assignedDeliveryAgent && (
+                    <div className="text-sm text-gray-600 mt-2">
+                      Currently assigned to: <strong>{order.assignedDeliveryAgent}</strong>
+                    </div>
+                  )}
                 </div>
               </div>
               ) : (
@@ -395,8 +485,8 @@ const OrderDetailsPage = () => {
                   ) : (
                     <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-purple-50 border border-purple-200 text-purple-700">
                       <Clock size={16} />
-                      <span className="font-medium">Pickup: {order.time || 'Not specified'}</span>
-                      <span className="hidden sm:inline">· {order.location || 'Pickup at counter'}</span>
+                      <span className="font-medium">Pickup: {order.time || 'ASAP'}</span>
+                      <span className="hidden sm:inline">· {order.deliveryInfo?.onCampusLocation || order.location || 'Campus Canteen'}</span>
                       <button onClick={() => setEditingTime(true)} className="ml-3 text-sm text-purple-700 underline">Edit</button>
                     </div>
                   )}

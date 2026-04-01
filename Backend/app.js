@@ -3,7 +3,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
-require("dotenv").config();
 
 const http = require("http");
 const { Server } = require("socket.io");
@@ -80,17 +79,32 @@ console.log("🔹 Registering payments routes...");
 app.use("/api/payments", require("./Routes/paymentRoutes"));
 console.log("✅ Payments routes registered successfully");
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`❌ Port ${PORT} is already in use.`);
+  } else {
+    console.error("❌ Server startup error:", err);
+  }
+  process.exit(1);
+});
+
+// Start HTTP/Socket server immediately so realtime features can connect.
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📁 Uploads accessible at: http://localhost:${PORT}/uploads`);
+});
+
+// MongoDB connection in background with explicit timeout to avoid indefinite startup hangs.
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+  })
   .then(() => {
     console.log("✅ MongoDB Connected Successfully");
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📁 Uploads accessible at: http://localhost:${PORT}/uploads`);
-    });
   })
   .catch((err) => {
-    console.error("❌ MongoDB Connection Error:", err);
+    console.error("❌ MongoDB Connection Error:", err.message || err);
   });
 
 // Error handling middleware (MUST be last)

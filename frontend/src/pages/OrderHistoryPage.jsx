@@ -1,46 +1,112 @@
-//history for both vendor and student
-
 import { useState, useEffect, useMemo } from 'react';
 import { formatRs } from '../utils/currency';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, RefreshCw, ChevronLeft, ChevronRight, Search, MoreHorizontal, Trash2 } from 'lucide-react';
-import { MOCK_ORDERS } from '../constants/orderConstants';
+import { Calendar, RefreshCw, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { io } from 'socket.io-client';
 import StatusBadge from '../components/orders/StatusBadge';
 import AdminSidebar from '../components/AdminSidebar';
+import { orderAPI } from '../services/api';
+import toast from 'react-hot-toast';
+
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '');
+
+const mapHistoryStatus = (order) => {
+  const raw = String(order?.status || '').toLowerCase();
+  if (raw === 'cancelled') return 'cancelled';
+  if (raw === 'delivered' || raw === 'completed' || raw === 'picked_up') return 'picked_up';
+
+  const legacy = String(order?.orderStatus || '').toLowerCase();
+  if (legacy === 'cancelled') return 'cancelled';
+  if (legacy === 'delivered' || legacy === 'completed') return 'picked_up';
+
+  return raw || 'pending';
+};
+
+const normalizeHistoryOrder = (order) => ({
+  id: order.orderId || order._id,
+  _id: order._id,
+  customer: order.customerName || order.customer || 'Unknown',
+  date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+  dateLabel: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '—',
+  total: order.totalAmount || order.total || 0,
+  status: mapHistoryStatus(order),
+  items: order.items || [],
+});
 
 const OrderHistoryPage = () => {
   const [filterDate, setFilterDate] = useState('all');
   const [search, setSearch] = useState('');
-  const [menuOpenId, setMenuOpenId] = useState(null);
-  const [trashedIds, setTrashedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const itemsPerPage = 10;
 
-  const historyOrders = MOCK_ORDERS.filter(o =>
-    ['picked_up', 'cancelled'].includes(o.status)
-  );
+  const fetchHistory = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    try {
+      const response = await orderAPI.getHistory({
+        search: search || undefined,
+        date: filterDate,
+      });
+      const payload = response?.data?.data || response?.data || [];
+      setOrders(Array.isArray(payload) ? payload.map(normalizeHistoryOrder) : []);
+      setError('');
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to load order history';
+      setError(message);
+      if (!silent) toast.error(message);
+      setOrders([]);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
 
-  const dates = [...new Set(historyOrders.map(o => o.date))].sort((a, b) => b.localeCompare(a));
+  useEffect(() => {
+    fetchHistory();
+  }, [filterDate, search]);
 
-  const baseFiltered = (filterDate === 'all'
-    ? historyOrders
-    : historyOrders.filter(o => o.date === filterDate));
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchHistory({ silent: true });
+    }, 8000);
 
-  const filtered = baseFiltered
-    .filter(o => !trashedIds.includes(o.id))
-    .filter(o => {
-      const matchSearch = search === '' ||
-        (o.id || '').toLowerCase().includes(search.toLowerCase()) ||
-        (o.customer || '').toLowerCase().includes(search.toLowerCase());
-      return matchSearch;
+    return () => clearInterval(intervalId);
+  }, [filterDate, search]);
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+
+    socket.on('orders:history-updated', () => {
+      fetchHistory({ silent: true });
     });
 
+    return () => {
+      socket.disconnect();
+    };
+  }, [filterDate, search]);
+
+  const dates = useMemo(
+    () => [...new Set(orders.map(o => o.date))].sort((a, b) => b.localeCompare(a)),
+    [orders]
+  );
+
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase();
+    return orders.filter(o => {
+      const matchSearch = !query ||
+        (o.id || '').toLowerCase().includes(query) ||
+        (o.customer || '').toLowerCase().includes(query);
+      const matchDate = filterDate === 'all' || o.date === filterDate;
+      return matchSearch && matchDate;
+    });
+  }, [orders, search, filterDate]);
+
   const completedCount = filtered.filter(o => o.status === 'picked_up').length;
-  const totalSpent = filtered
+  const cancelledCount = filtered.filter(o => o.status === 'cancelled').length;
+  const totalRevenue = filtered
     .filter(o => o.status === 'picked_up')
     .reduce((sum, o) => sum + o.total, 0);
 
-  // Pagination
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const startIdx = (currentPage - 1) * itemsPerPage;
   const paginatedOrders = filtered.slice(startIdx, startIdx + itemsPerPage);
@@ -52,46 +118,45 @@ const OrderHistoryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar />
-      <div className="overflow-y-auto ml-80">  
+      <div className="overflow-y-auto ml-80">
         <div className="space-y-6 p-8">
-
-          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold font-display text-gray-900">Order History</h1>
               <p className="text-gray-500 text-sm mt-1">View all past completed and cancelled orders</p>
             </div>
-            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium">
+            <button
+              onClick={() => fetchHistory()}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl transition-all duration-200 font-display font-medium"
+            >
               <RefreshCw size={15} />
               Refresh
             </button>
           </div>
 
-          {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <p className="text-gray-500 text-sm mb-1">Total Orders</p>
               <p className="text-3xl font-bold text-gray-900">{filtered.length.toLocaleString()}</p>
-              <p className="text-gray-400 text-xs mt-2">Total history last 365 days</p>
+              <p className="text-gray-400 text-xs mt-2">Total history records</p>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <p className="text-gray-500 text-sm mb-1">Completed Orders</p>
               <p className="text-3xl font-bold text-emerald-600">{completedCount.toLocaleString()}</p>
-              <p className="text-gray-400 text-xs mt-2">Completed Order last 365 days</p>
+              <p className="text-gray-400 text-xs mt-2">Delivered / picked up</p>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <p className="text-gray-500 text-sm mb-1">Cancelled Orders</p>
-              <p className="text-3xl font-bold text-red-600">{(filtered.length - completedCount).toLocaleString()}</p>
-              <p className="text-gray-400 text-xs mt-2">Cancelled Order last 365 days</p>
+              <p className="text-3xl font-bold text-red-600">{cancelledCount.toLocaleString()}</p>
+              <p className="text-gray-400 text-xs mt-2">Cancelled records</p>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <p className="text-gray-500 text-sm mb-1">Total Revenue</p>
-              <p className="text-3xl font-bold text-blue-600">{formatRs(totalSpent)}</p>
-              <p className="text-gray-400 text-xs mt-2">Total gain last 365 days</p>
+              <p className="text-3xl font-bold text-blue-600">{formatRs(totalRevenue)}</p>
+              <p className="text-gray-400 text-xs mt-2">Completed orders only</p>
             </div>
           </div>
 
-          {/* Search and Filter Bar */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <div className="flex-1 relative">
@@ -104,8 +169,7 @@ const OrderHistoryPage = () => {
                     setSearch(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm
-                    focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700 placeholder-gray-400 transition-colors"
+                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700 placeholder-gray-400 transition-colors"
                 />
               </div>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
@@ -124,13 +188,9 @@ const OrderHistoryPage = () => {
                   ))}
                 </select>
               </div>
-              <button className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200">
-                More Filter
-              </button>
             </div>
           </div>
 
-          {/* Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -141,24 +201,26 @@ const OrderHistoryPage = () => {
                     <th className="text-left text-gray-700 font-semibold px-6 py-4">Order Id</th>
                     <th className="text-left text-gray-700 font-semibold px-6 py-4">Amount</th>
                     <th className="text-left text-gray-700 font-semibold px-6 py-4">Status</th>
-                    <th className="text-center text-gray-700 font-semibold px-6 py-4">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {paginatedOrders.length === 0 ? (
+                  {loading ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-12">
+                      <td colSpan="5" className="text-center py-10 text-gray-500">Loading order history...</td>
+                    </tr>
+                  ) : paginatedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-12">
                         <div>
                           <p className="text-4xl mb-3">📭</p>
                           <p className="font-semibold text-gray-600">No order history found</p>
-                          <p className="text-sm text-gray-400 mt-1">Try a different date or search term</p>
+                          <p className="text-sm text-gray-400 mt-1">{error || 'Try a different date or search term'}</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     paginatedOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                        {/* Item */}
+                      <tr key={order._id || order.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
@@ -172,8 +234,7 @@ const OrderHistoryPage = () => {
                             </div>
                           </div>
                         </td>
-                        
-                        {/* Customer Name */}
+
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -185,50 +246,19 @@ const OrderHistoryPage = () => {
                             </div>
                           </div>
                         </td>
-                        
-                        {/* Order ID */}
+
                         <td className="px-6 py-4">
                           <p className="text-gray-900 font-medium">{order.id}</p>
-                          <p className="text-gray-500 text-xs">{order.date}</p>
+                          <p className="text-gray-500 text-xs">{order.dateLabel}</p>
                         </td>
-                        
-                        {/* Amount */}
+
                         <td className="px-6 py-4">
                           <p className="text-gray-900 font-semibold">{formatRs(order.total)}</p>
                           <p className="text-gray-500 text-xs">Paid in Full</p>
                         </td>
-                        
-                        {/* Status */}
+
                         <td className="px-6 py-4">
                           <StatusBadge status={order.status} />
-                        </td>
-                        
-                        {/* Action */}
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2 relative">
-                            <button
-                              onClick={() => setMenuOpenId(menuOpenId === order.id ? null : order.id)}
-                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                              aria-label={`Actions for ${order.id}`}
-                            >
-                              <MoreHorizontal size={16} className="text-gray-500" />
-                            </button>
-
-                            {menuOpenId === order.id && (
-                              <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                <button
-                                  onClick={() => {
-                                    setTrashedIds(prev => Array.from(new Set([...prev, order.id])));
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                >
-                                  <Trash2 size={14} />
-                                  Move to trash
-                                </button>
-                              </div>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     ))
@@ -237,7 +267,6 @@ const OrderHistoryPage = () => {
               </table>
             </div>
 
-            {/* Pagination */}
             {paginatedOrders.length > 0 && (
               <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 bg-gray-50">
                 <button
@@ -248,7 +277,7 @@ const OrderHistoryPage = () => {
                   <ChevronLeft size={16} />
                   Previous
                 </button>
-                
+
                 <div className="flex items-center gap-2">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
@@ -261,14 +290,13 @@ const OrderHistoryPage = () => {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
+
                     return pageNum >= 1 && pageNum <= totalPages ? (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === pageNum
-                            ? 'bg-orange-600 text-white'
-                            : 'text-gray-600 hover:bg-gray-200'
+                          currentPage === pageNum ? 'bg-orange-600 text-white' : 'text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         {pageNum}
@@ -276,7 +304,7 @@ const OrderHistoryPage = () => {
                     ) : null;
                   })}
                 </div>
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}

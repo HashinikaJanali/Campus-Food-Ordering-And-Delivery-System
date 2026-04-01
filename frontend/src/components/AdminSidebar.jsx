@@ -1,7 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { ClipboardList, History, Search, ChefHat, ChevronDown, Settings, HelpCircle, MapPin, LayoutDashboard, UtensilsCrossed, Package, Tag, Bell, Store, Eye, BarChart3, Edit3, Gift, Ticket, X, ExternalLink, LogOut, Users, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
+import { orderAPI } from '../services/api';
 import logoImage from '../assets/logo.png';
 import toast from 'react-hot-toast';
 
@@ -42,10 +44,13 @@ const otherMenuItems = [
   { path: '#', icon: HelpCircle, label: 'Help & Support' },
 ];
 
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '');
+
 export default function AdminSidebar({ unreadAlerts }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const navigate = useNavigate();
   const { admin, logout } = useAuth();
 
@@ -59,6 +64,34 @@ export default function AdminSidebar({ unreadAlerts }) {
   useEffect(() => {
     localStorage.setItem('admin_sidebar_expanded', JSON.stringify(expandedSections));
   }, [expandedSections]);
+
+  // Fetch pending orders count
+  const fetchPendingCount = async () => {
+    try {
+      const response = await orderAPI.getAll({ status: 'pending' });
+      const items = response?.data?.data || response?.data || [];
+      setPendingCount(Array.isArray(items) ? items.length : 0);
+    } catch (err) {
+      console.error('Failed to fetch pending orders:', err);
+    }
+  };
+
+  // Fetch pending count on mount and set up socket listener
+  useEffect(() => {
+    fetchPendingCount();
+
+    const intervalId = setInterval(fetchPendingCount, 8000);
+
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    socket.on('orders:history-updated', () => {
+      fetchPendingCount();
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      socket.disconnect();
+    };
+  }, []);
 
   // Filter menu items based on search query
   const filterItems = (items) => {
@@ -245,7 +278,12 @@ export default function AdminSidebar({ unreadAlerts }) {
                             `}
                           >
                             <Icon size={18} className="shrink-0" />
-                            <span>{label}</span>
+                            <span className="flex-1">{label}</span>
+                            {path === '/orders' && pendingCount > 0 && (
+                              <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                {pendingCount}
+                              </span>
+                            )}
                           </NavLink>
                         ))}
                       </div>

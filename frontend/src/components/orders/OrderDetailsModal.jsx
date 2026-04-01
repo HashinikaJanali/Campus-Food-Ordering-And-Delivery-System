@@ -42,7 +42,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onStatusChange }) => {
             <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-orange-500 px-8 py-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-white">Order Details</h2>
-                <p className="text-orange-100 text-sm mt-1">Order ID: {order._id}</p>
+                <p className="text-orange-100 text-sm mt-1">Order ID: {order.orderId || order._id}</p>
               </div>
               <button
                 onClick={onClose}

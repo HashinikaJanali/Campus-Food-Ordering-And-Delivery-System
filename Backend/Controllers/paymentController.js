@@ -4,6 +4,7 @@ const LoyaltyPoints = require("../Model/LoyaltyPoints");
 const Notification = require("../Model/Notification");
 const RefundRequest = require("../Model/RefundRequest");
 const User = require("../Model/User");
+const mongoose = require("mongoose");
 
 const normalizeAddressType = (value) => {
   if (value === "on-campus" || value === "off-campus") {
@@ -16,6 +17,17 @@ const normalizeAddressType = (value) => {
 const getStripe = () => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
   return stripe;
+};
+
+const findOrderByIdentifier = async (identifier) => {
+  if (!identifier) return null;
+
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    const byMongoId = await Order.findById(identifier);
+    if (byMongoId) return byMongoId;
+  }
+
+  return Order.findOne({ orderId: String(identifier).toUpperCase() });
 };
 
 /**
@@ -165,9 +177,9 @@ exports.confirmPayment = async (req, res) => {
           userId,
           type: "order_status_update",
           title: "🛍️ Order Placed Successfully!",
-          message: `Your order #${order._id.toString().slice(-6).toUpperCase()} has been placed and is pending approval.`,
+          message: `Your order #${order.orderId} has been placed and is pending approval.`,
           icon: "🛍️",
-          data: { orderId: order._id, status: "Pending" },
+          data: { orderId: order.orderId, orderDbId: order._id, status: "Pending" },
         });
       } catch (notifError) {
         console.error("Order placed notification error:", notifError);
@@ -176,7 +188,8 @@ exports.confirmPayment = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      orderId: order._id,
+      orderId: order.orderId,
+      orderDbId: order._id,
       message: "Order created successfully after payment",
       order,
     });
@@ -287,6 +300,7 @@ exports.getAllPayments = async (req, res) => {
     // Map orders to payment format
     const mappedPayments = payments.map(order => ({
       _id: order._id,
+      orderId: order.orderId,
       paymentIntentId: order.paymentIntentId,
       amount: order.totalAmount,
       status: order.paymentStatus.toLowerCase(),
@@ -352,6 +366,7 @@ exports.markPaymentAsRefunded = async (req, res) => {
       message: "Payment marked as refunded",
       data: {
         _id: order._id,
+        orderId: order.orderId,
         paymentIntentId: order.paymentIntentId,
         amount: order.totalAmount,
         status: order.paymentStatus.toLowerCase(),
@@ -407,8 +422,8 @@ exports.requestRefund = async (req, res) => {
     }
 
     // Find order
-    console.log(`🔄 [3/7] Finding order by ID: ${orderId}`);
-    const order = await Order.findById(orderId);
+    console.log(`🔄 [3/7] Finding order by identifier: ${orderId}`);
+    const order = await findOrderByIdentifier(orderId);
     if (!order) {
       console.warn(`❌ [3/7] Order not found: ${orderId}`);
       return res.status(404).json({
@@ -430,9 +445,9 @@ exports.requestRefund = async (req, res) => {
     console.log(`✅ [4/7] Order ownership verified`);
 
     // Check if refund request already exists
-    console.log(`🔄 [5/7] Checking for existing refund requests for order ${orderId}`);
+    console.log(`🔄 [5/7] Checking for existing refund requests for order ${order.orderId || order._id}`);
     const existingRequest = await RefundRequest.findOne({
-      orderId,
+      orderId: order._id,
       status: { $in: ['pending', 'approved'] }
     });
 
@@ -448,7 +463,7 @@ exports.requestRefund = async (req, res) => {
     // Create refund request
     console.log(`🔄 [6/7] Creating refund request`);
     const refundRequest = new RefundRequest({
-      orderId,
+      orderId: order._id,
       userId,
       amount: order.totalAmount,
       reason,
@@ -465,16 +480,16 @@ exports.requestRefund = async (req, res) => {
         userId: "admin",
         type: "refund_request",
         title: "💰 Refund Request Received",
-        message: `New refund request for order #${orderId.toString().slice(-6).toUpperCase()} (Rs.${order.totalAmount})`,
+        message: `New refund request for order #${order.orderId || order._id} (Rs.${order.totalAmount})`,
         icon: "💰",
-        data: { refundRequestId: refundRequest._id, orderId }
+        data: { refundRequestId: refundRequest._id, orderId: order.orderId, orderDbId: order._id }
       });
       console.log(`✅ [7/7] Admin notification created`);
     } catch (notifError) {
       console.warn(`⚠️ [7/7] Notification failed (non-critical):`, notifError.message);
     }
 
-    console.log(`✅ Refund request completed for order ${orderId}`);
+    console.log(`✅ Refund request completed for order ${order.orderId || order._id}`);
 
     res.status(201).json({
       success: true,
@@ -519,7 +534,7 @@ exports.getRefundRequests = async (req, res) => {
 
     // Fetch refund requests with order details
     const refundRequests = await RefundRequest.find(filter)
-      .populate('orderId', '_id customerName customerEmail totalAmount orderStatus')
+      .populate('orderId', '_id orderId customerName customerEmail totalAmount orderStatus')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
@@ -622,7 +637,7 @@ exports.approveRefundRequest = async (req, res) => {
     // Refresh and populate data for response
     console.log(`🔄 [4/6] Fetching enriched refund request data`);
     const updatedRequest = await RefundRequest.findById(refundRequestId)
-      .populate('orderId', '_id customerName customerEmail totalAmount orderStatus')
+      .populate('orderId', '_id orderId customerName customerEmail totalAmount orderStatus')
       .lean();
     
     const user = await User.findById(refundRequest.userId).select('name email');
@@ -686,7 +701,7 @@ exports.getUserRefundRequests = async (req, res) => {
     const userId = req.body.userId || req.user?.id;
 
     const refundRequests = await RefundRequest.find({ userId })
-      .populate('orderId', 'customerName customerEmail totalAmount orderStatus')
+      .populate('orderId', '_id orderId customerName customerEmail totalAmount orderStatus')
       .sort({ createdAt: -1 })
       .lean();
 
