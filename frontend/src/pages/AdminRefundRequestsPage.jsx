@@ -23,13 +23,13 @@ const RefundStatusBadge = ({ status }) => {
 // Helper function to safely extract Order ID
 const getOrderId = (orderId) => {
   if (!orderId) return "—";
-  // If orderId is an object (populated), access _id
-  if (typeof orderId === 'object' && orderId._id) {
-    return String(orderId._id).slice(-8).toUpperCase();
+  // If orderId is populated, prefer the unique orderId generated at placement time.
+  if (typeof orderId === 'object') {
+    return orderId.orderId || orderId._id || "—";
   }
-  // If orderId is already a string, slice it
+  // If orderId is already a string, return as-is.
   if (typeof orderId === 'string') {
-    return String(orderId).slice(-8).toUpperCase();
+    return orderId;
   }
   return "—";
 };
@@ -143,6 +143,7 @@ export default function AdminRefundRequestsPage() {
   const filteredRequests = refundRequests.filter(req => {
     const matchSearch = 
       req._id?.toLowerCase().includes(search.toLowerCase()) ||
+      getOrderId(req.orderId).toLowerCase().includes(search.toLowerCase()) ||
       req.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
       req.reason?.toLowerCase().includes(search.toLowerCase());
     return matchSearch;

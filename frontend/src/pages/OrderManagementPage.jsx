@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { orderAPI } from '../services/api';
 import { formatRs } from '../utils/currency';
 import AdminSidebar from '../components/AdminSidebar';
 import StatusBadge from '../components/orders/StatusBadge';
-import { MOCK_ORDERS } from '../constants/orderConstants';
 import { matchesOrder } from '../utils/orderSearch';
 import { ClipboardList, Clock, ShoppingBag, CheckCircle, XCircle, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '');
+
+const isFinalStatus = (order) => {
+  const status = String(order?.status || '').toLowerCase();
+  const orderStatus = String(order?.orderStatus || '').toLowerCase();
+
+  return ['cancelled', 'delivered', 'completed', 'picked_up'].includes(status)
+    || ['cancelled', 'delivered', 'completed'].includes(orderStatus);
+};
+
 const STATUS_FILTERS = [
-  { key: 'all', label: 'All Orders', icon: ClipboardList, text: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200' },
+  { key: 'all', label: 'All Active', icon: ClipboardList, text: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200' },
   { key: 'pending', label: 'Pending', icon: Clock, text: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
   { key: 'preparing', label: 'Preparing', icon: ShoppingBag, text: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
   { key: 'ready', label: 'Ready', icon: CheckCircle, text: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-  { key: 'cancelled', label: 'Cancelled', icon: XCircle, text: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+  { key: 'delivering', label: 'Delivering', icon: XCircle, text: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
 ];
 
 const OrderManagementPage = () => {
@@ -26,16 +36,32 @@ const OrderManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
   const itemsPerPage = 10;
 
   // Fetch orders from backend
   useEffect(() => {
     fetchOrders();
+
+    const intervalId = setInterval(() => {
+      fetchOrders({ silent: true });
+    }, 8000);
+
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    socket.on('orders:history-updated', () => {
+      fetchOrders({ silent: true });
+    });
+
+    return () => {
+      clearInterval(intervalId);
+      socket.disconnect();
+    };
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await orderAPI.getAll();
       // Normalize API response to ensure `orders` is always an array
       const payload = response?.data ?? response;
@@ -45,24 +71,27 @@ const OrderManagementPage = () => {
       else if (Array.isArray(payload?.orders)) items = payload.orders;
       else if (Array.isArray(payload?.docs)) items = payload.docs;
       else items = [];
-      setOrders(items);
+      setOrders(items.filter(o => !isFinalStatus(o)));
       setError(null);
     } catch (err) {
-      // Fallback to mock data if API fails
-      console.error('API call failed, using mock data:', err);
-      setOrders(MOCK_ORDERS);
-      setError(null);
+      console.error('Failed to fetch orders:', err);
+      if (!silent) setOrders([]);
+      setError(err.response?.data?.message || 'Failed to fetch orders');
+      if (!silent) toast.error(err.response?.data?.message || 'Failed to fetch orders');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const handleStatusChange = async (id, newStatus) => {
     try {
       await orderAPI.updateStatus(id, newStatus);
-      setOrders(prev =>
-        prev.map(o => o._id === id ? { ...o, status: newStatus } : o)
-      );
+      setOrders(prev => {
+        if (['cancelled', 'completed', 'delivered', 'picked_up'].includes(String(newStatus).toLowerCase())) {
+          return prev.filter(o => o._id !== id);
+        }
+        return prev.map(o => o._id === id ? { ...o, status: newStatus } : o);
+      });
     } catch (err) {
       console.error('Failed to update status:', err);
     }
@@ -83,10 +112,34 @@ const OrderManagementPage = () => {
     return matchTab && matchesOrder(o, search);
   });
 
-  // Pagination
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const sorted = [...filtered].sort((a, b) => {
+    let aVal, bVal;
+    switch (sortBy) {
+      case 'date':
+        aVal = new Date(a.createdAt || 0).getTime();
+        bVal = new Date(b.createdAt || 0).getTime();
+        break;
+      case 'amount':
+        aVal = a.total || a.totalAmount || 0;
+        bVal = b.total || b.totalAmount || 0;
+        break;
+      case 'customer':
+        aVal = (a.customerName || a.customer || '').toLowerCase();
+        bVal = (b.customerName || b.customer || '').toLowerCase();
+        break;
+      case 'status':
+        aVal = (a.status || '').toLowerCase();
+        bVal = (b.status || '').toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+    return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+  });
+
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const startIdx = (currentPage - 1) * itemsPerPage;
-  const paginatedOrders = filtered.slice(startIdx, startIdx + itemsPerPage);
+  const paginatedOrders = sorted.slice(startIdx, startIdx + itemsPerPage);
 
   const handlePageChange = (pageNum) => {
     setCurrentPage(pageNum);
@@ -102,7 +155,7 @@ const OrderManagementPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold font-display text-gray-900">Orders List</h1>
-              <p className="text-gray-500 text-sm mt-1">Track and fulfill campus food orders in real time</p>
+              <p className="text-gray-500 text-sm mt-1">Track active in-process orders in real time</p>
             </div>
             <button
               onClick={fetchOrders}
@@ -114,7 +167,7 @@ const OrderManagementPage = () => {
           </div>
 
           {/* Status Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
               <p className="text-gray-500 text-sm mb-1">Total Orders</p>
               <p className="text-3xl font-bold text-gray-900">{counts.all.toLocaleString()}</p>
@@ -129,11 +182,6 @@ const OrderManagementPage = () => {
               <p className="text-gray-500 text-sm mb-1">Ready Orders</p>
               <p className="text-3xl font-bold text-emerald-600">{counts.ready.toLocaleString()}</p>
               <p className="text-gray-400 text-xs mt-2">Ready Order last 365 days</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-              <p className="text-gray-500 text-sm mb-1">Cancelled Orders</p>
-              <p className="text-3xl font-bold text-red-600">{counts.cancelled.toLocaleString()}</p>
-              <p className="text-gray-400 text-xs mt-2">Cancelled Order last 365 days</p>
             </div>
           </div>
 
@@ -154,16 +202,43 @@ const OrderManagementPage = () => {
                     focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700 placeholder-gray-400 transition-colors"
                 />
               </div>
-              <button className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200">
-                All Status
-              </button>
-              <button className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200">
-                Date Range
-              </button>
-              <button className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200">
-                More Filter
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-sm font-medium text-gray-600 bg-white border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <option value="date">Sort by Date</option>
+                <option value="amount">Sort by Amount</option>
+                <option value="customer">Sort by Customer</option>
+                <option value="status">Sort by Status</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors border border-gray-200"
+              >
+                {sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
               </button>
             </div>
+          </div>
+
+          {/* Status Filter Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map(({ key, label, text }) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setActiveTab(key);
+                  setCurrentPage(1);
+                }}
+                className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
+                  activeTab === key
+                    ? `${text} bg-gray-100 border-2 border-orange-500 shadow-sm`
+                    : 'text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* Table */}
@@ -195,17 +270,18 @@ const OrderManagementPage = () => {
                         <div>
                           <ClipboardList size={40} className="mx-auto text-gray-300 mb-3" />
                           <p className="font-semibold text-gray-600">No orders found</p>
-                          <p className="text-sm text-gray-400 mt-1">Try a different filter or search term</p>
+                          <p className="text-sm text-gray-400 mt-1">{error || 'Try a different filter or search term'}</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     paginatedOrders.map((order) => {
-                      const orderId = order._id || order.id;
+                      const orderDbId = order._id || order.id;
+                      const displayOrderId = order.orderId || order.id || order._id;
                       const orderDate = order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString());
                       const total = order.totalAmount || order.total || 0;
                       return (
-                        <tr key={orderId} className="hover:bg-gray-50 transition-colors">
+                        <tr key={orderDbId || displayOrderId} className="hover:bg-gray-50 transition-colors">
                           {/* Canteen / Item */}
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -240,7 +316,7 @@ const OrderManagementPage = () => {
                           
                           {/* Order ID */}
                           <td className="px-6 py-4">
-                            <p className="text-gray-900 font-medium">{orderId}</p>
+                            <p className="text-gray-900 font-medium">{displayOrderId}</p>
                             <p className="text-gray-500 text-xs">{orderDate}</p>
                           </td>
                           
@@ -261,7 +337,7 @@ const OrderManagementPage = () => {
                           <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
-                                onClick={() => navigate(`/order/${orderId}`)}
+                                onClick={() => navigate(`/order/${orderDbId || displayOrderId}`)}
                                 className="text-sm font-medium text-orange-600 hover:bg-orange-50 px-4 py-1.5 rounded-lg transition-colors"
                               >
                                 Details

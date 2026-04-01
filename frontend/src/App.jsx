@@ -85,7 +85,7 @@ const UserProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <UserAuthProvider>
         <AppProvider>
           <AuthProvider>
@@ -100,12 +100,12 @@ function App() {
                 <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/about" element={<UserLayout><AboutPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-                <Route path="/orders" element={<AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout>} />
-                <Route path="/order/:orderId" element={<AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout>} />
+                <Route path="/orders" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout></ProtectedRoute>} />
+                <Route path="/order/:orderId" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/track" element={<UserLayout showHeader={false} showFooter={false}><OrderTrackingPage /></UserLayout>} />
                 <Route path="/my-orders" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><MyOrdersPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/tracking" element={<AdminSubLayout showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
-                <Route path="/history" element={<AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout>} />
+                <Route path="/history" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />

@@ -77,6 +77,11 @@ const UserProfilePage = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
+  const getDisplayOrderId = (order) => {
+    if (!order) return "—";
+    return order.orderId || (order._id?.slice(-8).toUpperCase() || "—");
+  };
+
   // Fetch user's orders
   const fetchOrders = async () => {
     setOrdersLoading(true);
@@ -193,16 +198,17 @@ const UserProfilePage = () => {
       return;
     }
 
-    if (!selectedOrder?._id) {
+    if (!selectedOrder?._id && !selectedOrder?.orderId) {
       showToast("No order selected. Please try again.", "error");
       return;
     }
 
     setRefundLoading(true);
     try {
-      console.log(`🔄 Submitting refund request for order:`, selectedOrder._id);
+      const orderIdentifier = selectedOrder.orderId || selectedOrder._id;
+      console.log(`🔄 Submitting refund request for order:`, orderIdentifier);
       const response = await api.post("/payments/request-refund", {
-        orderId: selectedOrder._id,
+        orderId: orderIdentifier,
         reason: refundReason.trim(),
         userId: user._id
       });
@@ -460,7 +466,7 @@ const UserProfilePage = () => {
                   {/* Order header */}
                   <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                     <div>
-                      <p className="font-black text-sm text-gray-900">Order #{order._id?.slice(-8).toUpperCase() || "—"}</p>
+                      <p className="font-black text-sm text-gray-900">Order #{getDisplayOrderId(order)}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
                       </p>
@@ -548,7 +554,7 @@ const UserProfilePage = () => {
               >
                 <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Request Refund</h3>
                 <p className="text-xs text-gray-400 font-medium mb-6">
-                  Order #{selectedOrder._id?.slice(-8).toUpperCase()} • Rs. {selectedOrder.totalAmount?.toFixed(2)}
+                  Order #{getDisplayOrderId(selectedOrder)} • Rs. {selectedOrder.totalAmount?.toFixed(2)}
                 </p>
 
                 <form onSubmit={handleRequestRefund} className="space-y-4">

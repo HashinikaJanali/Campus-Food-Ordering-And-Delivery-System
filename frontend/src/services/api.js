@@ -6,11 +6,23 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
-// Request interceptor for User Authentication
+// Request interceptor for role-aware authentication
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('user_token');
-  if (token) {
+  const adminToken = localStorage.getItem('admin_token');
+  const userToken = localStorage.getItem('user_token');
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  const isAdminOrderScreen = path === '/orders' || path.startsWith('/order/') || path === '/history';
+
+  // Admin screens should use admin token first.
+  const token = (path.startsWith('/admin') || isAdminOrderScreen)
+    ? (adminToken || userToken)
+    : (userToken || adminToken);
+
+  if (token && token !== 'null' && token !== 'undefined') {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
   }
   return config;
 }, (error) => {
@@ -42,9 +54,15 @@ export const loyaltyAPI = {
 // Order API
 export const orderAPI = {
   getAll: (params) => api.get('/orders', { params }),
+  getMyOrders: (params) => api.get('/orders/my', { params }),
+  getMyActiveOrders: (params) => api.get('/orders/my/active', { params }),
+  trackMyOrder: (orderId) => api.get(`/orders/my/track/${orderId}`),
+  getHistory: (params) => api.get('/orders/history', { params }),
+  getAssignedDeliveryOrders: (params) => api.get('/orders/delivery/assigned', { params }),
   getById: (id) => api.get(`/orders/${id}`),
   create: (data) => api.post('/orders', data),
   updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  updateFulfillment: (id, data) => api.patch(`/orders/${id}/fulfillment`, data),
   delete: (id) => api.delete(`/orders/${id}`),
 };
 

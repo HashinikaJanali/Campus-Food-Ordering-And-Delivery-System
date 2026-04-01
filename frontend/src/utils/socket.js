@@ -8,7 +8,9 @@ const getSocketUrl = () => {
 const socket = io(getSocketUrl(), {
   autoConnect: true,
   reconnection: true,
-  transports: ['websocket', 'polling'] // Ensure compatibility
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+  transports: ['polling', 'websocket']
 });
 
 export default socket;

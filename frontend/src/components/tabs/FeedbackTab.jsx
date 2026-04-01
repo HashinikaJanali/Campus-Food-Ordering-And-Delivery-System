@@ -99,7 +99,7 @@ const FeedbackTab = () => {
           if (order.orderStatus !== 'Cancelled' && order.status !== 'cancelled') {
             order.items.forEach(item => {
               actualOrders.push({
-                orderId: order._id,
+                orderId: order.orderId || order._id,
                 foodItem: item.name,
                 vendor: order.vendorName || 'Campus Canteen', 
                 deliveredAt: order.orderStatus === 'Pending' ? 'Just placed' : new Date(order.updatedAt).toLocaleString(),

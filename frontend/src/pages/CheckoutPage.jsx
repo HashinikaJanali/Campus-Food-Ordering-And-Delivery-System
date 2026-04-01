@@ -212,21 +212,22 @@ const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: 
       }
 
       const orderData = await confirmResponse.json();
-      const simpleOrderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
+      const persistedOrderId = orderData.order?.orderId || orderData.orderId;
       
       setPlacedOrder({
-        _id: simpleOrderId,
-        _dbId: orderData.order._id,
-        createdAt: orderData.order.createdAt || new Date().toISOString(),
-        items: cart,
+        _id: orderData.order?._id,
+        orderId: persistedOrderId,
+        _dbId: orderData.order?._id,
+        createdAt: orderData.order?.createdAt || new Date().toISOString(),
+        items: orderData.order?.items || cart,
         subtotal: cartTotal,
         deliveryCharge: deliveryCharge,
         discountAmount: discountAmount,
-        total: finalTotal,
-        deliveryInfo,
-        addressType,
+        total: orderData.order?.totalAmount || finalTotal,
+        deliveryInfo: orderData.order?.deliveryInfo || deliveryInfo,
+        addressType: orderData.order?.addressType || addressType,
         paymentMethod: "Credit Card",
-        paymentStatus: "Completed",
+        paymentStatus: orderData.order?.paymentStatus || "Completed",
       });
       
       clearCart({ preserveStock: true });
@@ -249,7 +250,8 @@ const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: 
     try {
       // Replace with: await api.post('/orders', { items: cart, deliveryInfo })
       const fakeOrder = {
-        _id: "ORD-" + Math.floor(100000 + Math.random() * 900000),
+        _id: null,
+        orderId: 'PENDING',
         createdAt: new Date().toISOString(),
         items: cart,
         subtotal: cartTotal,
@@ -821,7 +823,7 @@ const handleChange = (e) => setDeliveryInfo({ ...deliveryInfo, [e.target.name]: 
           </motion.div>
           <h2 className="font-display text-2xl font-bold text-gray-900 mb-2">Order Confirmed!</h2>
           <p className="text-gray-500 text-sm font-medium mb-6">
-            Your order <span className="font-black text-gray-800">{placedOrder?._id}</span> has been received.
+            Your order <span className="font-black text-gray-800">{placedOrder?.orderId || placedOrder?._id}</span> has been received.
           </p>
           {/* Order Items */}
           <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-4 mb-6 border border-orange-100">

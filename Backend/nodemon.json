@@ -1,0 +1,19 @@
+{
+  "watch": [
+    "app.js",
+    "Controllers",
+    "Routes",
+    "Model",
+    "Models",
+    "middleware",
+    "services"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/**",
+    "uploads/**",
+    "scripts/**"
+  ],
+  "legacyWatch": true,
+  "delay": "300"
+}
