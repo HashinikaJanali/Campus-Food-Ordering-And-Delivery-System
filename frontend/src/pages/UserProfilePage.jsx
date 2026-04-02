@@ -106,19 +106,13 @@ const UserProfilePage = () => {
   const handleClearAllOrders = async () => {
     try {
       setOrdersLoading(true);
-      console.log(`🗑️  Clearing all orders...`);
+      console.log(`🗑️  Clearing all orders from user view...`);
       
-      // Delete all orders
-      const deletePromises = orders.map(order => 
-        api.delete(`/orders/${order._id}`).catch(err => console.error(`Failed to delete order ${order._id}:`, err))
-      );
-      
-      await Promise.all(deletePromises);
-      
-      console.log(`✅ All orders cleared successfully`);
+      // Only clear from local UI state - don't delete actual orders to preserve admin refund data
+      console.log(`✅ All orders cleared from user view successfully`);
       setOrders([]);
       setClearConfirm(false);
-      showToast("All orders cleared successfully!", "success");
+      showToast("All orders cleared from your view!", "success");
     } catch (error) {
       console.error("Clear orders error:", error);
       showToast("Failed to clear orders.", "error");
