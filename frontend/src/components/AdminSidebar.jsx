@@ -148,7 +148,7 @@ export default function AdminSidebar({ unreadAlerts }) {
     logout();
     localStorage.removeItem('admin_sidebar_expanded');
     toast.success('Logged out successfully');
-    navigate('/admin/login');
+    window.location.replace('/');
   };
 
   return (
