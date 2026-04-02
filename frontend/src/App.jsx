@@ -98,6 +98,7 @@ function App() {
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/payments" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/about" element={<UserLayout><AboutPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout></ProtectedRoute>} />

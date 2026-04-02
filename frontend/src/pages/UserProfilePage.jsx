@@ -10,7 +10,7 @@ import UserLayout from '../components/UserLayout';
 import UserSidebar from '../components/UserSidebar';
 import api from "../utils/api";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Field = ({ label, value, icon: Icon }) => (
   <div className="flex items-center gap-4 py-4 border-b border-gray-50 last:border-0">
@@ -54,6 +54,8 @@ const InputField = ({ label, name, type = "text", value, onChange, icon: Icon, p
 
 const UserProfilePage = () => {
   const { user, updateProfile } = useUserAuth();
+  const location = useLocation();
+  const isPaymentHistoryView = location.pathname === "/payments";
 
   const [editMode, setEditMode] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: user?.name || "", email: user?.email || "" });
@@ -265,7 +267,8 @@ const UserProfilePage = () => {
           )}
         </AnimatePresence>
 
-        {/* Hero Banner */}
+        {!isPaymentHistoryView && (
+        /* Hero Banner */
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -285,7 +288,10 @@ const UserProfilePage = () => {
             </div>
           </div>
         </motion.div>
+        )}
 
+        {!isPaymentHistoryView && (
+        <>
         {/* Profile Info / Edit */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -402,8 +408,11 @@ const UserProfilePage = () => {
             </motion.button>
           </form>
         </motion.div>
+        </>
+        )}
 
-        {/* Order History */}
+        {isPaymentHistoryView && (
+        /* Order History */
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -412,7 +421,7 @@ const UserProfilePage = () => {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="font-display text-xl font-bold text-gray-900 flex items-center gap-2"><ShoppingBag size={20} /> Order History</h2>
+              <h2 className="font-display text-xl font-bold text-gray-900 flex items-center gap-2"><ShoppingBag size={20} /> Payment History</h2>
               <p className="text-xs text-gray-400 font-medium mt-0.5">Your recent orders and refund requests</p>
             </div>
             <div className="flex items-center gap-2">
@@ -541,6 +550,7 @@ const UserProfilePage = () => {
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Refund Request Modal */}
         <AnimatePresence>
