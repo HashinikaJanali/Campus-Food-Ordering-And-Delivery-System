@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn, Sparkles } from "lucide-react";
+import { Mail, Lock, LogIn, Sparkles, GraduationCap, ShieldCheck, Briefcase } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
+import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useUserAuth();
+  const [searchParams] = useSearchParams();
+  const { login: studentLogin } = useUserAuth();
+  const { login: adminLogin } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState(searchParams.get('role') || "student");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,33 +25,53 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // Clear previous errors
+    setError("");
     
     try {
-      // Validate fields first
       if (!form.email.trim() || !form.password.trim()) {
         setError("Please enter both email and password.");
         setLoading(false);
         return;
       }
 
-      await login(form.email, form.password);
-      
-      // Only navigate on SUCCESSFUL login
-      const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
-      localStorage.removeItem('login_redirect_path');
-      localStorage.removeItem('login_redirect');
-      
-      if (redirectPath) {
-        navigate(redirectPath);
+      if (role === "admin") {
+        await adminLogin(form.email, form.password);
+        navigate('/admin/management');
+      } else if (role === "staff") {
+        const res = await api.post('/users/login', { email: form.email, password: form.password });
+        const userData = res.data.data;
+
+        if (userData.role !== 'staff') {
+          setError("Invalid credentials for staff account.");
+          setLoading(false);
+          return;
+        }
+
+        localStorage.setItem('user_token', userData.token);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        navigate('/delivery-staff');
       } else {
-        navigate('/');
+        const userData = await studentLogin(form.email, form.password);
+
+        if (userData.role && userData.role !== 'student') {
+          setError("Invalid credentials for student account.");
+          setLoading(false);
+          return;
+        }
+
+        const redirectPath = localStorage.getItem('login_redirect_path') || localStorage.getItem('login_redirect');
+        localStorage.removeItem('login_redirect_path');
+        localStorage.removeItem('login_redirect');
+
+        if (redirectPath) {
+          navigate(redirectPath);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
-      // Show error message - DO NOT NAVIGATE
       setError(err.message || "Invalid email or password.");
       setLoading(false);
-      return;
     }
   };
 
@@ -68,6 +93,42 @@ const LoginPage = () => {
               <span className="text-primary italic">Grab &amp; Go</span>
             </h1>
             <p className="text-gray-500 text-sm font-medium mt-2">Your campus food, one tap away</p>
+          </div>
+
+          {/* Role Selection Tabs */}
+          <div className="grid grid-cols-3 gap-2 mb-8">
+            {[
+              { id: "student", label: "Student", icon: GraduationCap, color: "blue" },
+              { id: "admin", label: "Admin", icon: ShieldCheck, color: "orange" },
+              { id: "staff", label: "Staff", icon: Briefcase, color: "green" }
+            ].map((r) => {
+              const Icon = r.icon;
+              const isSelected = role === r.id;
+              return (
+                <motion.button
+                  key={r.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setRole(r.id);
+                    setError("");
+                  }}
+                  type="button"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all border-2 ${
+                    isSelected
+                      ? `border-${r.color}-400 bg-${r.color}-50`
+                      : `border-gray-200 bg-gray-50 hover:border-gray-300`
+                  }`}
+                >
+                  <Icon size={20} className={isSelected ? `text-${r.color}-600` : "text-gray-400"} />
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${
+                    isSelected ? `text-${r.color}-600` : "text-gray-500"
+                  }`}>
+                    {r.label}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
 
           {error && (
@@ -114,10 +175,12 @@ const LoginPage = () => {
             </motion.button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 font-medium mt-6">
-            Don&apos;t have an account?{" "}
-            <Link to="/signup" className="text-primary font-black hover:underline">Create one</Link>
-          </p>
+          {role === "student" && (
+            <p className="text-center text-sm text-gray-500 font-medium mt-6">
+              Don&apos;t have an account?{" "}
+              <Link to="/signup" className="text-primary font-black hover:underline">Create one</Link>
+            </p>
+          )}
         </motion.div>
       </div>
     </div>

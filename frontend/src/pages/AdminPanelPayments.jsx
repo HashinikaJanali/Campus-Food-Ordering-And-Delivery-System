@@ -73,6 +73,9 @@ const STATUS_MAP = {
   pending:  { color: "bg-amber-50 text-amber-600 border-amber-200", icon: Clock,        label: "Pending" },
   refunded: { color: "bg-blue-50 text-blue-600 border-blue-200",   icon: RotateCcw,    label: "Refunded" },
   failed:   { color: "bg-red-50 text-red-500 border-red-200",      icon: XCircle,      label: "Failed" },
+  refund_pending:  { color: "bg-sky-50 text-sky-600 border-sky-200", icon: AlertTriangle, label: "Request to Refund" },
+  refund_approved: { color: "bg-violet-50 text-violet-600 border-violet-200", icon: ThumbsUp, label: "Approved to Refund" },
+  refund_rejected: { color: "bg-rose-50 text-rose-600 border-rose-200", icon: ThumbsDown, label: "Rejected Refund" },
 };
 
 const PaymentBadge = ({ status }) => {
@@ -83,6 +86,19 @@ const PaymentBadge = ({ status }) => {
       <Icon size={10} /> {s.label}
     </span>
   );
+};
+
+const getDisplayPaymentStatus = (payment) => {
+  const paymentStatus = String(payment?.status || "").toLowerCase();
+  const refundStatus = String(payment?.refundRequestStatus || "").toLowerCase();
+
+  if (paymentStatus === "refunded") return "refunded";
+  if (refundStatus === "pending") return "refund_pending";
+  if (refundStatus === "approved") return "refund_approved";
+  if (refundStatus === "rejected") return "refund_rejected";
+  if (paymentStatus === "paid") return "paid";
+  if (paymentStatus === "failed") return "failed";
+  return paymentStatus || "pending";
 };
 
 const RefundModal = ({ payment, onConfirm, onCancel, loading }) => (
@@ -131,7 +147,12 @@ const AdminPanelPayments = () => {
       // Map order payment status to payment status for UI
       const mappedData = data.map(payment => ({
         ...payment,
-        status: payment.status === "completed" ? "paid" : payment.status || "pending"
+        refundRequestStatus: payment.refundRequestStatus || null,
+        status: payment.status === "completed" ? "paid" : payment.status || "pending",
+        displayStatus: getDisplayPaymentStatus({
+          ...payment,
+          status: payment.status === "completed" ? "paid" : payment.status || "pending",
+        })
       }));
       
       setPayments(mappedData);
@@ -155,7 +176,10 @@ const AdminPanelPayments = () => {
     setRefundLoading(true);
     try {
       await api.patch(`/payments/${refundTarget._id}/refund`);
-      setPayments(prev => prev.map(p => p._id === refundTarget._id ? { ...p, status: "refunded" } : p));
+      setPayments(prev => prev.map(p => p._id === refundTarget._id
+        ? { ...p, status: "refunded", displayStatus: "refunded", refundRequestStatus: "completed" }
+        : p
+      ));
       showToast(`Payment of Rs.${refundTarget.amount?.toFixed(2)} marked as refunded.`);
       setRefundTarget(null);
       console.log(`✅ Payment ${refundTarget._id} marked as refunded`);
@@ -196,7 +220,7 @@ const AdminPanelPayments = () => {
       p._id?.toLowerCase().includes(search.toLowerCase()) ||
       p.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
       p.userName?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || p.status === statusFilter;
+    const matchStatus = statusFilter === "all" || p.displayStatus === statusFilter;
     const matchFrom = !dateRange.from || new Date(p.createdAt) >= new Date(dateRange.from);
     const matchTo = !dateRange.to || new Date(p.createdAt) <= new Date(dateRange.to + "T23:59:59");
     return matchSearch && matchStatus && matchFrom && matchTo;
@@ -336,7 +360,13 @@ const AdminPanelPayments = () => {
           <Filter size={15} className="text-gray-400 shrink-0" />
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-gray-700 font-black text-sm focus:outline-none cursor-pointer">
             <option value="all">All Status</option>
-            {["paid","pending","refunded","failed"].map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="paid">Paid</option>
+            <option value="refund_pending">Request to Refund</option>
+            <option value="refund_approved">Approved to Refund</option>
+            <option value="refund_rejected">Rejected Refund</option>
+            <option value="refunded">Refunded</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
         <div className="flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-2 shadow-sm">
@@ -384,9 +414,9 @@ const AdminPanelPayments = () => {
                 <p className="text-xs text-gray-500 font-black hidden md:block truncate max-w-[120px]">
                   {payment.canteen?.name || payment.canteenName || "—"}
                 </p>
-                <PaymentBadge status={payment.status} />
+                <PaymentBadge status={payment.displayStatus || payment.status} />
                 <p className="font-black text-gray-900 text-base whitespace-nowrap">Rs. {payment.amount?.toFixed(2) || "—"}</p>
-                {payment.status === "paid" && (
+                {payment.displayStatus === "refund_approved" && (
                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={() => setRefundTarget(payment)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-black text-xs transition-all sm:opacity-0 sm:group-hover:opacity-100">

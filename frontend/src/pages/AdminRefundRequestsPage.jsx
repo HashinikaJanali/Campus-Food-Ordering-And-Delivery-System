@@ -8,15 +8,25 @@ import api from "../utils/api";
 
 const RefundStatusBadge = ({ status }) => {
   const styles = {
-    pending: "bg-amber-50 text-amber-600 border-amber-200",
+    pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
     approved: "bg-green-50 text-green-600 border-green-200",
     rejected: "bg-red-50 text-red-600 border-red-200",
+    completed: "bg-blue-50 text-blue-600 border-blue-200",
+  };
+
+  const labels = {
+    pending: "Completed",
+    approved: "Approved",
+    rejected: "Rejected",
+    completed: "Completed",
   };
 
   return (
+    status === "pending" ? null : (
     <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest border ${styles[status] || styles.pending}`}>
-      {status}
+      {labels[status] || status}
     </span>
+    )
   );
 };
 
@@ -152,6 +162,7 @@ export default function AdminRefundRequestsPage() {
   const pendingCount = allRefundRequests.filter(r => r.status === 'pending').length;
   const approvedCount = allRefundRequests.filter(r => r.status === 'approved').length;
   const rejectedCount = allRefundRequests.filter(r => r.status === 'rejected').length;
+  const completedCount = allRefundRequests.filter(r => r.status === 'completed').length;
   const totalCount = allRefundRequests.length;
 
   const handleStatClick = (statFilter) => {
@@ -181,6 +192,7 @@ export default function AdminRefundRequestsPage() {
             { label: "Pending", value: pendingCount, icon: Clock, color: "amber", type: "pending" },
             { label: "Approved", value: approvedCount, icon: Check, color: "green", type: "approved" },
             { label: "Rejected", value: rejectedCount, icon: X, color: "red", type: "rejected" },
+            { label: "Completed", value: completedCount, icon: ThumbsUp, color: "blue", type: "completed" },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -247,6 +259,7 @@ export default function AdminRefundRequestsPage() {
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+              <option value="completed">Completed</option>
               <option value="all">All Requests</option>
             </select>
           </div>
@@ -521,6 +534,17 @@ export default function AdminRefundRequestsPage() {
                   >
                     Close
                   </button>
+                </div>
+              )}
+
+              {selectedRequest.status === "completed" && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">
+                    Refund completed
+                  </p>
+                  <p className="text-xs text-blue-700 font-medium">
+                    This refund request has already been processed and marked as completed.
+                  </p>
                 </div>
               )}
             </motion.div>

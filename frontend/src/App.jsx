@@ -18,7 +18,6 @@ import AdminDashboard from './pages/AdminDashboard';
 
 import AdminLayout from './components/AdminLayout';
 import AdminSubLayout from './components/AdminSubLayout';
-import AdminLogin from './pages/inventory/AdminLoginPage';
 import DashboardPage from './pages/inventory/DashboardPage';
 import FoodItemsPage from './pages/inventory/FoodItemsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
@@ -56,7 +55,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return admin ? children : <Navigate to="/admin/login" replace />;
+  return admin ? children : <Navigate to="/login?role=admin" replace />;
 };
 
 // User Protected Route
@@ -98,6 +97,7 @@ function App() {
                 <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
                 <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/payments" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/about" element={<UserLayout><AboutPage /></UserLayout>} />
                 <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
                 <Route path="/orders" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout></ProtectedRoute>} />
@@ -114,7 +114,6 @@ function App() {
 
                 {/* Admin routes */}
                 <Route path="/admin/management" element={<ProtectedRoute><AdminSubLayout showFooter={false}><AdminDashboard /></AdminSubLayout></ProtectedRoute>} />
-                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
                   path="/admin"
                   element={

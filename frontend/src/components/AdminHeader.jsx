@@ -28,7 +28,7 @@ const AdminHeader = ({ className = "" }) => {
         logout();
         localStorage.removeItem('admin_sidebar_expanded');
         toast.success('Logged out successfully');
-        navigate('/admin/login');
+        window.location.replace('/');
     };
 
     return (

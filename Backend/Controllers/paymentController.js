@@ -297,6 +297,19 @@ exports.getAllPayments = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
+    const orderIds = payments.map((order) => order._id);
+    const refundRequests = await RefundRequest.find({ orderId: { $in: orderIds } })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const latestRefundStatusByOrder = {};
+    refundRequests.forEach((req) => {
+      const key = String(req.orderId);
+      if (!latestRefundStatusByOrder[key]) {
+        latestRefundStatusByOrder[key] = req.status;
+      }
+    });
+
     // Map orders to payment format
     const mappedPayments = payments.map(order => ({
       _id: order._id,
@@ -304,6 +317,7 @@ exports.getAllPayments = async (req, res) => {
       paymentIntentId: order.paymentIntentId,
       amount: order.totalAmount,
       status: order.paymentStatus.toLowerCase(),
+      refundRequestStatus: latestRefundStatusByOrder[String(order._id)] || null,
       userName: order.customerName,
       userEmail: order.customerEmail,
       userId: order.userId,
@@ -355,11 +369,38 @@ exports.markPaymentAsRefunded = async (req, res) => {
       });
     }
 
+    if (order.paymentStatus === "Refunded") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment is already refunded"
+      });
+    }
+
+    const approvedRefundRequest = await RefundRequest.findOne({
+      orderId: order._id,
+      status: 'approved'
+    }).sort({ createdAt: -1 });
+
+    if (!approvedRefundRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "Refund can only be processed after an approved refund request"
+      });
+    }
+
     // Update payment status to refunded
     order.paymentStatus = "Refunded";
+    order.refundRequestId = approvedRefundRequest._id;
+    order.refundAmount = approvedRefundRequest.amount;
+    order.refundReason = approvedRefundRequest.reason;
+
+    approvedRefundRequest.status = 'completed';
+    approvedRefundRequest.refundedAt = new Date();
+
+    await approvedRefundRequest.save();
     await order.save();
 
-    console.log(`✅ Payment ${paymentId} marked as refunded`);
+    console.log(`✅ Payment ${paymentId} marked as refunded after approved request ${approvedRefundRequest._id}`);
 
     res.status(200).json({
       success: true,
@@ -612,24 +653,7 @@ exports.approveRefundRequest = async (req, res) => {
     refundRequest.adminNotes = adminNotes || '';
     refundRequest.approvedBy = req.user?.id || 'admin';
     
-    // If approved, mark the refund as completed and update Order's payment status
-    if (action === 'approve') {
-      refundRequest.refundedAt = new Date();
-      console.log(`🔄 [3a/6] Updating associated order payment status to 'Refunded'`);
-      
-      const Order = require('../Model/Order');
-      const order = await Order.findById(refundRequest.orderId);
-      if (order) {
-        order.paymentStatus = 'Refunded';
-        order.refundRequestId = refundRequest._id;
-        order.refundAmount = refundRequest.amount;
-        order.refundReason = refundRequest.reason;
-        await order.save();
-        console.log(`✅ [3a/6] Order payment status updated to 'Refunded'`);
-      } else {
-        console.warn(`⚠️ [3a/6] Order not found for refund update: ${refundRequest.orderId}`);
-      }
-    }
+    // Approval only authorizes refund processing in Admin Payments; it does not mark order refunded.
     
     await refundRequest.save();
     console.log(`✅ [3/6] Status updated successfully`);
