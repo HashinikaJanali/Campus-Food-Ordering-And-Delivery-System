@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Plus, Minus, ArrowRight, Store, ShoppingBag } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
+const getCartItemId = (item) => {
+  if (!item) return null;
+  if (item.foodItem && typeof item.foodItem === "object") return item.foodItem._id || item.foodItem.id || null;
+  return item.foodItem || item.foodItemId || item._id || item.id || null;
+};
+
 const CartPage = () => {
   const navigate = useNavigate();
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
@@ -62,9 +68,12 @@ const CartPage = () => {
         {/* Items */}
         <div className="bg-white rounded-[3rem] shadow-xl shadow-orange-100/40 border border-orange-50 overflow-hidden">
           <AnimatePresence>
-            {cart.map((item, i) => (
+            {cart.map((item, i) => {
+              const itemId = getCartItemId(item);
+
+              return (
               <motion.div
-                key={item.foodItem._id}
+                key={itemId || `cart-item-${i}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
@@ -100,15 +109,17 @@ const CartPage = () => {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => updateQuantity(item.foodItem._id, item.quantity - 1)}
+                    onClick={() => itemId && updateQuantity(itemId, item.quantity - 1)}
                     className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-orange-100 hover:text-primary flex items-center justify-center transition-all"
+                    disabled={!itemId}
                   >
                     <Minus size={14} />
                   </button>
                   <span className="w-6 text-center text-sm font-black text-gray-800">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.foodItem._id, item.quantity + 1)}
+                    onClick={() => itemId && updateQuantity(itemId, item.quantity + 1)}
                     className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-orange-100 hover:text-primary flex items-center justify-center transition-all"
+                    disabled={!itemId}
                   >
                     <Plus size={14} />
                   </button>
@@ -119,13 +130,15 @@ const CartPage = () => {
                 </p>
 
                 <button
-                  onClick={() => removeFromCart(item.foodItem._id)}
+                  onClick={() => itemId && removeFromCart(itemId)}
                   className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                  disabled={!itemId}
                 >
                   <Trash2 size={15} />
                 </button>
               </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
         </div>
 

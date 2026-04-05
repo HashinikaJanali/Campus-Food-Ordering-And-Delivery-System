@@ -5,13 +5,38 @@ import { useUserAuth } from './UserAuthContext';
 
 const CartContext = createContext();
 
+const EMPTY_CART = { items: [], totalAmount: 0 };
+
+const normalizeCart = (cartData) => {
+    if (!cartData) return EMPTY_CART;
+
+    // Handle legacy/local payloads stored directly as an array.
+    if (Array.isArray(cartData)) {
+        const totalAmount = cartData.reduce((total, item) => total + ((item?.price || 0) * (item?.quantity || 0)), 0);
+        return { items: cartData, totalAmount };
+    }
+
+    // Handle API payloads wrapped in `cart`.
+    const raw = cartData.cart && typeof cartData.cart === 'object' ? cartData.cart : cartData;
+    const items = Array.isArray(raw.items) ? raw.items : [];
+    const totalAmount = typeof raw.totalAmount === 'number'
+        ? raw.totalAmount
+        : items.reduce((total, item) => total + ((item?.price || 0) * (item?.quantity || 0)), 0);
+
+    return { ...raw, items, totalAmount };
+};
+
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(() => {
         // Initialize from localStorage for guests
-        const savedCart = localStorage.getItem('guestCart');
-        return savedCart ? JSON.parse(savedCart) : { items: [], totalAmount: 0 };
+        try {
+            const savedCart = localStorage.getItem('guestCart');
+            return savedCart ? normalizeCart(JSON.parse(savedCart)) : EMPTY_CART;
+        } catch {
+            return EMPTY_CART;
+        }
     });
     const [loading, setLoading] = useState(false);
     const { user } = useUserAuth();
@@ -32,7 +57,7 @@ export const CartProvider = ({ children }) => {
     const loadCart = async () => {
         try {
             const response = await api.get('/cart');
-            setCart(response.data);
+            setCart(normalizeCart(response.data));
         } catch (error) {
             console.error('Error loading cart:', error);
         }
@@ -47,7 +72,7 @@ export const CartProvider = ({ children }) => {
                     foodItemId: product._id,
                     quantity: 1
                 });
-                setCart(response.data);
+                setCart(normalizeCart(response.data));
                 toast.success(`Added ${product.name} to cart!`);
                 return true;
             } catch (error) {
@@ -100,7 +125,7 @@ export const CartProvider = ({ children }) => {
                         foodItemId,
                         quantity: newQuantity
                     });
-                    setCart(response.data);
+                    setCart(normalizeCart(response.data));
                 } catch (error) {
                     toast.error(error.response?.data?.message || 'Failed to update quantity');
                 }
@@ -134,7 +159,7 @@ export const CartProvider = ({ children }) => {
             (async () => {
                 try {
                     const response = await api.delete(`/cart/remove/${foodItemId}`);
-                    setCart(response.data);
+                    setCart(normalizeCart(response.data));
                     toast.success('Item removed from cart');
                 } catch (error) {
                     toast.error('Failed to remove item from cart');
@@ -164,14 +189,14 @@ export const CartProvider = ({ children }) => {
             try {
                 const queryParams = options.preserveStock ? '?preserveStock=true' : '';
                 await api.delete(`/cart/clear${queryParams}`);
-                setCart({ items: [], totalAmount: 0 });
+                setCart(EMPTY_CART);
                 toast.success('Cart cleared');
             } catch (error) {
                 toast.error('Failed to clear cart');
             }
         } else {
             // For guest users, clear localStorage
-            setCart({ items: [], totalAmount: 0 });
+            setCart(EMPTY_CART);
             toast.success('Cart cleared');
         }
     };
