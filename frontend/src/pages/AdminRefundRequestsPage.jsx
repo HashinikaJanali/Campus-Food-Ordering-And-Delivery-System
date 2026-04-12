@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 
+const REFUND_LIST_LIMIT = 1000;
+
 const RefundStatusBadge = ({ status }) => {
   const styles = {
     pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -15,7 +17,7 @@ const RefundStatusBadge = ({ status }) => {
   };
 
   const labels = {
-    pending: "Completed",
+    pending: "Pending",
     approved: "Approved",
     rejected: "Rejected",
     completed: "Completed",
@@ -46,7 +48,13 @@ const getOrderId = (orderId) => {
 
 export default function AdminRefundRequestsPage() {
   const [refundRequests, setRefundRequests] = useState([]);
-  const [allRefundRequests, setAllRefundRequests] = useState([]);
+  const [refundStats, setRefundStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    completed: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("pending");
   const [search, setSearch] = useState("");
@@ -59,7 +67,7 @@ export default function AdminRefundRequestsPage() {
     setLoading(true);
     try {
       console.log(`🔄 Fetching refund requests with status filter: ${filter}`);
-      const res = await api.get(`/payments/refund-requests?status=${filter}`);
+      const res = await api.get(`/payments/refund-requests?status=${filter}&page=1&limit=${REFUND_LIST_LIMIT}`);
       setRefundRequests(res.data.data || []);
       console.log(`✅ Fetched ${(res.data.data || []).length} refund requests:`, res.data.data);
     } catch (error) {
@@ -70,21 +78,40 @@ export default function AdminRefundRequestsPage() {
     }
   };
 
-  // Fetch all refund requests for stats (independent of filter)
-  const fetchAllRefundRequests = async () => {
+  // Fetch exact totals from server-side pagination metadata to avoid page-size skew.
+  const fetchRefundStats = async () => {
     try {
-      console.log(`🔄 Fetching ALL refund requests for stats...`);
-      const res = await api.get(`/payments/refund-requests?status=all`);
-      setAllRefundRequests(res.data.data || []);
-      console.log(`✅ Fetched ${(res.data.data || []).length} total refund requests`);
+      console.log(`🔄 Fetching refund request stats...`);
+      const statuses = ["all", "pending", "approved", "rejected", "completed"];
+
+      const counts = await Promise.all(
+        statuses.map(async (status) => {
+          const res = await api.get(`/payments/refund-requests?status=${status}&page=1&limit=1`);
+          const total = Number(
+            res?.data?.pagination?.total ??
+            (Array.isArray(res?.data?.data) ? res.data.data.length : 0)
+          );
+          return [status, total];
+        })
+      );
+
+      const countMap = Object.fromEntries(counts);
+      setRefundStats({
+        total: countMap.all || 0,
+        pending: countMap.pending || 0,
+        approved: countMap.approved || 0,
+        rejected: countMap.rejected || 0,
+        completed: countMap.completed || 0,
+      });
+      console.log(`✅ Refund stats loaded:`, countMap);
     } catch (error) {
-      console.error('❌ Fetch all refund requests error:', error.response?.data || error.message);
+      console.error('❌ Fetch refund stats error:', error.response?.data || error.message);
     }
   };
 
   useEffect(() => {
     fetchRefundRequests();
-    fetchAllRefundRequests();
+    fetchRefundStats();
   }, []);
 
   useEffect(() => {
@@ -128,7 +155,7 @@ export default function AdminRefundRequestsPage() {
         setTimeout(() => {
           console.log(`🔄 Re-fetching refund requests to sync state`);
           fetchRefundRequests();
-          fetchAllRefundRequests();
+          fetchRefundStats();
         }, 500);
       } else {
         console.error(`❌ API returned success: false`, res.data);
@@ -159,11 +186,11 @@ export default function AdminRefundRequestsPage() {
     return matchSearch;
   });
 
-  const pendingCount = allRefundRequests.filter(r => r.status === 'pending').length;
-  const approvedCount = allRefundRequests.filter(r => r.status === 'approved').length;
-  const rejectedCount = allRefundRequests.filter(r => r.status === 'rejected').length;
-  const completedCount = allRefundRequests.filter(r => r.status === 'completed').length;
-  const totalCount = allRefundRequests.length;
+  const pendingCount = refundStats.pending;
+  const approvedCount = refundStats.approved;
+  const rejectedCount = refundStats.rejected;
+  const completedCount = refundStats.completed;
+  const totalCount = refundStats.total;
 
   const handleStatClick = (statFilter) => {
     console.log(`📊 Clicked stat card, changing filter to: ${statFilter}`);
@@ -266,7 +293,10 @@ export default function AdminRefundRequestsPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={fetchRefundRequests}
+            onClick={() => {
+              fetchRefundRequests();
+              fetchRefundStats();
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-2xl text-gray-600 font-black text-sm hover:border-gray-300 transition-all"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />

@@ -162,17 +162,20 @@ exports.removeFromCart = async (req, res) => {
 
     const removedQuantity = cart.items[itemIndex].quantity;
 
-    const prevStock = foodItem.stockQuantity;
-    foodItem.stockQuantity += removedQuantity;
-    await foodItem.save();
+    const foodItem = await FoodItem.findById(foodItemId);
+    if (foodItem) {
+      const prevStock = foodItem.stockQuantity;
+      foodItem.stockQuantity += removedQuantity;
+      await foodItem.save();
 
-    // Check for alerts
-    await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
+      // Check for alerts
+      await alertService.checkStockAlerts(foodItem, prevStock, req.app.get('io'));
 
-    // Emit stock update
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+      // Emit stock update
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('stockUpdate', { foodItemId: foodItem._id, stockQuantity: foodItem.stockQuantity });
+      }
     }
 
     // Remove item from cart
