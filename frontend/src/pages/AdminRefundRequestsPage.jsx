@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import api from "../utils/api";
 
+const REFUND_LIST_LIMIT = 1000;
+
 const RefundStatusBadge = ({ status }) => {
   const styles = {
     pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -65,7 +67,7 @@ export default function AdminRefundRequestsPage() {
     setLoading(true);
     try {
       console.log(`🔄 Fetching refund requests with status filter: ${filter}`);
-      const res = await api.get(`/payments/refund-requests?status=${filter}`);
+      const res = await api.get(`/payments/refund-requests?status=${filter}&page=1&limit=${REFUND_LIST_LIMIT}`);
       setRefundRequests(res.data.data || []);
       console.log(`✅ Fetched ${(res.data.data || []).length} refund requests:`, res.data.data);
     } catch (error) {
