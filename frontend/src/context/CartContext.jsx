@@ -7,12 +7,15 @@ const CartContext = createContext();
 
 const EMPTY_CART = { items: [], totalAmount: 0 };
 
+const calculateTotalAmount = (items = []) =>
+    items.reduce((total, item) => total + ((item?.price || 0) * (item?.quantity || 0)), 0);
+
 const normalizeCart = (cartData) => {
     if (!cartData) return EMPTY_CART;
 
     // Handle legacy/local payloads stored directly as an array.
     if (Array.isArray(cartData)) {
-        const totalAmount = cartData.reduce((total, item) => total + ((item?.price || 0) * (item?.quantity || 0)), 0);
+        const totalAmount = calculateTotalAmount(cartData);
         return { items: cartData, totalAmount };
     }
 
@@ -21,7 +24,7 @@ const normalizeCart = (cartData) => {
     const items = Array.isArray(raw.items) ? raw.items : [];
     const totalAmount = typeof raw.totalAmount === 'number'
         ? raw.totalAmount
-        : items.reduce((total, item) => total + ((item?.price || 0) * (item?.quantity || 0)), 0);
+        : calculateTotalAmount(items);
 
     return { ...raw, items, totalAmount };
 };
@@ -67,6 +70,33 @@ export const CartProvider = ({ children }) => {
         // For authenticated users, send to backend
         if (user) {
             setLoading(true);
+            const previousCart = cart;
+
+            // Optimistically update the UI first for faster interaction feedback.
+            setCart(prevCart => {
+                const existingItem = prevCart.items?.find(item => item.foodItem?._id === product._id);
+                let updatedItems;
+
+                if (existingItem) {
+                    updatedItems = prevCart.items.map(item =>
+                        item.foodItem?._id === product._id
+                            ? { ...item, quantity: item.quantity + 1 }
+                            : item
+                    );
+                } else {
+                    updatedItems = [...(prevCart.items || []), {
+                        foodItem: { _id: product._id, ...product },
+                        quantity: 1,
+                        price: product.price,
+                        name: product.name,
+                        image: product.image,
+                        canteen: product.canteen || { name: "Main Canteen" }
+                    }];
+                }
+
+                return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
+            });
+
             try {
                 const response = await api.post('/cart/add', {
                     foodItemId: product._id,
@@ -76,6 +106,7 @@ export const CartProvider = ({ children }) => {
                 toast.success(`Added ${product.name} to cart!`);
                 return true;
             } catch (error) {
+                setCart(previousCart);
                 toast.error(error.response?.data?.message || 'Failed to add to cart');
                 return false;
             } finally {
@@ -104,11 +135,7 @@ export const CartProvider = ({ children }) => {
                     }];
                 }
 
-                const totalAmount = updatedItems.reduce((total, item) =>
-                    total + (item.price * item.quantity), 0
-                );
-
-                return { items: updatedItems, totalAmount };
+                return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
             });
 
             toast.success(`Added ${product.name} to cart!`);
@@ -116,20 +143,37 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    const updateQuantity = (foodItemId, newQuantity) => {
+    const updateQuantity = async (foodItemId, newQuantity) => {
         if (user) {
             // For authenticated users, update on backend
-            (async () => {
-                try {
-                    const response = await api.put('/cart/update', {
-                        foodItemId,
-                        quantity: newQuantity
-                    });
-                    setCart(normalizeCart(response.data));
-                } catch (error) {
-                    toast.error(error.response?.data?.message || 'Failed to update quantity');
-                }
-            })();
+            const previousCart = cart;
+
+            if (newQuantity <= 0) {
+                setCart(prevCart => {
+                    const updatedItems = prevCart.items.filter(item => item.foodItem?._id !== foodItemId);
+                    return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
+                });
+            } else {
+                setCart(prevCart => {
+                    const updatedItems = prevCart.items.map(item =>
+                        item.foodItem?._id === foodItemId
+                            ? { ...item, quantity: newQuantity }
+                            : item
+                    );
+                    return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
+                });
+            }
+
+            try {
+                const response = await api.put('/cart/update', {
+                    foodItemId,
+                    quantity: newQuantity
+                });
+                setCart(normalizeCart(response.data));
+            } catch (error) {
+                setCart(previousCart);
+                toast.error(error.response?.data?.message || 'Failed to update quantity');
+            }
         } else {
             // For guest users, update in localStorage
             if (newQuantity <= 0) {
@@ -144,39 +188,36 @@ export const CartProvider = ({ children }) => {
                         : item
                 );
 
-                const totalAmount = updatedItems.reduce((total, item) =>
-                    total + (item.price * item.quantity), 0
-                );
-
-                return { items: updatedItems, totalAmount };
+                return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
             });
         }
     };
 
-    const removeFromCart = (foodItemId) => {
+    const removeFromCart = async (foodItemId) => {
         if (user) {
             // For authenticated users, remove from backend
-            (async () => {
-                try {
-                    const response = await api.delete(`/cart/remove/${foodItemId}`);
-                    setCart(normalizeCart(response.data));
-                    toast.success('Item removed from cart');
-                } catch (error) {
-                    toast.error('Failed to remove item from cart');
-                }
-            })();
+            const previousCart = cart;
+
+            setCart(prevCart => {
+                const updatedItems = prevCart.items.filter(item => item.foodItem?._id !== foodItemId);
+                return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
+            });
+
+            try {
+                const response = await api.delete(`/cart/remove/${foodItemId}`);
+                setCart(normalizeCart(response.data));
+                toast.success('Item removed from cart');
+            } catch (error) {
+                setCart(previousCart);
+                toast.error(error.response?.data?.message || 'Failed to remove item from cart');
+            }
         } else {
             // For guest users, remove from localStorage
             setCart(prevCart => {
                 const updatedItems = prevCart.items.filter(item =>
                     item.foodItem?._id !== foodItemId
                 );
-
-                const totalAmount = updatedItems.reduce((total, item) =>
-                    total + (item.price * item.quantity), 0
-                );
-
-                return { items: updatedItems, totalAmount };
+                return { items: updatedItems, totalAmount: calculateTotalAmount(updatedItems) };
             });
 
             toast.success('Item removed from cart');
