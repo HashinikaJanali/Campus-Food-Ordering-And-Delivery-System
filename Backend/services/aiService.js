@@ -4,7 +4,7 @@ const axios = require('axios');
 const HF_API_KEY = process.env.HF_API_KEY || 'hf_temp';
 const HF_API_URL = 'https://api-inference.huggingface.co/models/';
 
-// UPDATED WORKING MODELS - 2024
+// UPDATED WORKING MODELS 
 const SENTIMENT_MODEL = 'distilbert-base-uncased-finetuned-sst-2-english';
 const EMOTION_MODEL = 'bhadresh-savani/distilbert-base-uncased-emotion';
 const TOPIC_MODEL = 'facebook/bart-large-mnli';
