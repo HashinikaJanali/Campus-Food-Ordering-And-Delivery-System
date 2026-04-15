@@ -12,6 +12,8 @@
     "axios": "^1.13.6",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^10.18.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.303.0",
     "object-hash": "^3.0.0",
     "qr-code-styling": "^1.9.2",
