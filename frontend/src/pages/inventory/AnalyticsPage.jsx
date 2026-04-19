@@ -5,8 +5,10 @@ import {
 } from 'recharts';
 import {
     FileDown, TrendingUp, AlertTriangle, Package, Layers, Info,
-    ChevronRight, ArrowUpRight, ArrowDownRight, Printer
+    ChevronRight, ArrowUpRight, ArrowDownRight, Printer, FileText
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -32,7 +34,7 @@ export default function AnalyticsPage() {
         }
     };
 
-    const handleExport = async () => {
+    const handleCSVExport = async () => {
         setExporting(true);
         try {
             const res = await api.get('/analytics/report');
@@ -62,9 +64,67 @@ export default function AnalyticsPage() {
             link.click();
             document.body.removeChild(link);
 
-            toast.success('Report exported successfully');
+            toast.success('CSV Report exported successfully');
         } catch (err) {
-            toast.error('Failed to generate report');
+            toast.error('Failed to generate CSV report');
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const handlePDFExport = async () => {
+        setExporting(true);
+        try {
+            const res = await api.get('/analytics/report');
+            const reportData = res.data.data;
+
+            if (!reportData || reportData.length === 0) {
+                toast.error('No data available for export');
+                return;
+            }
+
+            const doc = new jsPDF();
+
+            // Add Header
+            doc.setFontSize(22);
+            doc.setTextColor(249, 115, 22); // admin-600 orange
+            doc.text('Inventory Report', 14, 22);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+            doc.text('Campus Food Ordering & Delivery System - Inventory Analytics', 14, 35);
+
+            // Add a separator line
+            doc.setDrawColor(249, 115, 22);
+            doc.setLineWidth(0.5);
+            doc.line(14, 38, 196, 38);
+
+            // Table mapping
+            const headers = Object.keys(reportData[0]);
+            const rows = reportData.map(item => headers.map(header => {
+                const val = item[header];
+                return val === null || val === undefined ? '-' : val;
+            }));
+
+            autoTable(doc, {
+                head: [headers],
+                body: rows,
+                startY: 45,
+                margin: { top: 45 },
+                styles: { fontSize: 8, cellPadding: 3 },
+                headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [255, 247, 237] },
+                borderColor: [229, 231, 235],
+                borderWidth: 0.1,
+            });
+
+            const fileName = `inventory_report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            toast.success('PDF Report exported successfully');
+        } catch (err) {
+            console.error('PDF Export Error:', err);
+            toast.error('Failed to generate PDF report');
         } finally {
             setExporting(false);
         }
@@ -98,12 +158,20 @@ export default function AnalyticsPage() {
                         Refresh
                     </button>
                     <button
-                        onClick={handleExport}
+                        onClick={handleCSVExport}
+                        disabled={exporting}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium shadow-sm disabled:opacity-50"
+                    >
+                        <FileDown size={16} className="text-admin-600" />
+                        {exporting ? 'Exporting...' : 'Export CSV'}
+                    </button>
+                    <button
+                        onClick={handlePDFExport}
                         disabled={exporting}
                         className="flex items-center gap-2 px-4 py-2 bg-admin-600 text-white rounded-xl hover:bg-admin-700 transition-all text-sm font-medium shadow-orange disabled:opacity-50"
                     >
-                        <FileDown size={16} />
-                        {exporting ? 'Exporting...' : 'Generate Report'}
+                        <FileText size={16} />
+                        {exporting ? 'Exporting...' : 'Download PDF'}
                     </button>
                 </div>
             </div>
