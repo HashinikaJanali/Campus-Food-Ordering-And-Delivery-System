@@ -7,6 +7,7 @@ dotenv.config();
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_food_inventory';
 
 const Admin = require('./Model/Admin');
+const User = require('./Model/User');
 const Category = require('./Model/inventory/Category');
 const FoodItem = require('./Model/inventory/FoodItem');
 const Canteen = require('./Model/inventory/Canteen');
@@ -26,6 +27,7 @@ async function seed() {
 
   // Clear existing data
   await Admin.deleteMany({});
+  await User.deleteMany({});
   await Category.deleteMany({});
   await FoodItem.deleteMany({});
   await Canteen.deleteMany({});
@@ -38,6 +40,15 @@ async function seed() {
     role: 'super_admin'
   });
   console.log('✅ Admin created: admin@campus.edu / admin123');
+  
+  // Create demo user
+  const demoUser = await User.create({
+    name: 'Student',
+    email: 'user@campus.edu',
+    password: 'user123',
+    role: 'student'
+  });
+  console.log('✅ Demo Student created: user@campus.edu / user123');
 
   // Create canteens
   const canteenNames = ['P&S', 'Anohana', 'Basement Canteen', 'New building canteen'];
@@ -77,6 +88,7 @@ async function seed() {
 
   console.log('\n🎉 Seed complete!');
   console.log('Admin login: admin@campus.edu / admin123');
+  console.log('User login:  user@campus.edu / user123');
   process.exit(0);
 }
 
