@@ -10,10 +10,6 @@ import toast from 'react-hot-toast';
 const mockOrders = [
   { orderId: 'ORD-101', foodItem: 'Cheese Pizza Slice', vendor: 'P&S Canteen', deliveredAt: '15 minutes ago', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop' },
   { orderId: 'ORD-102', foodItem: 'Iced Coffee', vendor: 'Main Canteen', deliveredAt: '30 minutes ago', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-103', foodItem: 'Vegetable Noodles', vendor: 'Engineering Canteen', deliveredAt: '2 hours ago', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-104', foodItem: 'Chicken Submarine', vendor: 'Anohana Canteen', deliveredAt: '1 hour ago', image: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-105', foodItem: 'Chocolate Milkshake', vendor: 'New Building Canteen', deliveredAt: '10 minutes ago', image: 'https://images.unsplash.com/photo-1572490122703-0c4e0e5c839f?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-106', foodItem: 'Chicken Biryani', vendor: 'Main Canteen', deliveredAt: '1.5 hours ago', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&h=200&fit=crop' },
 ];
 
 // Validation Helpers
@@ -90,14 +86,18 @@ const FeedbackTab = () => {
       let actualOrders = [];
       if (user && user.email) {
         const response = await orderAPI.getAll({ customerEmail: user.email });
-        const userOrders = Array.isArray(response.data) ? response.data : [];
+        
+        // Handle various response formats from the backend
+        const payload = response.data?.data || response.data || [];
+        const userOrders = Array.isArray(payload) ? payload : [];
         
         // Map order items to the display format
         userOrders.forEach(order => {
           // Show all delivered/active orders for feedback
           // Only skip cancelled orders
           if (order.orderStatus !== 'Cancelled' && order.status !== 'cancelled') {
-            order.items.forEach(item => {
+            const items = order.items || [];
+            items.forEach(item => {
               actualOrders.push({
                 orderId: order.orderId || order._id,
                 foodItem: item.name,
@@ -111,7 +111,7 @@ const FeedbackTab = () => {
         });
       }
 
-      // Merge with mock orders
+      // Combined with exactly 2 mock orders for demo
       const combinedOrders = [...actualOrders, ...mockOrders];
       setOrders(combinedOrders);
     } catch (error) {
