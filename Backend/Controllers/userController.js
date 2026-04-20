@@ -99,8 +99,50 @@ const loginUser = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // --- Demo Account Bypass ---
+    if (normalizedEmail === 'user@campus.edu' && password === 'user123') {
+      try {
+        let demoUser = await User.findOne({ email: normalizedEmail });
+        
+        if (!demoUser) {
+          console.log('📝 Creating demo user...');
+          demoUser = await User.create({
+            name: 'Student',
+            email: normalizedEmail,
+            password: 'user123',
+            role: 'student',
+            active: true
+          });
+          console.log('✅ Demo user created');
+        } else if (demoUser.name !== 'Student') {
+          // Sync name if it was different
+          demoUser.name = 'Student';
+          await demoUser.save();
+          console.log('✅ Demo user name updated to "Student"');
+        }
+
+        const token = generateToken(demoUser._id);
+        return res.json({
+          success: true,
+          message: 'Login successful (Demo Account)',
+          data: {
+            _id: demoUser._id,
+            name: demoUser.name,
+            email: demoUser.email,
+            role: demoUser.role,
+            token
+          }
+        });
+      } catch (err) {
+        console.error('❌ Demo Bypass Error:', err);
+      }
+    }
+    // ----------------------------
+
     // Check for user
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
