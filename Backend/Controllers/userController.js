@@ -139,6 +139,48 @@ const loginUser = async (req, res) => {
         console.error('❌ Demo Bypass Error:', err);
       }
     }
+
+    // --- Delivery Staff Demo Account Bypass ---
+    if (normalizedEmail === 'delivery@campus.edu' && password === 'staff123') {
+      try {
+        let demoStaff = await User.findOne({ email: normalizedEmail });
+
+        if (!demoStaff) {
+          console.log('📝 Creating delivery staff demo user...');
+          demoStaff = await User.create({
+            name: 'Delivery Agent',
+            email: normalizedEmail,
+            password: 'staff123',
+            role: 'staff',
+            active: true
+          });
+          console.log('✅ Delivery staff demo user created');
+        } else {
+          if (demoStaff.name !== 'Delivery Agent') {
+            demoStaff.name = 'Delivery Agent';
+          }
+          if (demoStaff.role !== 'staff') {
+            demoStaff.role = 'staff';
+          }
+          await demoStaff.save();
+        }
+
+        const token = generateToken(demoStaff._id);
+        return res.json({
+          success: true,
+          message: 'Login successful (Delivery Staff Demo Account)',
+          data: {
+            _id: demoStaff._id,
+            name: demoStaff.name,
+            email: demoStaff.email,
+            role: demoStaff.role,
+            token
+          }
+        });
+      } catch (err) {
+        console.error('❌ Delivery Staff Demo Bypass Error:', err);
+      }
+    }
     // ----------------------------
 
     // Check for user

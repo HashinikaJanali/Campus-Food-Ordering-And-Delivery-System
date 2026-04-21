@@ -50,6 +50,15 @@ async function seed() {
   });
   console.log('✅ Demo Student created: user@campus.edu / user123');
 
+  // Create delivery staff user
+  const deliveryStaff = await User.create({
+    name: 'Delivery Agent',
+    email: 'delivery@campus.edu',
+    password: 'staff123',
+    role: 'staff'
+  });
+  console.log('✅ Delivery Staff created: delivery@campus.edu / staff123');
+
   // Create canteens
   const canteenNames = ['P&S', 'Anohana', 'Basement Canteen', 'New building canteen'];
   const createdCanteens = await Canteen.insertMany(canteenNames.map(name => ({ name, isActive: true })));
@@ -89,6 +98,7 @@ async function seed() {
   console.log('\n🎉 Seed complete!');
   console.log('Admin login: admin@campus.edu / admin123');
   console.log('User login:  user@campus.edu / user123');
+  console.log('Staff login: delivery@campus.edu / staff123');
   process.exit(0);
 }
 

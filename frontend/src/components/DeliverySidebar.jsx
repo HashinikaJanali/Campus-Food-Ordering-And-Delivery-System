@@ -1,10 +1,19 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { ClipboardList, History, MapPin, User, LogOut, RefreshCw, Truck, CheckCircle } from 'lucide-react';
 import logoImage from '../assets/logo.png';
 import { useState } from 'react';
+import { useUserAuth } from '../context/UserAuthContext';
 
 export default function DeliverySidebar() {
   const [logoError, setLogoError] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useUserAuth();
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem('delivery_staff_name');
+    navigate('/login?role=staff');
+  };
 
   const mainItems = [
     { path: '/delivery-staff', icon: ClipboardList, label: 'Dashboard' },
@@ -65,7 +74,10 @@ export default function DeliverySidebar() {
       </nav>
 
       <div className="p-4 border-t border-gray-100 bg-gray-50">
-        <button className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700"
+        >
           <LogOut size={16} /> Logout
         </button>
       </div>
