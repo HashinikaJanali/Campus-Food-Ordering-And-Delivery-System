@@ -1,2 +1,6 @@
 .DS_Store
 /Backend/node_modules
+
+playwright-report/
+test-results/
+blob-report/
