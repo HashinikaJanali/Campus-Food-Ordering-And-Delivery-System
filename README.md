@@ -1,6 +1,6 @@
 # 🍔 Campus Food Ordering & Delivery System
 
-A full-stack web application for ordering and delivering food within a university campus.
+Grab & Go is a full-stack web application developed specifically for university students, enabling convenient and efficient food ordering and delivery.
 
 ## 🛠️ Tech Stack
 
