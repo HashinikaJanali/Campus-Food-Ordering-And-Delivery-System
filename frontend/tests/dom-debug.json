@@ -1,0 +1,203 @@
+{
+  "starSvgCount": 43,
+  "starSvgClasses": [
+    "lucide lucide-bell w-6 h-6 text-orange-500",
+    "lucide lucide-star w-5 h-5",
+    "lucide lucide-star w-5 h-5 mx-auto opacity-50",
+    "lucide lucide-gift w-5 h-5 mx-auto opacity-50",
+    "lucide lucide-trophy w-5 h-5 mx-auto opacity-50",
+    "lucide lucide-trending-up w-5 h-5 mx-auto opacity-50",
+    "lucide lucide-gamepad2 w-5 h-5 mx-auto opacity-50",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-upload w-12 h-12 mx-auto mb-3 text-gray-400",
+    "lucide lucide-check-circle w-5 h-5",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-star w-10 h-10 text-gray-300",
+    "lucide lucide-upload w-12 h-12 mx-auto mb-3 text-gray-400",
+    "lucide lucide-check-circle w-5 h-5",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 text-gray-300",
+    "lucide lucide-pen w-4 h-4",
+    "lucide lucide-trash2 w-4 h-4",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-star w-5 h-5 fill-gold text-gold",
+    "lucide lucide-pen w-4 h-4",
+    "lucide lucide-trash2 w-4 h-4",
+    "lucide lucide-facebook ",
+    "lucide lucide-instagram ",
+    "lucide lucide-twitter ",
+    "lucide lucide-github ",
+    "lucide lucide-map-pin w-5 h-5 text-orange-400 flex-shrink-0 mt-1",
+    "lucide lucide-phone w-5 h-5 text-orange-400 flex-shrink-0",
+    "lucide lucide-mail w-5 h-5 text-orange-400 flex-shrink-0",
+    "lucide lucide-heart w-4 h-4 text-red-500 fill-red-500"
+  ],
+  "buttonCount": 23,
+  "buttons": [
+    {
+      "text": "9+",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-bell w-6 h-6 text-orange-500",
+      "parentClass": "relative"
+    },
+    {
+      "text": "⭐Loyalty Points",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-5 h-5 mx-auto opacity-50",
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "🎁Promotions",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-gift w-5 h-5 mx-auto opacity-50",
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "🏆Achievements",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-trophy w-5 h-5 mx-auto opacity-50",
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "💬Give Feedback",
+      "hasSvg": false,
+      "svgClass": null,
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "📊All Reviews",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-trending-up w-5 h-5 mx-auto opacity-50",
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "🎮Mini-Games",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-gamepad2 w-5 h-5 mx-auto opacity-50",
+      "parentClass": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "Submit Review & Earn 5 Points ⭐",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-check-circle w-5 h-5",
+      "parentClass": "space-y-4"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-star w-10 h-10 text-gray-300",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "Submit Review & Earn 5 Points ⭐",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-check-circle w-5 h-5",
+      "parentClass": "space-y-4"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-pen w-4 h-4",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-trash2 w-4 h-4",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-pen w-4 h-4",
+      "parentClass": "flex gap-2"
+    },
+    {
+      "text": "",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-trash2 w-4 h-4",
+      "parentClass": "flex gap-2"
+    }
+  ],
+  "textareas": [
+    {
+      "placeholder": "Tell us about your experience... (min 10 characters if provided)",
+      "visible": true,
+      "class": "w-full px-4 py-3 border-2 rounded-xl resize-none focus:outline-none transition-a"
+    },
+    {
+      "placeholder": "Tell us about your experience... (min 10 characters if provided)",
+      "visible": true,
+      "class": "w-full px-4 py-3 border-2 rounded-xl resize-none focus:outline-none transition-a"
+    }
+  ],
+  "hasRateYourOrders": true,
+  "pageTitle": "Grab & Go"
+}

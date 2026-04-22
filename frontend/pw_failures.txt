@@ -1,0 +1,59 @@
+
+Running 14 tests using 1 worker
+
+  [38;5;45;1mpw:api [0m=> browserType.launch started [38;5;45m+0ms[0m
+  [38;5;45;1mpw:api [0m<= browserType.launch succeeded [38;5;45m+431ms[0m
+  [38;5;45;1mpw:api [0m=> browser.newContext started [38;5;45m+6ms[0m
+  [38;5;45;1mpw:api [0m<= browser.newContext succeeded [38;5;45m+21ms[0m
+  [38;5;45;1mpw:api [0m=> browserContext.newPage started [38;5;45m+10ms[0m
+  [38;5;45;1mpw:api [0m<= browserContext.newPage succeeded [38;5;45m+117ms[0m
+  [38;5;45;1mpw:api [0m=> page.goto started [38;5;45m+4ms[0m
+  [38;5;45;1mpw:api [0mnavigating to "http://localhost:5173/", waiting until "load" [38;5;45m+11ms[0m
+  [38;5;45;1mpw:api [0m  "commit" event fired [38;5;45m+26ms[0m
+  [38;5;45;1mpw:api [0m  navigated to "http://localhost:5173/" [38;5;45m+1ms[0m
+  [38;5;45;1mpw:api [0m  "domcontentloaded" event fired [38;5;45m+452ms[0m
+  [38;5;45;1mpw:api [0m  "load" event fired [38;5;45m+11ms[0m
+  [38;5;45;1mpw:api [0m  navigated to "http://localhost:5173/" [38;5;45m+5ms[0m
+  [38;5;45;1mpw:api [0m<= page.goto succeeded [38;5;45m+406ms[0m
+  [38;5;45;1mpw:api [0m=> page.click started [38;5;45m+5ms[0m
+  [38;5;45;1mpw:api [0mwaiting for locator('text=Give Feedback') [38;5;45m+34ms[0m
+  [38;5;45;1mpw:api [0m  "networkidle" event fired [38;5;45m+1s[0m
+  [38;5;45;1mpw:api [0m<= page.click failed [38;5;45m+4s[0m
+Terminate batch job (Y/N)?   [38;5;45;1mpw:api [0m=> browser.close started [38;5;45m+31ms[0m
+  [38;5;45;1mpw:api [0m<= browser.close failed [38;5;45m+1ms[0m
+  ✘   1 [chromium] › tests\ai-sentiment.spec.js:5:3 › AI Sentiment Analysis › should analyze positive review (7.0s)
+
+
+  1) [chromium] › tests\ai-sentiment.spec.js:5:3 › AI Sentiment Analysis › should analyze positive review 
+
+    Test was interrupted.
+
+    Error: page.click: Target page, context or browser has been closed
+    Call log:
+    [2m  - waiting for locator('text=Give Feedback')[22m
+
+
+       5 |   test('should analyze positive review', async ({ page }) => {
+       6 |     await page.goto('/');
+    >  7 |     await page.click('text=Give Feedback');
+         |                ^
+       8 |     await page.waitForTimeout(2000);
+       9 |     
+      10 |     const textarea = page.locator('textarea').first();
+        at C:\Users\hashi\OneDrive\Documents\GitHub\Campus-Food-Ordering-And-Delivery-System\frontend\tests\ai-sentiment.spec.js:7:16
+
+    Error: apiRequestContext._wrapApiCall: Target page, context or browser has been closed
+
+    Error Context: test-results\ai-sentiment-AI-Sentiment--a50f3-uld-analyze-positive-review-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\ai-sentiment-AI-Sentiment--a50f3-uld-analyze-positive-review-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\ai-sentiment-AI-Sentiment--a50f3-uld-analyze-positive-review-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 interrupted
+    [chromium] › tests\ai-sentiment.spec.js:5:3 › AI Sentiment Analysis › should analyze positive review 
+  13 did not run
