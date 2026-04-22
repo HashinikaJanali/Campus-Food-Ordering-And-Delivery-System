@@ -4,12 +4,11 @@ import { motion } from "framer-motion";
 import { Mail, Lock, LogIn, Sparkles, GraduationCap, ShieldCheck, Briefcase } from "lucide-react";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login: studentLogin } = useUserAuth();
+  const { login: userLogin, logout: userLogout } = useUserAuth();
   const { login: adminLogin } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -38,22 +37,21 @@ const LoginPage = () => {
         await adminLogin(form.email, form.password);
         navigate('/admin/management');
       } else if (role === "staff") {
-        const res = await api.post('/users/login', { email: form.email, password: form.password });
-        const userData = res.data.data;
+        const userData = await userLogin(form.email, form.password);
 
         if (userData.role !== 'staff') {
+          userLogout();
           setError("Invalid credentials for staff account.");
           setLoading(false);
           return;
         }
 
-        localStorage.setItem('user_token', userData.token);
-        localStorage.setItem('user_data', JSON.stringify(userData));
         navigate('/delivery-staff');
       } else {
-        const userData = await studentLogin(form.email, form.password);
+        const userData = await userLogin(form.email, form.password);
 
         if (userData.role && userData.role !== 'student') {
+          userLogout();
           setError("Invalid credentials for student account.");
           setLoading(false);
           return;
