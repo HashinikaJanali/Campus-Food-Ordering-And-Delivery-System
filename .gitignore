@@ -5,17 +5,3 @@ playwright-report/
 test-results/
 blob-report/
 /frontend/tests/screenshots
-frontend/tests/screenshots/ai-positive-no-stars.png
-frontend/tests/screenshots/ai-negative-no-stars.png
-frontend/tests/dom-debug.json
-frontend/tests/screenshots/loyalty-dashboard.png
-frontend/tests/screenshots/points-history.png
-frontend/tests/screenshots/notification-dropdown.png
-frontend/tests/screenshots/step5-stars-clicked.png
-frontend/tests/screenshots/step4-text-filled.png
-frontend/tests/screenshots/step7-final.png
-frontend/tests/screenshots/step6-submitted.png
-frontend/tests/screenshots/step1-login.png
-frontend/tests/screenshots/step2-navigate.png
-frontend/tests/screenshots/step4-text-filled.png
-frontend/tests/screenshots/notification-bell.png
