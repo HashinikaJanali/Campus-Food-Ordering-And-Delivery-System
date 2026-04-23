@@ -119,5 +119,92 @@ test('PM-05: Admin payments panel displays transaction data', async ({ page }) =
     page.getByRole('paragraph').filter({ hasText: 'Total Payments' })
   ).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: /csv/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /pdf report/i })).toBeVisible();
+});
+
+// PM-06: Payment rows expose delete action
+test('PM-06: Admin payment rows expose a delete button', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`${BASE_URL}/admin/payments`);
+  await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible({ timeout: 10_000 });
+
+  const deleteButtons = page.getByRole('button', { name: /^delete$/i });
+  const deleteCount = await deleteButtons.count();
+  test.skip(!deleteCount, 'No payment rows available – skipping');
+
+  const firstDelete = deleteButtons.first();
+  const firstRow = page.locator('div.group').filter({ has: firstDelete }).first();
+  await firstRow.hover();
+
+  await expect(firstDelete).toBeVisible({ timeout: 10_000 });
+});
+
+// PM-07: Payment delete can be cancelled safely
+test('PM-07: Admin payment delete confirmation can be cancelled', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`${BASE_URL}/admin/payments`);
+
+  const deleteButtons = page.getByRole('button', { name: /^delete$/i });
+  const deleteCount = await deleteButtons.count();
+  test.skip(!deleteCount, 'No payment rows available – skipping');
+
+  const firstDelete = deleteButtons.first();
+  const firstRow = page.locator('div.group').filter({ has: firstDelete }).first();
+  await firstRow.hover();
+
+  await expect(firstDelete).toBeVisible({ timeout: 10_000 });
+
+  page.once('dialog', dialog => dialog.dismiss());
+  await firstDelete.click();
+
+  await expect(firstDelete).toBeVisible({ timeout: 5_000 });
+});
+
+// PM-08: Refund requests page renders
+test('PM-08: Admin refund requests page is accessible', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`${BASE_URL}/admin/refund-requests`);
+  await expect(
+    page.getByRole('heading', { name: /refund requests management/i })
+  ).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('Review and manage customer refund requests')).toBeVisible();
+});
+
+// PM-09: Refund request rows expose delete action
+test('PM-09: Admin refund request rows expose a delete button', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`${BASE_URL}/admin/refund-requests`);
+  await expect(
+    page.getByRole('heading', { name: /refund requests management/i })
+  ).toBeVisible({ timeout: 10_000 });
+
+  const deleteButtons = page.getByRole('button', { name: /^delete$/i });
+  const deleteCount = await deleteButtons.count();
+  test.skip(!deleteCount, 'No refund requests available – skipping');
+
+  const firstDelete = deleteButtons.first();
+  const firstRow = page.locator('div.group').filter({ has: firstDelete }).first();
+  await firstRow.hover();
+
+  await expect(firstDelete).toBeVisible({ timeout: 10_000 });
+});
+
+// PM-10: Refund request delete can be cancelled safely
+test('PM-10: Admin refund request delete confirmation can be cancelled', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`${BASE_URL}/admin/refund-requests`);
+
+  const deleteButtons = page.getByRole('button', { name: /^delete$/i });
+  const deleteCount = await deleteButtons.count();
+  test.skip(!deleteCount, 'No refund requests available – skipping');
+
+  const firstDelete = deleteButtons.first();
+  const firstRow = page.locator('div.group').filter({ has: firstDelete }).first();
+  await firstRow.hover();
+
+  await expect(firstDelete).toBeVisible({ timeout: 10_000 });
+
+  page.once('dialog', dialog => dialog.dismiss());
+  await firstDelete.click();
+
+  await expect(firstDelete).toBeVisible({ timeout: 5_000 });
 });

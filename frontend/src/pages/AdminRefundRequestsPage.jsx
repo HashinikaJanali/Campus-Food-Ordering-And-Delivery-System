@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle, Search, Filter, RefreshCw, Clock, Check, X,
-  ThumbsUp, ThumbsDown, Layers
+  ThumbsUp, ThumbsDown, Layers, Trash2
 } from "lucide-react";
 import api from "../utils/api";
 
@@ -61,6 +61,7 @@ export default function AdminRefundRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [toast, setToast] = useState(null);
 
   const fetchRefundRequests = async () => {
@@ -174,6 +175,25 @@ export default function AdminRefundRequestsPage() {
       showToast(errorMessage || `Failed to ${action} refund request`, "error");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDeleteRequest = async (request) => {
+    const confirmed = window.confirm(`Delete refund request for order ${getOrderId(request.orderId)}?`);
+    if (!confirmed) return;
+
+    setDeleteLoadingId(request._id);
+    try {
+      await api.delete(`/payments/refund-requests/${request._id}`);
+      setRefundRequests(prev => prev.filter(req => req._id !== request._id));
+      await fetchRefundStats();
+      showToast("Refund request deleted successfully.", "success");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to delete refund request";
+      console.error('❌ Delete refund request error:', error.response?.data || error.message);
+      showToast(errorMessage, "error");
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -381,20 +401,40 @@ export default function AdminRefundRequestsPage() {
                 <p className="font-black text-gray-900 whitespace-nowrap">
                   Rs. {req.amount?.toFixed(2)}
                 </p>
-                {req.status === "pending" && (
+                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  {req.status === "pending" && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        console.log("🔍 Opening refund request review modal for:", req._id);
+                        setSelectedRequest(req);
+                        setAdminNotes("");
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 font-black text-xs transition-all"
+                    >
+                      <AlertTriangle size={12} /> Review
+                    </motion.button>
+                  )}
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      console.log("🔍 Opening refund request review modal for:", req._id);
-                      setSelectedRequest(req);
-                      setAdminNotes("");
-                    }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 font-black text-xs transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                    onClick={() => handleDeleteRequest(req)}
+                    disabled={deleteLoadingId === req._id}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black text-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <AlertTriangle size={12} /> Review
+                    {deleteLoadingId === req._id ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={12} /> Delete
+                      </>
+                    )}
                   </motion.button>
-                )}
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
