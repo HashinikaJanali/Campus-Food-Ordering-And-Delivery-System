@@ -20,30 +20,15 @@ const UserHomePage = () => {
     const [authError, setAuthError] = useState('');
     const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
-    const { login, register, isAuthenticated } = useUserAuth();
+    const { login, register, isAuthenticated, user } = useUserAuth();
     const navigate = useNavigate();
 
+    // Redirect delivery staff to their dashboard
     useEffect(() => {
-        const fetchHomeData = async () => {
-            try {
-                setLoading(true);
-                const response = await api.get('/food-items/public');
-                const allItems = response.data.data || [];
-                setPopularItems(allItems.slice(0, 3));
-            } catch (error) {
-                console.error("Error fetching home data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchHomeData();
-    }, []);
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            // User is logged in, can stay on home
+        if (user && user.role === 'staff') {
+            navigate('/delivery-staff', { replace: true });
         }
-    }, [isAuthenticated]);
+    }, [user, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();

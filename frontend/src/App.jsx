@@ -82,6 +82,35 @@ const UserProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Student Protected Route (prevents delivery staff access)
+const StudentProtectedRoute = ({ children }) => {
+  const { user, loading, setLoginRedirect } = useUserAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-primary-600 font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect delivery staff to their dashboard
+  if (user && user.role === 'staff') {
+    return <Navigate to="/delivery-staff" replace />;
+  }
+
+  if (!user) {
+    setLoginRedirect(location.pathname);
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 const StaffProtectedRoute = ({ children }) => {
   const { user, loading } = useUserAuth();
 
@@ -103,6 +132,18 @@ const StaffProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Guard against delivery staff accessing student pages (but allow non-authenticated users)
+const NoStaffRoute = ({ children }) => {
+  const { user } = useUserAuth();
+
+  // Redirect delivery staff to their dashboard
+  if (user && user.role === 'staff') {
+    return <Navigate to="/delivery-staff" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -112,24 +153,24 @@ function App() {
             <CartProvider>
               <Routes>
                 {/* Student routes */}
-                <Route path="/signup" element={<UserLayout><SignupPage /></UserLayout>} />
-                <Route path="/login" element={<UserLayout><LoginPage /></UserLayout>} />
-                <Route path="/cart" element={<UserLayout><CartPage /></UserLayout>} />
-                <Route path="/checkout" element={<UserLayout><UserProtectedRoute><CheckoutPage /></UserProtectedRoute></UserLayout>} />
-                <Route path="/order-success" element={<UserLayout><OrderSuccessPage /></UserLayout>} />
+                <Route path="/signup" element={<UserLayout><NoStaffRoute><SignupPage /></NoStaffRoute></UserLayout>} />
+                <Route path="/login" element={<UserLayout><NoStaffRoute><LoginPage /></NoStaffRoute></UserLayout>} />
+                <Route path="/cart" element={<UserLayout><NoStaffRoute><CartPage /></NoStaffRoute></UserLayout>} />
+                <Route path="/checkout" element={<UserLayout><StudentProtectedRoute><CheckoutPage /></StudentProtectedRoute></UserLayout>} />
+                <Route path="/order-success" element={<UserLayout><NoStaffRoute><OrderSuccessPage /></NoStaffRoute></UserLayout>} />
                 <Route path="/profile" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
                 <Route path="/payments" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><UserProfilePage /></UserProtectedRoute></UserLayout>} />
-                <Route path="/about" element={<UserLayout><AboutPage /></UserLayout>} />
-                <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
+                <Route path="/about" element={<UserLayout><NoStaffRoute><AboutPage /></NoStaffRoute></UserLayout>} />
+                <Route path="/feedback" element={<Layout><NoStaffRoute><FeedbackPage /></NoStaffRoute></Layout>} />
                 <Route path="/orders" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderManagementPage /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/order/:orderId" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderDetailsPage /></AdminSubLayout></ProtectedRoute>} />
                 <Route path="/track" element={<UserLayout showHeader={false} showFooter={false}><OrderTrackingPage /></UserLayout>} />
-                <Route path="/my-orders" element={<UserLayout showHeader={false} showFooter={false}><UserProtectedRoute><MyOrdersPage /></UserProtectedRoute></UserLayout>} />
+                <Route path="/my-orders" element={<UserLayout showHeader={false} showFooter={false}><StudentProtectedRoute><MyOrdersPage /></StudentProtectedRoute></UserLayout>} />
                 <Route path="/tracking" element={<AdminSubLayout showFooter={false}><OrderTrackingPage /></AdminSubLayout>} />
                 <Route path="/history" element={<ProtectedRoute><AdminSubLayout showFooter={false}><OrderHistoryPage /></AdminSubLayout></ProtectedRoute>} />
-                <Route path="/menu" element={<UserLayout><StudentMenuPage /></UserLayout>} />
-                <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
-                <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
+                <Route path="/menu" element={<UserLayout><NoStaffRoute><StudentMenuPage /></NoStaffRoute></UserLayout>} />
+                <Route path="/home" element={<UserLayout><NoStaffRoute><UserHomePage /></NoStaffRoute></UserLayout>} />
+                <Route path="/" element={<UserLayout><NoStaffRoute><UserHomePage /></NoStaffRoute></UserLayout>} />
                 
                 <Route path="/delivery-staff" element={<StaffProtectedRoute><DeliveryStaffPage /></StaffProtectedRoute>} />
 
