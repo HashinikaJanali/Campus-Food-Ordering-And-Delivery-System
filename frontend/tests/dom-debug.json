@@ -1,7 +1,7 @@
 {
-  "starSvgCount": 43,
+  "starSvgCount": 29,
   "starSvgClasses": [
-    "lucide lucide-bell w-6 h-6 text-orange-500",
+    "lucide lucide-bell w-6 h-6 text-gray-600",
     "lucide lucide-star w-5 h-5",
     "lucide lucide-star w-5 h-5 mx-auto opacity-50",
     "lucide lucide-gift w-5 h-5 mx-auto opacity-50",
@@ -22,20 +22,6 @@
     "lucide lucide-star w-10 h-10 text-gray-300",
     "lucide lucide-upload w-12 h-12 mx-auto mb-3 text-gray-400",
     "lucide lucide-check-circle w-5 h-5",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 text-gray-300",
-    "lucide lucide-pen w-4 h-4",
-    "lucide lucide-trash2 w-4 h-4",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-star w-5 h-5 fill-gold text-gold",
-    "lucide lucide-pen w-4 h-4",
-    "lucide lucide-trash2 w-4 h-4",
     "lucide lucide-facebook ",
     "lucide lucide-instagram ",
     "lucide lucide-twitter ",
@@ -45,12 +31,12 @@
     "lucide lucide-mail w-5 h-5 text-orange-400 flex-shrink-0",
     "lucide lucide-heart w-4 h-4 text-red-500 fill-red-500"
   ],
-  "buttonCount": 23,
+  "buttonCount": 19,
   "buttons": [
     {
-      "text": "9+",
+      "text": "",
       "hasSvg": true,
-      "svgClass": "lucide lucide-bell w-6 h-6 text-orange-500",
+      "svgClass": "lucide lucide-bell w-6 h-6 text-gray-600",
       "parentClass": "relative"
     },
     {
@@ -160,30 +146,6 @@
       "hasSvg": true,
       "svgClass": "lucide lucide-check-circle w-5 h-5",
       "parentClass": "space-y-4"
-    },
-    {
-      "text": "",
-      "hasSvg": true,
-      "svgClass": "lucide lucide-pen w-4 h-4",
-      "parentClass": "flex gap-2"
-    },
-    {
-      "text": "",
-      "hasSvg": true,
-      "svgClass": "lucide lucide-trash2 w-4 h-4",
-      "parentClass": "flex gap-2"
-    },
-    {
-      "text": "",
-      "hasSvg": true,
-      "svgClass": "lucide lucide-pen w-4 h-4",
-      "parentClass": "flex gap-2"
-    },
-    {
-      "text": "",
-      "hasSvg": true,
-      "svgClass": "lucide lucide-trash2 w-4 h-4",
-      "parentClass": "flex gap-2"
     }
   ],
   "textareas": [

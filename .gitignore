@@ -16,6 +16,8 @@ playwright/.cache/
 frontend/test-results/
 frontend/playwright-report/
 frontend/blob-report/
+frontend/tests/screenshots/
+frontend/tests/dom-debug.json
 
 # Environment files
 .env
