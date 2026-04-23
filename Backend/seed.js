@@ -4,6 +4,9 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_food_inventory';
 
 const Admin = require('./Model/Admin');

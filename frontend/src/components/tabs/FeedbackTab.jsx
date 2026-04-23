@@ -6,11 +6,7 @@ import { useApp } from '../../context/AppContext';
 import { useUserAuth } from '../../context/UserAuthContext';
 import toast from 'react-hot-toast';
 
-// Mock orders for demo
-const mockOrders = [
-  { orderId: 'ORD-101', foodItem: 'Cheese Pizza Slice', vendor: 'P&S Canteen', deliveredAt: '15 minutes ago', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop' },
-  { orderId: 'ORD-102', foodItem: 'Iced Coffee', vendor: 'Main Canteen', deliveredAt: '30 minutes ago', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200&h=200&fit=crop' },
-];
+// Dynamic mock orders will be generated inside the component to prevent collision across test runs
 
 // Validation Helpers
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -58,6 +54,12 @@ const FeedbackTab = () => {
   const [editingReview, setEditingReview] = useState(null);
   const [successMessage, setSuccessMessage] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Use dynamic IDs for mock orders to ensure Playwright tests always have fresh orders to review
+  const [mockOrders] = useState(() => [
+    { orderId: `ORD-101-${Date.now()}-${Math.floor(Math.random() * 1000)}`, foodItem: 'Cheese Pizza Slice', vendor: 'P&S Canteen', deliveredAt: '15 minutes ago', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop' },
+    { orderId: `ORD-102-${Date.now()}-${Math.floor(Math.random() * 1000)}`, foodItem: 'Iced Coffee', vendor: 'Main Canteen', deliveredAt: '30 minutes ago', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200&h=200&fit=crop' },
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {

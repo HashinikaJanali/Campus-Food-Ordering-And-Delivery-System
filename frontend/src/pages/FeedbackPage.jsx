@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Gift, MessageSquare, TrendingUp, Trophy, QrCode, Gamepad2, Mic } from 'lucide-react';
 import LoyaltyTab from '../components/tabs/LoyaltyTab';
@@ -59,7 +60,7 @@ const tabs = [
     iconColor: 'text-green-600',
     emoji: '📊',
   },
- 
+
   {
     id: 'mini-games',
     label: 'Mini-Games',
@@ -71,11 +72,19 @@ const tabs = [
     emoji: '🎮',
   },
 
-  
+
 ];
 
 const FeedbackPage = () => {
-  const [activeTab, setActiveTab] = useState('loyalty');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'loyalty';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Sync tab with URL
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
   const activeTabData = tabs.find(tab => tab.id === activeTab);
@@ -94,7 +103,7 @@ const FeedbackPage = () => {
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
         />
-        
+
         <div className="relative z-10">
           <motion.h1
             initial={{ y: 20, opacity: 0 }}
@@ -132,7 +141,8 @@ const FeedbackPage = () => {
                 transition={{ delay: 0.3 + index * 0.05 }}
                 whileHover={{ scale: 1.05, y: -3 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
+                id={`tab-${tab.id}`}
                 className={`
                   relative flex flex-col items-center gap-2 px-3 py-4 rounded-2xl font-semibold text-sm transition-all overflow-hidden
                   ${isActive
