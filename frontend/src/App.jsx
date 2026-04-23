@@ -82,6 +82,27 @@ const UserProtectedRoute = ({ children }) => {
   return children;
 };
 
+const StaffProtectedRoute = ({ children }) => {
+  const { user, loading } = useUserAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-orange-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-primary-600 font-semibold">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'staff') {
+    return <Navigate to="/login?role=staff" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -110,7 +131,7 @@ function App() {
                 <Route path="/home" element={<UserLayout><UserHomePage /></UserLayout>} />
                 <Route path="/" element={<UserLayout><UserHomePage /></UserLayout>} />
                 
-                <Route path="/delivery-staff" element={<DeliveryStaffPage />} />
+                <Route path="/delivery-staff" element={<StaffProtectedRoute><DeliveryStaffPage /></StaffProtectedRoute>} />
 
                 {/* Admin routes */}
                 <Route path="/admin/management" element={<ProtectedRoute><AdminSubLayout showFooter={false}><AdminDashboard /></AdminSubLayout></ProtectedRoute>} />

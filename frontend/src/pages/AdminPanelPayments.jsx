@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CreditCard, Search, Filter, RefreshCw, Download,
   TrendingUp, CheckCircle2, XCircle, Clock, RotateCcw,
-  AlertTriangle, BarChart2, Users, Store, Calendar, ThumbsUp, ThumbsDown
+  AlertTriangle, BarChart2, Users, Store, Calendar, ThumbsUp, ThumbsDown, Trash2
 } from "lucide-react";
 import api from "../utils/api";
 
@@ -134,10 +134,9 @@ const AdminPanelPayments = () => {
   const [chartPeriod, setChartPeriod] = useState("daily");
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundLoading, setRefundLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [toast, setToast] = useState(null);
   
-  const reportRef = useRef(null);
-
   const fetchPayments = async () => {
     setLoading(true);
     try {
@@ -190,6 +189,23 @@ const AdminPanelPayments = () => {
     finally { setRefundLoading(false); }
   };
 
+  const handleDeletePayment = async (payment) => {
+    const confirmed = window.confirm(`Delete payment ${payment.orderId || payment._id}? This will also remove linked refund requests.`);
+    if (!confirmed) return;
+
+    setDeleteLoadingId(payment._id);
+    try {
+      await api.delete(`/payments/${payment._id}`);
+      setPayments(prev => prev.filter(p => p._id !== payment._id));
+      showToast("Payment deleted successfully.");
+    } catch (error) {
+      console.error('Delete payment error:', error.response?.data || error.message);
+      showToast(error.response?.data?.message || "Failed to delete payment.", "error");
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
   const exportCSV = () => {
     const headers = ["Order ID", "ID", "User", "Amount", "Status", "Canteen", "Date"];
     const rows = filtered.map(p => [
@@ -208,11 +224,6 @@ const AdminPanelPayments = () => {
     a.href = url; a.download = `payments_report_${Date.now()}.csv`; a.click();
     URL.revokeObjectURL(url);
     showToast("CSV exported successfully.");
-  };
-
-  const exportPDF = () => {
-    const el = document.getElementById("print-report");
-    if (el) { el.style.display = "block"; setTimeout(() => { window.print(); el.style.display = "none"; }, 300); }
   };
 
   const filtered = payments.filter(p => {
@@ -322,10 +333,6 @@ const AdminPanelPayments = () => {
               className="flex items-center gap-2 px-4 py-3 bg-white/20 hover:bg-white/30 border border-white/20 rounded-2xl font-black text-sm transition-all">
               <Download size={15} /> CSV
             </button>
-            <button onClick={exportPDF}
-              className="flex items-center gap-2 px-4 py-3 bg-white text-violet-700 hover:bg-violet-50 rounded-2xl font-black text-sm transition-all shadow-lg">
-              <Download size={15} /> PDF Report
-            </button>
             <button onClick={fetchPayments} className="p-3 bg-white/20 hover:bg-white/30 border border-white/20 rounded-2xl transition-all">
               <RefreshCw size={18} />
             </button>
@@ -416,64 +423,35 @@ const AdminPanelPayments = () => {
                 </p>
                 <PaymentBadge status={payment.displayStatus || payment.status} />
                 <p className="font-black text-gray-900 text-base whitespace-nowrap">Rs. {payment.amount?.toFixed(2) || "—"}</p>
-                {payment.displayStatus === "refund_approved" && (
+                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  {payment.displayStatus === "refund_approved" && (
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => setRefundTarget(payment)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-black text-xs transition-all">
+                      <RotateCcw size={12} /> Refund
+                    </motion.button>
+                  )}
                   <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => setRefundTarget(payment)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-black text-xs transition-all sm:opacity-0 sm:group-hover:opacity-100">
-                    <RotateCcw size={12} /> Refund
+                    onClick={() => handleDeletePayment(payment)}
+                    disabled={deleteLoadingId === payment._id}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black text-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+                    {deleteLoadingId === payment._id ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={12} /> Delete
+                      </>
+                    )}
                   </motion.button>
-                )}
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
         )}
       </div>
-
-      {/* Print-only Report */}
-      <div id="print-report" style={{ display: "none" }}>
-        <div style={{ fontFamily: "sans-serif", padding: "40px", maxWidth: "800px", margin: "0 auto" }}>
-          <h1 style={{ fontSize: "28px", fontWeight: "900", marginBottom: "4px" }}>Payment Report</h1>
-          <p style={{ color: "#888", fontSize: "13px", marginBottom: "32px" }}>Generated on {new Date().toLocaleString()}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "32px" }}>
-            {[
-              { label: "Total Revenue",  value: `Rs.${totalRevenue.toFixed(2)}` },
-              { label: "Total Payments", value: payments.length },
-              { label: "Pending",        value: `Rs.${totalPending.toFixed(2)}` },
-              { label: "Refunded",       value: `Rs.${totalRefunded.toFixed(2)}` },
-            ].map((s, i) => (
-              <div key={i} style={{ background: "#f9f9f9", padding: "16px", borderRadius: "12px" }}>
-                <p style={{ fontSize: "20px", fontWeight: "900" }}>{s.value}</p>
-                <p style={{ fontSize: "11px", color: "#888", textTransform: "uppercase" }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-          <h2 style={{ fontSize: "16px", fontWeight: "900", marginBottom: "12px" }}>Status Breakdown</h2>
-          <div style={{ display: "flex", gap: "12px", marginBottom: "32px", flexWrap: "wrap" }}>
-            {statusBreakdown.map((s, i) => (
-              <div key={i} style={{ background: "#f9f9f9", padding: "10px 16px", borderRadius: "10px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: s.color }} />
-                <span style={{ fontSize: "12px", fontWeight: "700" }}>{s.label}: {s.value}</span>
-              </div>
-            ))}
-          </div>
-          <h2 style={{ fontSize: "16px", fontWeight: "900", marginBottom: "12px" }}>Top Paying Students</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "32px", fontSize: "13px" }}>
-            <thead><tr style={{ background: "#f3f4f6" }}>{["#","Student","Orders","Total"].map(h => <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontWeight: "900" }}>{h}</th>)}</tr></thead>
-            <tbody>{topStudents.map((s, i) => (<tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}><td style={{ padding: "10px 16px" }}>{i+1}</td><td style={{ padding: "10px 16px", fontWeight: "700" }}>{s.name}</td><td style={{ padding: "10px 16px" }}>{s.count}</td><td style={{ padding: "10px 16px", fontWeight: "900" }}>Rs.{s.total.toFixed(2)}</td></tr>))}</tbody>
-          </table>
-          <h2 style={{ fontSize: "16px", fontWeight: "900", marginBottom: "12px" }}>Revenue by Canteen</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "32px", fontSize: "13px" }}>
-            <thead><tr style={{ background: "#f3f4f6" }}>{["Canteen","Revenue"].map(h => <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontWeight: "900" }}>{h}</th>)}</tr></thead>
-            <tbody>{byCanteen.map((c, i) => (<tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}><td style={{ padding: "10px 16px", fontWeight: "700" }}>{c.name}</td><td style={{ padding: "10px 16px", fontWeight: "900" }}>Rs.{c.total.toFixed(2)}</td></tr>))}</tbody>
-          </table>
-          <h2 style={{ fontSize: "16px", fontWeight: "900", marginBottom: "12px" }}>All Payments ({filtered.length})</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead><tr style={{ background: "#f3f4f6" }}>{["Order ID","Payment ID","User","Canteen","Status","Amount","Date"].map(h => <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: "900" }}>{h}</th>)}</tr></thead>
-            <tbody>{filtered.map((p, i) => (<tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}><td style={{ padding: "8px 12px", fontFamily: "monospace" }}>#{p.orderId || p._id}</td><td style={{ padding: "8px 12px", fontFamily: "monospace" }}>#{p._id?.slice(-8).toUpperCase()}</td><td style={{ padding: "8px 12px" }}>{p.user?.name || p.userName || "—"}</td><td style={{ padding: "8px 12px" }}>{p.canteen?.name || p.canteenName || "—"}</td><td style={{ padding: "8px 12px", fontWeight: "700", textTransform: "capitalize" }}>{p.status}</td><td style={{ padding: "8px 12px", fontWeight: "900" }}>Rs.{p.amount?.toFixed(2)}</td><td style={{ padding: "8px 12px" }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}</td></tr>))}</tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
   );
 };
