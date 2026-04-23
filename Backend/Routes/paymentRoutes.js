@@ -6,8 +6,10 @@ const { protectUser } = require("../middleware/auth");
 
 // Admin routes (protected)
 router.get("/", protect, paymentController.getAllPayments);
+router.delete("/:paymentId", protect, paymentController.deletePayment);
 router.patch("/:paymentId/refund", protect, paymentController.markPaymentAsRefunded);
 router.get("/refund-requests", protect, paymentController.getRefundRequests);
+router.delete("/refund-requests/:refundRequestId", protect, paymentController.deleteRefundRequest);
 router.patch("/refund-requests/:refundRequestId", protect, paymentController.approveRefundRequest);
 
 // User routes (protected)

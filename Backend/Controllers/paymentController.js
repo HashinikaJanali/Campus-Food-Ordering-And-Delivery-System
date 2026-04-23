@@ -425,6 +425,39 @@ exports.markPaymentAsRefunded = async (req, res) => {
 };
 
 /**
+ * Delete Payment (Admin)
+ * DELETE /api/payments/:paymentId
+ */
+exports.deletePayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    const order = await Order.findById(paymentId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found"
+      });
+    }
+
+    await RefundRequest.deleteMany({ orderId: order._id });
+    await Order.findByIdAndDelete(order._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Payment deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete Payment Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete payment",
+      error: error.message
+    });
+  }
+};
+
+/**
  * Request Refund (User)
  * POST /api/payments/request-refund
  * Body: { orderId, reason }
@@ -712,6 +745,51 @@ exports.approveRefundRequest = async (req, res) => {
       message: "Failed to process refund request",
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+/**
+ * Delete Refund Request (Admin)
+ * DELETE /api/payments/refund-requests/:refundRequestId
+ */
+exports.deleteRefundRequest = async (req, res) => {
+  try {
+    const { refundRequestId } = req.params;
+
+    const refundRequest = await RefundRequest.findById(refundRequestId);
+    if (!refundRequest) {
+      return res.status(404).json({
+        success: false,
+        message: "Refund request not found"
+      });
+    }
+
+    await RefundRequest.findByIdAndDelete(refundRequestId);
+
+    if (refundRequest.orderId) {
+      await Order.updateOne(
+        { _id: refundRequest.orderId, refundRequestId: refundRequestId },
+        {
+          $unset: {
+            refundRequestId: "",
+            refundAmount: "",
+            refundReason: ""
+          }
+        }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Refund request deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete Refund Request Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete refund request",
+      error: error.message
     });
   }
 };

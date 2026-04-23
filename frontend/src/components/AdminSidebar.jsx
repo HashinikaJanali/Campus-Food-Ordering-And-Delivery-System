@@ -31,7 +31,6 @@ const promotionsMenuItems = [
 
 const userManagementMenuItems = [
   { path: '/admin/users', icon: Users, label: 'All Users' },
-  { path: '/admin/users/roles', icon: Users, label: 'User Roles' },
 ];
 
 const paymentManagementMenuItems = [
