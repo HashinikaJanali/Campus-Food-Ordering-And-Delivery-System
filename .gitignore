@@ -16,6 +16,8 @@ playwright/.cache/
 frontend/test-results/
 frontend/playwright-report/
 frontend/blob-report/
+frontend/tests/screenshots/
+frontend/tests/dom-debug.json
 
 # Environment files
 .env
@@ -23,6 +25,8 @@ frontend/blob-report/
 .env.*.local
 frontend/.env
 Backend/.env
+backend.env
+backednd.env
 
 # OS generated files
 .DS_Store
