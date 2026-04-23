@@ -25,6 +25,8 @@ frontend/tests/dom-debug.json
 .env.*.local
 frontend/.env
 Backend/.env
+backend.env
+backednd.env
 
 # OS generated files
 .DS_Store
